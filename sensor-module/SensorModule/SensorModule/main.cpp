@@ -7,56 +7,28 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdlib.h>
+
 
 #define F_CPU 16000000UL
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
-volatile bool ultrasound = false;
-volatile bool hallsensor = false; 
+// Timing variables
+volatile unsigned long long milliseconds = 0;
+volatile unsigned long long us_latest = 0;
+volatile unsigned long long hall_left_latest = 0;
+volatile unsigned long long hall_right_latest = 0;
+
+// ISR flags
+volatile bool us_updated = false;
+volatile bool hall_left_updated = false;
+volatile bool hall_right_updated = false;  
+
 //Skicka data med jämnt intervall
 volatile bool sendbool = false;
-volatile unsigned long long milliseconds = 0;
-
-void timer1_init()
-{
-	OCR1A = 16000;
-	TCCR1A = 0x00;
-	//CTC = clear timer on compare and no prescale
-	TCCR1B = (1<<WGM12)|(1<<CS10);
-	//ICR1
-	TIMSK1 |= (1<<ICIE1);
-
-}
 
 
-ISR(TIMER1_CAPT_vect)
-{
-	milliseconds++;
-}
-
-unsinged long long millis()
-{
-
-}
-void setup()
-{
-	PORTD = (0 << PD5) |(0 << PD3) | (0 << PD2) | (1 << PD1) | (1 << PD0);
-	// output == 1 input == 0
-	DDRD = (1 << DDD5)|(1 << DDD4)| (0 << DDD3) | (0 << DDD2) | (1 << DDD1) | (0 << DDD0);
-	
-	//UART
-	
-	/* Set baud rate */ 
-	
-	UBRR0H = (BAUD_PRESCALE>>8);
-	UBRR0L = BAUD_PRESCALE;
-	/* Enable receiver and transmitter */
-	UCSR0B = (1<<RXEN0)|(1<<TXEN0);
-	/* Set frame format: 8data, 2stop bit */
-	UCSR0C = (1<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
-
-}
 
 void send_data(char* data)
 {
@@ -65,62 +37,203 @@ void send_data(char* data)
 	{
 		while(!( UCSR0A & (1<<UDRE0)))
 		;
-	
+		
 		UDR0 = data[counter];
 		if (data[counter] == '\0')
 		{
 			break;
-		}		
+		}
 		counter++;
 
 	}
 }
 
-//vänster hallsensor
-/*ISR(INT1_vect)
+ISR(TIMER1_COMPA_vect)
 {
+	milliseconds++;
+}
 
-}*/
+unsigned long long millis()
+{
+	cli();
+	unsigned long long tempmillis = milliseconds;
+	sei();
+	return tempmillis;
+}
+
+void portinit()
+{
+		PORTD = (0 << PD5) |(0 << PD3) | (0 << PD2) | (1 << PD1) | (1 << PD0);
+		// output == 1 input == 0
+		DDRD = (1 << DDD5)|(1 << DDD4)| (0 << DDD3) | (0 << DDD2) | (1 << DDD1) | (0 << DDD0);
+}
+
+void UART_init()
+{
+		/* Set baud rate */
+		UBRR0H = (BAUD_PRESCALE>>8);
+		UBRR0L = BAUD_PRESCALE;
+		
+		/* Enable receiver and transmitter */
+		UCSR0B = (1<<RXEN0)|(1<<TXEN0);
+		/* Set frame format: 8data, 2stop bit */
+		UCSR0C = (1<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
+}
+
+void timer1_init()
+{
+	// Set Output Compare Register to 16000 with is 1 ms at 16MHz
+	OCR1A = 16000; // == 0x3E80
+	//CTC = Clear Timer on Compare-mode with no prescaler
+	TCCR1A = (0<<WGM11)|(0<<WGM10); // COM1 in normal operation OC1A/B disabled
+	TCCR1B = (1<<WGM12)|(1<<CS10);
+	// Enable Output Compare A Match Interrupt Enable
+	TIMSK1 = (1<<OCIE1A);
+}
+
+//For interrupt routines
+//2 == falling edge // 3 == raising edge // 1 == any change
+
+void INT0_conf()
+{
+	//Rising edge interrupt mode
+	EICRA |=  (3 << ISC00);
+	
+	//Detta enablar interrupts för INT0
+	EIMSK |= (1 << INT0);
+}
+
+void INT1_conf()
+{
+	//Rising edge interrupt mode
+	EICRA |=  (3 << ISC10);
+	
+	//Detta enablar interrupts för INT0
+	EIMSK |= (1 << INT1);
+}
+
+void INT2_conf()
+{
+	
+	EICRA |= (2 << ISC20);
+	
+	//Detta enablar interrupts för INT2
+	EIMSK |= (1 << INT2);
+}
+
+void setup()
+{
+	portinit();
+	UART_init();
+	timer1_init();
+	INT0_conf();
+	INT1_conf();
+	INT2_conf();
+	
+	sei();
+}
+
+
 
 //Höger Hallsensor
 ISR(INT0_vect)
 {
+	hall_right_latest = millis();
+	hall_right_updated = true;
+	char * data = "Right Hallsensor!\n";
+	send_data(data);
+}
 
+//vänster hallsensor
+ISR(INT1_vect)
+{
+	hall_left_latest = millis();
+	hall_left_updated = true;
+	char * data = "Left Hallsensor!\n";
+	send_data(data);
 }
 
 //Ultraljudsensor
 ISR(INT2_vect)
 {
-
+	
 }
+
+
 
 int main(void)
 {
-
+	setup();
+	char* Data= "Init Completed! :)\n";
+	send_data(Data);
 	volatile bool localsend = false;	
-	sei();
+	volatile bool localultrasound = false;
+	volatile bool localhallsensor = false;
+	volatile unsigned long long old_time = 0;
+	volatile unsigned long long new_time = 0;
+	
+	volatile unsigned long long hall_left_old = 0;
+	
 	while(1)
 	{
-
-	cli()
-	localsend = sendbool
-	sei();
-	if(localsend == true)
-	{
-		//send_data_routine();
-	}	
-
-
+		new_time = millis();
+		
+		//if ((new_time - old_time) > 1000)
+		//{
+			//old_time = new_time;
+			//char* message = "1 Sec has passed\n";
+			//send_data(message);
+		//}
+		
+		cli();
+		localultrasound = us_updated;
+		sei();
+		if (localultrasound)
+		{
+		}
+	
+		cli();
+		localhallsensor = hall_left_updated;
+		sei();
+		if(localhallsensor)
+		{
+			unsigned diff = hall_left_latest - hall_left_old;
+			hall_left_old = hall_left_latest;
+			char time_passed[7];
+			itoa(diff, time_passed, 10); 
+			send_data(time_passed); // Sends time between each tick in ms
+			/*TODO: räkna ut hastighet
+				Hjulet har diameter 26cm => ungefär 81.68cm omkrets => 8.17cm mellan varje tick
+				(8.17/100)/(diff/1000) = hastighet i m/s
+			*/
+			hall_left_updated = false;
+		}
+	
+		cli();
+		localsend = sendbool;
+		sei();
+		if(localsend == true)
+		{
+			//send_data_routine();
+		}	
+	}
+	return 0;
 }
 
+
+
+
 /*
+
 int main()
 {
 	setup();
-	volatile int a= 0;
-	char* Data= "Hello World! :)";
-	send_data(Data);
-    while (1) 
+	char* Data= "Hello World! :)\n";
+	while(1)
+	{
+		send_data(Data);
+	}
+	while (1) 
 	{
 		
 		volatile int i = PIND;
@@ -135,6 +248,7 @@ int main()
 		}
 		
 	}
-}
+	
 
+}
 */
