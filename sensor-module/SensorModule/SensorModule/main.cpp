@@ -8,11 +8,15 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
-
+#include <string.h>
 
 #define F_CPU 16000000UL
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
+
+#define SPEED_PRECISION 1000000 // 6 decimalers precision
+#define SPEED_FIVETICKS 0.13 * SPEED_PRECISION // 0.13 m shiftat med precisionen 
+
 
 // Timing variables
 volatile unsigned long long milliseconds = 0;
@@ -27,6 +31,9 @@ volatile bool hall_right_updated = false;
 
 //Skicka data med jämnt intervall
 volatile bool sendbool = false;
+
+
+volatile int hall_left_counter = 0;
 
 
 
@@ -147,10 +154,15 @@ ISR(INT0_vect)
 //vänster hallsensor
 ISR(INT1_vect)
 {
-	hall_left_latest = millis();
-	hall_left_updated = true;
-	char * data = "Left Hallsensor!\n";
-	send_data(data);
+	hall_left_counter++;
+	if(hall_left_counter == 5)
+	{
+		hall_left_latest = millis();
+		hall_left_updated = true;
+		hall_left_counter = 0;
+	}
+	//char * data = "Left Hallsensor!\n";
+	//send_data(data);
 }
 
 //Ultraljudsensor
@@ -178,12 +190,14 @@ int main(void)
 	{
 		new_time = millis();
 		
-		//if ((new_time - old_time) > 1000)
-		//{
-			//old_time = new_time;
-			//char* message = "1 Sec has passed\n";
-			//send_data(message);
-		//}
+		/*
+		if ((new_time - old_time) > 1000)
+		{
+			old_time = new_time;
+			char* message = "1 Sec has passed\n";
+			send_data(message);
+		}
+		*/
 		
 		cli();
 		localultrasound = us_updated;
@@ -197,14 +211,45 @@ int main(void)
 		sei();
 		if(localhallsensor)
 		{
-			unsigned diff = hall_left_latest - hall_left_old;
+			unsigned long long diff = hall_left_latest - hall_left_old; // diff in ms for 5 ticks
 			hall_left_old = hall_left_latest;
-			char time_passed[7];
-			itoa(diff, time_passed, 10); 
-			send_data(time_passed); // Sends time between each tick in ms
+			
+			unsigned long tmp = SPEED_FIVETICKS / ( diff ); // tmp = hastighet i m/s shiftat med precisionen
+			// ett halvt varv * 1000 / skillnaden i tid i ms = hastighet i cm/s*1000
+			
+
+			char initial[27];
+			char * speed_msg = initial; 
+			"Speed=X.XXXXXX m/s";
+			
+			strcat(speed_msg, "Speed=");
+			char heltal[7];
+			ultoa((tmp / SPEED_PRECISION), heltal, 10);
+
+			strcat(speed_msg, heltal); // Heltal
+			strcat(speed_msg, ".");
+			char decimal[7];
+			ultoa( tmp % SPEED_PRECISION, decimal, 10);
+			strcat(speed_msg,decimal);
+			strcat(speed_msg, " m/s\n\0");
+			
+			//char time_passed[7];
+			//char speed[7];
+			//ultoa(diff, time_passed, 10); 
+			//ultoa(tmp, speed,10);
+
+			send_data(speed_msg);
+			/*send_data("speed in m/ms : ");
+			send_data(speed); // Sends time between each tick in ms
+			send_data("\t");
+			send_data("diff in ms: ");
+			send_data(time_passed);
+			send_data("\n");*/
 			/*TODO: räkna ut hastighet
-				Hjulet har diameter 26cm => ungefär 81.68cm omkrets => 8.17cm mellan varje tick
-				(8.17/100)/(diff/1000) = hastighet i m/s
+							
+				Omkrets är 26cm --> halva hjulet == 13 cm == 5 klick med hallsensorerna
+			
+				13 / deltaT
 			*/
 			hall_left_updated = false;
 		}
