@@ -24,13 +24,13 @@
 
 // Constants
 #define F_CPU 16000000UL
-#define USART_BAUDRATE 9600
+#define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
 #define SPEED_PRECISION 1000 // 3 decimalers precision
 #define SPEED_FIVETICKS 0.13 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster
 
-#define RECEIVE_BUFFER_SIZE 50
+#define RECEIVE_BUFFER_SIZE 100
 
 // Timing variables
 volatile unsigned short interval_counter = 0;
@@ -49,6 +49,11 @@ volatile bool hall_right_updated = false;
 //Skicka data med jämnt intervall
 volatile bool sendbool = false;
 
+//För att ta emot data
+volatile bool received = false;
+char receive_buffer[RECEIVE_BUFFER_SIZE];
+char working_buffer[RECEIVE_BUFFER_SIZE];
+volatile int receive_buffer_index = 0;
 
 volatile int hall_left_counter = 0;
 
@@ -124,11 +129,20 @@ void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE)
 {
 	for(int i = 0;i < size ;i++)
 	{
-		buffer[i] = ' ';
+		buffer[i] = '\0';
 	}
-	buffer[RECEIVE_BUFFER_SIZE-2] = '\n';
-	buffer[RECEIVE_BUFFER_SIZE-1] = '\0';
+
 }
+
+bool parse_handshake()
+{
+	if(!strcmp(&working_buffer[0], "ACK"))
+	{
+		return true;
+	}
+	return false;
+}
+
 int main(void)
 {
 	setup();
@@ -146,37 +160,41 @@ int main(void)
 	volatile unsigned heltal = 0;
 	volatile unsigned decimal = 0;
 	
-	char receive_buffer[RECEIVE_BUFFER_SIZE]; 
+	//char receive_buffer[RECEIVE_BUFFER_SIZE]; 
 	clear_buffer(&receive_buffer[0]);
+	clear_buffer(&working_buffer[0]);
 	volatile int counter =0;
 	volatile bool has_full_string = false;
+	memset(receive_buffer,0,sizeof receive_buffer);
+	memset(working_buffer,0,sizeof working_buffer);
+	
+		while(1)
+		{
+			if(millis()-new_time > 100)
+			{
+				new_time = millis();
+				//Denna ska va här ---- start
+				send_data("sensor_module\n");
+				//Denna ska va här ---- slut
+				if(received)
+				{
+					cli();
+					received = false;
+					if(parse_handshake()) //ACK
+					{
+						sei();
+						break;
+					}
+					sei();
+					
+				}
+				
+			}
+		}
+	send_data("After handshake\n");
 	while(1)
 	{
 		new_time = millis();
-
-		if (UCSR0A & (1<<RXC0))
-		{
-
-				unsigned char from_receive_buffer = UDR0;
-				receive_buffer[counter++] = from_receive_buffer;
-		
-				if((from_receive_buffer == '\0') || (counter == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
-				{			 
-					if(counter > 1)
-					{
-						
-					
-						receive_buffer[counter] = '\n';
-						send_data("\nTog emot detta från UART: ");
-						send_data(&receive_buffer[0]);
-						send_data("\n");
-
-					}
-						clear_buffer(&receive_buffer[0]);
-						counter =0;
-				}
-		 }
-		
 		
 		
 		cli();
@@ -188,8 +206,6 @@ int main(void)
 			char * echo_test = &test_inital[0];
 			pulse_length = echo_end - echo_start;
 			echo_updated = false;
-			//sprintf(echo_test, "start:%u end:%u \n", echo_start, echo_end);
-			//send_data(echo_test);
 		}
 		
 		cli();
@@ -209,10 +225,6 @@ int main(void)
 	
 		cli();
 		localsend = sendbool;
-		
-		//TA BORT DENNA START
-		localsend = false;
-		//TA BORT DENNA SLUT
 		sei();
 		if(localsend == true)
 		{
@@ -261,8 +273,6 @@ ISR(TIMER1_COMPA_vect)
 //HALL_RIGHT
 ISR(INT0_vect)
 {
-	//hall_right_latest = millis();
-	//hall_right_updated = true;
 	char * data = "Right Hallsensor!\n";
 	send_data(data);
 }
@@ -279,8 +289,6 @@ ISR(INT1_vect)
 		hall_left_updated = true;
 		hall_left_counter = 0;
 	}
-	//char * data = "Left Hallsensor!\n";
-	//send_data(data);
 }
 
 //ECHO_OUTPUT
@@ -321,9 +329,34 @@ void UART_init()
 	UCSR0B = (1<<RXEN0)|(1<<TXEN0);
 	/* Set frame format: 8data, 2stop bit */
 	UCSR0C = (1<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
+	
+	UCSR0B |= (1 << RXCIE0);
 }
 
+ISR (USART0_RX_vect)
+{
+	
+	unsigned char from_receive_buffer = UDR0;
+	receive_buffer[(receive_buffer_index)++] = from_receive_buffer;
 
+
+	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
+	{
+		receive_buffer[receive_buffer_index] = from_receive_buffer;
+		send_data("From UART: ");
+		send_data(receive_buffer);
+		send_data("\n");
+		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
+		send_data("I working buffer i ISR: ");
+		send_data(working_buffer);
+		send_data("\n");
+		memset(receive_buffer,0,receive_buffer_index);
+		receive_buffer_index =0;
+		received = true;
+
+
+	}
+}
 void timer0_init() // PWM variant
 {
 	// Set Output Compare Register to 160 which is 10 us at 16MHz
