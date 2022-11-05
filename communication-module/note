@@ -1,0 +1,10 @@
+
+Transform image:
+Perpsective needs four points that is the trapezoid-shaped to be eaxamined. Transform will make that into a square that covers the image. ( getPerspectiveTransform() )
+
+Identify lines:
+Histogram? Will detect black pixels on road but what for stops and crossroads? 
+    (Seems easy, just list of pixels in image per column)
+Sliding window technique tries to find two lanes, this always correct?
+    (Sliding window is just code, time to write)
+    (Poly.fit(x,y,degree=2) #Note that degree is 2 to achieve curvature)
