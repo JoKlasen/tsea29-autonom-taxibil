@@ -3,28 +3,59 @@ from PIL import Image
 from io import BytesIO
 import numpy as np
 import cv2
+import time
+import os
+from datetime import datetime
 
-PREFERED_PREVIEW_SIZE = (50,50,500,300)
+PREFERED_PREVIEW_SIZE = (50,50,1500,800)
 
 def create_a_camera():
 	camera = PiCamera()
-	camera.resolution = (2000,1000)
+	camera.resolution = (250,190)
 	camera.framerate = 32
-	camera.rotation = 0
-	camera.contrast = -40
+#	camera.rotation = 0
+	camera.contrast = 30
+	
+	camera.saturation = 0
+	camera.sharpness = 0
+	
 	camera.hflip = False
 	camera.vflip = False
 	
-	print(camera.brightness)
-	
 	return camera
+	
+def create_example_images():
+
+	cam = create_a_camera()
+
+	path = "./Example/"
+
+	if not os.path.exists(path):
+		os.mkdir(path)
+			
+	cam.start_preview()
+
+	while True:
+		time.sleep(5 - time.monotonic() % 1)
+		stream = BytesIO()
+
+		cam.capture(stream, format='jpeg')
+		
+		stream.seek(0)
+		
+		img = Image.open(stream)
+		
+		now = datetime.now()
+		
+		img.save("{}EI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+		print("image taken")
 
 def camera_capture_image(camera:PiCamera):
 	stream = BytesIO()
 
 	camera.start_preview()
-	cam.preview.window = (0,0,500,300)
-	cam.preview.fullscreen = False
+	camera.preview.window = (0,0,1000,800)
+	camera.preview.fullscreen = False
 	# time.sleep(3)
     
 	input("")
@@ -64,6 +95,41 @@ def preview_image_grid(img_grid):
 	
 	return final
 
+
+def test_sharpness():
+	camera = create_a_camera()
+
+	camera.stop_preview()
+
+	for contrast in range(-100, 101, 10):
+		print(contrast)
+		
+		camera.sharpness = contrast
+
+		camera.start_preview()
+		camera.preview.window = PREFERED_PREVIEW_SIZE
+		camera.preview.fullscreen = False
+		
+		input("")
+		
+		camera.stop_preview()
+
+
+def test_saturation():
+	camera = create_a_camera()
+
+	for contrast in range(-100, 101, 10):
+		print(contrast)
+		
+		camera.saturation = contrast
+
+		camera.start_preview()
+		camera.preview.window = PREFERED_PREVIEW_SIZE
+		camera.preview.fullscreen = False
+		
+		input("")
+		
+		camera.stop_preview()
 
 
 def test_brightness():
@@ -121,5 +187,7 @@ if __name__ == "__main__":
 #	test_awb_mode()
 #	test_contrast()
 
-	test_brightness()
+#	test_brightness()
 
+	#camera_capture_image(create_a_camera())
+	create_example_images()

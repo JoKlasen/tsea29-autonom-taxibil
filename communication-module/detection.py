@@ -6,8 +6,8 @@ import calibrate
 
 TESTFILE =  "CI_22.11.05.00.11.17.jpg"
 
+#DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)]
 DEFAULT_ROI = [(700,0),(0,800),(2000,800),(1600,0)]
-
 
 # ------------------------------------------------
 # Display data on image
@@ -15,7 +15,7 @@ DEFAULT_ROI = [(700,0),(0,800),(2000,800),(1600,0)]
 
 def preview_bitmap_on_image(bitmap, image, color=(0, 255, 0)):
 	""" Previews a bitmap overlayed on an image with the provided 
-	color 
+	color.
 	"""
 	image_to_show = add_bitmap_to_image(bitmap, image, color)
 	
@@ -23,13 +23,15 @@ def preview_bitmap_on_image(bitmap, image, color=(0, 255, 0)):
 	
 
 
-def add_bitmap_on_image(bitmap, image, color=(0, 255, 0)) -> np.ndarray:
+def add_bitmap_on_image(bitmap, image, color=(0, 255, 0), weight=0.5) -> np.ndarray:
+	""" Add a bitmap onto the provided image and return the result. 
+	"""
 	
-	manipulated_image = image
+	manipulated_image = image.copy()
 	
 	manipulated_image[bitmap == 1] = np.array(color)
 	
-	imageArray = cv2.addWeighted(imageArray, 0.5, ori, 1, 0)
+	return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
 
 
 def draw_polynomial_on_image(image:np.ndarray, polynomial, color=(255,255,255)):
@@ -38,13 +40,40 @@ def draw_polynomial_on_image(image:np.ndarray, polynomial, color=(255,255,255)):
 	resulting_x = polynomial[0]*plot_over_y**2 + polynomial[1]*plot_over_y + polynomial[2]
 	for i in range(len(plot_over_y)):
 		cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, [0,255,255], 2)
+		
+		
+def fill_between_polynomials(size, poly1, poly2):
+	""" Creates a bitmap where the area inbetween the two provided 
+	second degree polynomials are filled with ones.
+	"""
+	
+	bitmap = np.empty(size)
+
+	print(bitmap.shape)
+	
+	# A func that have value be inside of bitmap to avoid incorrect x
+	clamp = lambda x: max(min(x, bitmap.shape[1]), 0)
+
+	for y in range(bitmap.shape[0]):
+		x1 = clamp(poly1[0] * y**2 + poly1[1] * y + poly1[2])
+		x2 = clamp(poly2[0] * y**2 + poly2[1] * y + poly2[2])
+		
+		x1 = int(x1 + 0.5) # Rounded to closest integer
+		x2 = int(x2 + 0.5) # Rounded to closest integer
+	
+		bitmap[y, min(x1,x2):max(x1,x2)] = 1
+
+	camera.preview_image(bitmap*255)
+		
+	return bitmap
+	
 
 
 # ------------------------------------------------
 # Line detection as a whole
 # ------------------------------------------------
 
-def dl_clearify_edges(image:np.ndarray) -> np.ndarray:
+def dl_clearify_edges(image:np.ndarray) -> np.ndarray: #just in case we need it
 	""" Manipulates provided image to clearify edges. Returns an image 
 	with same characteristics.
 	"""
@@ -53,27 +82,16 @@ def dl_clearify_edges(image:np.ndarray) -> np.ndarray:
 
 	_, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
 	
-	# ___Another way to detect edges____
-	#	_, s_binary = cv2.threshold(cvt_image[:, :, 2], 110, 255, cv2.THRESH_BINARY_INV)
-	#_, r_thresh = cv2.threshold(ori[:,:,2], 70, 255, cv2.THRESH_BINARY)
-	#_binary = cv2.bitwise_and(s_binary, r_thresh)
-
-	# ___Another nother way to detect edges____
-	#_, s_binary = cv2.threshold(cvt_image[:, :, 2], 110, 255, cv2.THRESH_BINARY_INV)
-	#_, r_thresh = cv2.threshold(ori[:,:,2], 70, 255, cv2.THRESH_BINARY)
-	#_binary = cv2.bitwise_and(s_binary, r_thresh)
-	#mask_maybe = cv2.bitwise_or(_binary, sobel_image.astype(np.uint8))
-	
 	
 	blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
 	
 	return blur_image
 
 
-def dl_warp_perspective(image:np.ndarray, roi=None, target_roi=None, debug=False):
-	""" Warps perspective of image so that region of interest, roi, 
-	covers the target area defined by target_roi. Returns an image with 
-	same characteristics.
+def get_warp_perspective_funcs(image:np.ndarray, roi=None, target_roi=None, debug=False):
+	""" generates a method to warps perspective of an image so that 
+	region of interest, roi, covers the target area defined by 
+	target_roi. Returns an image with same characteristics.
 	"""
 
 	if roi == None:
@@ -92,7 +110,8 @@ def dl_warp_perspective(image:np.ndarray, roi=None, target_roi=None, debug=False
 	transform_matrix = cv2.getPerspectiveTransform(roi, target_roi)
 	inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
 	
-	warped = cv2.warpPerspective(image, transform_matrix, image.shape[::-1]) # [1:]) <- Needed for some types of images?!
+	warp_func = lambda img: cv2.warpPerspective(img, transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
+	warp_back_func = lambda img: cv2.warpPerspective(img, inv_transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
 	
 	# ----------DEBUG-----------
 	if debug:
@@ -109,24 +128,75 @@ def dl_warp_perspective(image:np.ndarray, roi=None, target_roi=None, debug=False
 		camera.preview_image_grid([[image_preview, warped_preview]])
 	# --------------------------
 	
-	return warped
+	return warp_func, warp_back_func
+
+'''
+	cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
+
+	_, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
+	
+	blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
+
+	sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, 7))
+	sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, 7))
+	
+	sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
+
+	sobel_image = np.ones_like(sobel, dtype=image.dtype)
+	sobel_image[threshold(sobel)] = 0'''
+
+def test_dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
+	""" Returns an image of the provided one where the edges are
+	marked.
+	"""
+	
+	cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
+
+	_, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
+	
+	blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
+
+	sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, 7))
+	sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, 7))
+	
+	sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
+
+	sobel_image = np.ones_like(sobel, dtype=image.dtype)
+	sobel_image[threshold(sobel)] = 0
+	
+	_, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
+	_, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
+	rs_binary = cv2.bitwise_and(s_binary, r_thresh)
+	rs_binary_like = np.ones_like(rs_binary, dtype=image.dtype)
+	rs_binary_like[threshold(rs_binary)] = 0 
+
+	sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
+	
+	return sobel_image
 
 
 def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
 	""" Returns an image of the provided one where the edges are
 	marked.
 	"""
+	
+	cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
 
-	sobel_x = np.absolute(cv2.Sobel(image, cv2.CV_64F, 1, 0, 7))
-	sobel_y = np.absolute(cv2.Sobel(image, cv2.CV_64F, 0, 1, 7))
+	_, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
+	
+	blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
+
+	sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, 7))
+	sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, 7))
 	
 	sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
 
 	sobel_image = np.ones_like(sobel, dtype=image.dtype)
 	sobel_image[threshold(sobel)] = 0
+	print(np.sum(sobel_image, axis = 0))
 
-	return sobel_image
 	
+	return sobel_image
 
 def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to_recenter_window=10, debug = False):
 	"""	Takes an bitmap and returns lanes tracked on it """
@@ -161,8 +231,6 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 		# Write out location of left_lane_start and right_lane_start
 		cv2.putText(graph, "LEFT LANE PEEK: " + str(left_lane_start), (10,graph.shape[0]-50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
 		cv2.putText(graph, "RIGHT LANE PEEK: " + str(right_lane_start), (10,graph.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
-
-		# camera.preview_image_grid([[pre_image],[graph]])
 	# --------------------------
 	
 	# Use sliding window technique to track lanes
@@ -223,31 +291,23 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 			
 							
 	if debug:
-		camera.preview_image(pre_image)
+		camera.preview_image_grid([[pre_image], [graph]])
 	
 	return lanes[0][0], lanes[1][0]
 
 
 def detect_lines(image:np.ndarray):
 	
-	manipulated = dl_clearify_edges(image)
-
-	#camera.preview_image(manipulated)
-
 	undistort = calibrate.get_undistort()
-	fisheye_removed = undistort(manipulated)
+	fisheye_removed = undistort(image)
 
-	#camera.preview_image(fisheye_removed)
-
-	warped = dl_warp_perspective(fisheye_removed)
-
-	#camera.preview_image(warped)
+	warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed)
+	warped = warp_func(fisheye_removed)
 		
-	edges = dl_mark_edges(warped)
+	# Does things to image but not warps it
+	edges = test_dl_mark_edges(warped)
 
-	# camera.preview_image(edges*255)
-
-	lane_left, lane_right = dl_detect_lanes(edges)
+	lane_left, lane_right = dl_detect_lanes(edges, debug=True)
 	
 	# Calculate center offset
 	camera_pos = image.shape[1]/2 # screen center
@@ -261,14 +321,18 @@ def detect_lines(image:np.ndarray):
 	left_curve = ((1 + (2*lane_left[0]*bottom_y + lane_left[1])**2)**1.5) / np.absolute(2*lane_left[0])
 	right_curve = ((1 + (2*lane_right[0]*bottom_y + lane_right[1])**2)**1.5) / np.absolute(2*lane_right[0])
 
-	
+	# _________________PREVIEW____________________
 	# An image to preview result
-	preview_image = undistort(image)
+	preview_image = undistort(image)	
+	
+	# Add colored road
+	color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
+	preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
+
+	# Add marker for center of road
 	cv2.circle(preview_image, (int(camera_pos - center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
-	
-	#preview_image = draw_polynomial_on_image(preview_image, lane_left)
-	#preview_image = draw_polynomial_on_image(preview_image, lane_right)
-	
+	# ____________________________________________
+		
 	
 	return center_offset, left_curve, right_curve, preview_image
 
