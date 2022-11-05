@@ -132,40 +132,124 @@ def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (sobel >= 110) & (sobe
 	return sobel	
 """
 
+def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=50, min_to_recenter_window=40, debug = False):
+	"""	Takes an bitmap and returns lanes tracked on it """
+	 
+	# Find where pixels are concentrated
+	 
+	distrubution = np.sum(
+		image[:,:], 	# Check whole image
+#		image[:int(image.shape[0]/2),:],	# Below half image
+#		image[int(image.shape[0]/2):,:], 	# Above half image
+		axis=0
+	)
+	
+	mid = int(distrubution.shape[0]/2)
+	left_lane_start = np.argmax(distrubution[:mid])
+	right_lane_start = np.argmax(distrubution[mid:]) + mid
+	
+	# ----------DEBUG-----------
+	if debug:
+		pre_image = cv2.cvtColor(image*255, cv2.COLOR_GRAY2RGB)
+		
+		graph = np.zeros_like(pre_image)
+				
+		for x in range(len(distrubution)):
+			for y in range(distrubution[x]):
+				if x == left_lane_start or x == right_lane_start:
+					graph[y][x] = np.asarray((255,0,0), dtype=graph.dtype)
+				else:
+					graph[y][x] = np.asarray((255,255,255), dtype=graph.dtype)
+						
+		cv2.putText(graph, "LEFT LANE PEEK: " + str(left_lane_start), (10,graph.shape[0]-50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+		cv2.putText(graph, "RIGHT LANE PEEK: " + str(right_lane_start), (10,graph.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+
+		# camera.preview_image_grid([[pre_image],[graph]])
+	# --------------------------
+	
+	window_height = int(image.shape[0]/numb_windows)	
+	lanes = ([left_lane_start], [right_lane_start])
+	
+	pre_image = cv2.cvtColor(image*255, cv2.COLOR_GRAY2RGB)
+	
+	for lane_package in lanes:
+		
+		current_x = lane_package[0]
+		lane_pixels = []
+		
+		for win_i in range(numb_windows):
+		
+			win_x = (
+				current_x - lane_margin,
+				current_x + lane_margin,
+			)
+			win_y = (
+				image.shape[0] - (win_i + 1) * window_height,
+				image.shape[0] - win_i * window_height
+			)
+		
+			# TODO: A lot, for each window find pixels and moce current_x
+		
+			# Find pixels in window
+			pixels_in_window = image[win_y[0]:win_y[1]][win_x[0]:win_x[1]].nonzero()
+			
+			# Remember pixels for lane
+			lane_pixels.append(pixels_in_window)
+			
+			# Stuff should happen here
+			
+			if len(pixels_in_window) > min_to_recenter_window:
+				# Recenter around found pixels
+				current_x = int(np.mean(lane_pixels[:][1]))	
+	
+			cv2.rectangle(pre_image,(current_x - lane_margin, win_y[0]),(current_x + lane_margin, win_y[1]), (255,255,255), 2)
+		
+		# TODO: Use points in lane_pixels to calculate line and return through lane_package.append(line_data)
+							
+		
+	camera.preview_image(pre_image)
+	
+	return lanes[0], lanes[1]
+
 
 def detect_lines(image:np.ndarray):
 	
 	manipulated = dl_clearify_edges(image)
 
-	camera.preview_image(manipulated)
+	#camera.preview_image(manipulated)
 
 	fisheye_removed = calibrate.get_undistort()(manipulated)
 
-	camera.preview_image(fisheye_removed)
+	#camera.preview_image(fisheye_removed)
 
 	warped = dl_warp_perspective(fisheye_removed)
 
-	camera.preview_image(warped)
+	#camera.preview_image(warped)
 		
 	edges = dl_mark_edges(warped)
 
-	camera.preview_image(edges*255)
+	#camera.preview_image(edges*255)
+
+	dl_detect_lanes(edges, debug=True)
 
 	lane1, lane2 = None, None # Detect lanes
+
+	# An image to preview result
+	preview_image = edges
 
 	# Edges found
 	param1 = None
 	param2 = None
 	param3 = None
 
-	preview_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB) * 255
+	#preview_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB) * 255
 	
 	return param1, param2, param3, preview_image
 
 
 # ------------------------------------------------
 # Testing
-# ------------------------------------------------
+# ------------------------------------------------d
 
 if __name__ == "__main__":
 	
