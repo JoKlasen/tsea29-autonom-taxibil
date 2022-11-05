@@ -1,6 +1,7 @@
 from picamera import PiCamera
 from PIL import Image
 from io import BytesIO
+import numpy as np
 import cv2
 
 PREFERED_PREVIEW_SIZE = (50,50,500,300)
@@ -36,6 +37,33 @@ def camera_capture_image(camera:PiCamera):
 	image = Image.open(stream)
     
 	return image
+
+
+def preview_image(image:np.array, title="¡YEAY!"):
+
+	# Show window
+	cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+	cv2.resizeWindow(title, 1500, 800)
+	cv2.imshow(title, image)
+
+	# Wait on key then destroy
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+
+
+def preview_image_grid(img_grid):
+		
+	rows = []
+	
+	for img_row in img_grid:
+		rows.append(np.concatenate(img_row, axis=1))
+		
+	final = np.concatenate(rows)
+	
+	preview_image(final)
+	
+	return final
+
 
 
 def test_brightness():
