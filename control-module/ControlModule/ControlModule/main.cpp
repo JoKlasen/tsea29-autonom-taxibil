@@ -26,7 +26,7 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
-#define MAX_SPEED 3000
+#define MAX_SPEED 4000
 
 #define MAX_STEER_LEFT 2100
 #define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
@@ -35,7 +35,7 @@
 #define  STEER_REGISTER OCR3A
 #define  SPEED_REGISTER OCR1A
 
-#define RECEIVE_BUFFER_SIZE 50
+#define RECEIVE_BUFFER_SIZE 100
 
 volatile unsigned steering = STEER_NEUTRAL;
 
@@ -45,8 +45,11 @@ volatile bool man_left = false;
 volatile bool man_right = false;
 volatile bool man_forward = false;
 volatile bool man_back = false;
+volatile unsigned long long old_millis=0;
 
 volatile bool update = false;
+
+volatile unsigned long long milliseconds =0;
 
 void port_init()
 {
@@ -75,7 +78,7 @@ void UART_init()
 
 void pwm_init()
 {
-	// Motor-timer 2000Hz (0.5ms) 1-2ms
+	// Motor-timer 2000Hz (0.5ms)
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
 	SPEED_REGISTER = 0; // == 0x1F40
 	ICR1 = 8000; // Set TOP (total period length) to 20 ms
@@ -83,7 +86,7 @@ void pwm_init()
 	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS10);
 	// Enable Output Compare A Match Interrupt Enable
-	TIMSK1 = (1<<OCIE1A);
+	//TIMSK1 = (1<<OCIE1A); -- Får inte ha dessa om vi inte använder interruptsen programmet kommer restarta i en infinite loop
 	
 	// Servo-timer 50Hz (20ms) with 1-2ms PW
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
@@ -93,8 +96,42 @@ void pwm_init()
 	TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR3B = (1<<WGM33)|(1<<WGM32)|(1<<CS31);
 	// Enable Output Compare A Match Interrupt Enable
-	TIMSK3 = (1<<OCIE3A);
+	//TIMSK3 = (1<<OCIE3A); -- får inte ha detta om vi inte använder interrupten programmet kommer restarta i en infinite loop
 }
+
+
+void timer2_init()
+{
+		// Set Output Compare Register to 160 which is 10 us at 16MHz
+		OCR2A = 250; // 1 millisecond
+		
+		//CTC-mode with 64 prescaler, COM0 in normal operation OC0A/B disabled
+		TCCR2A = (1<<COM2A1) | (0<<COM2A0) | (1<<WGM21) | (0<<WGM20);
+		TCCR2B = (0<<WGM22)	 | (1<<CS20)|(1<<CS21);
+		
+		// Enable Output Compare A Match Interrupt Enable
+		TIMSK2 = (1<<OCIE2A);
+	
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+	
+	milliseconds++;
+	if(milliseconds - old_millis >= 1000)
+	{
+		SPEED_REGISTER = 0;
+	}
+}
+
+unsigned long long millis()
+{
+	cli();
+	unsigned long long temp = milliseconds;
+	sei();
+	return temp;
+}
+
 
 void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE);
 
@@ -103,6 +140,9 @@ void setup()
     port_init();
     UART_init();
 	pwm_init();
+	timer2_init();
+	sei();
+
 }
 
 void send_data(char* data)
@@ -112,45 +152,45 @@ void send_data(char* data)
 	{
 		while(!( UCSR0A & (1<<UDRE0)))
 		;
-		
-		UDR0 = data[counter];
 		if (data[counter] == '\0')
 		{
 			break;
 		}
+		UDR0 = data[counter];
+
 		counter++;
 	}
 }
 
-void receive_data(char* receive_buffer,volatile int* counter)
+void receive_data(char* receive_buffer)
 {
-	if (UCSR0A & (1<<RXC0))
-	{
-		unsigned char from_receive_buffer = UDR0;
-		receive_buffer[(*counter)++] = from_receive_buffer;
+	bool receiving = true;
+	int counter = 0;
+	
+	while (receiving) {
+		while (!(UCSR0A & (1<<RXC0)));
 		
-		if((from_receive_buffer == '\0') || ((*counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
-		{
-			if((*counter) > 1)
-			{
-				send_data("\nTog emot detta från UART: ");
-				send_data(receive_buffer);
-				update = true;
-			}
-			//clear_buffer(receive_buffer);
-			*counter =0;
-		}
+		unsigned char from_receive_buffer = UDR0;
+		receive_buffer[(counter)++] = from_receive_buffer;
+		
+		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
 	}
-}
 
+	
+	send_data("Tog emot detta från UART:\n");
+	send_data(receive_buffer);
+	send_data("\n");
+	
+}
 
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
 		speed = MAX_SPEED;
 	}
+
 }
 
-void clear_buffer(char* buffer,int size)
+void clear_buffer(char* buffer, int size)
 {
 	for(int i = 0;i < size ;i++)
 	{
@@ -158,7 +198,7 @@ void clear_buffer(char* buffer,int size)
 	}
 }
 
-void parse(char* input)
+void parse(char input[])
 {
 	char command[20];
 	char value_name[20];
@@ -171,15 +211,15 @@ void parse(char* input)
 	int label_end = 0;
 	int value_separator = 0;
 	
-	for (int i =0; *(input+i) != NULL;i++)
+	for (int i = 0; input[i] != '\0'; i++)
 	{
 		if (findcommand) 
 		{
-			if (*(input+i) == ':') 
+			if (input[i] == ':') 
 			{
-				strncpy(&command[0], input, i);
+				strlcpy(&command[0], input, i+1);
 				label_end = i;
-				
+
 				if (!strcmp(&command[0], "keyspressed")) 
 				{
 					keys = true;
@@ -199,28 +239,25 @@ void parse(char* input)
 		}
 		else
 		{
-			 
 			if (keys)
 			{
-				if(*(input+i) == '=')
+				if (input[i] == '=')
 				{
 					clear_buffer(&value_name[0], 20);
-					strncpy(&value_name[0], &input[label_end+1], ((i-1) - label_end));
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
 					value_separator = i;
 				}
-				else if (*(input+i) == ':')
+				else if (input[i] == ':')
 				{	
 					char text_value[10];
 					clear_buffer(&text_value[0], 10);
-					strncpy(&text_value[0], &input[value_separator+1], ((i-1) - value_separator) );
-					
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "forward"))
 					{
 						man_forward = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
 					{
-						send_data(&text_value[0]);
 						man_left = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "back")) 
@@ -231,8 +268,9 @@ void parse(char* input)
 					{
 						man_right = atoi(&text_value[0]);
 					}
-					
+					char debugstring[50];
 					label_end = i;
+
 				}
 			}
 				
@@ -251,56 +289,57 @@ void parse(char* input)
 
 	sprintf(&value_msg[0], "Received forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
 	send_data(&value_msg[0]);
-}
 	
+}
+
+int P, I, D;
+void pid_init(int in_p, int in_i, int in_d) {
+    P = in_p;
+    I = in_i;
+    D = in_d;
+}
+
+int pid_loop(int error) {
+    int steering = 0;
+    
+    steering -= error*P;
+
+    return steering;
+}
 
 int main(void)
 {
     setup();
     
-    char* welcome_msg= "Hello World! :)\n";
+    char* welcome_msg = "Hello World! :)\n";
     send_data(welcome_msg);
 	char receive_buffer[RECEIVE_BUFFER_SIZE];
-	clear_buffer(&receive_buffer[0]);
-	volatile int counter =0;
-	
-	
+	//clear_buffer(&receive_buffer[0]);	
+	memset(receive_buffer,0,sizeof receive_buffer);
 	while (1)
 	{
-		receive_data(&receive_buffer[0],&counter);
-		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
-		char value_msg[50];
-		if(update == true)
-		{
-			parse(receive_buffer);
 		
-			if (manual_mode)
-			{	
-				
-				//sprintf(&value_msg[0], "\nReceived forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
-				//send_data(&value_msg[0]);
-				// steering
-				if (man_left)
-					steering = MAX_STEER_LEFT;
-				else if (man_right)
-					steering = MAX_STEER_RIGHT;
-				else
-					steering = STEER_NEUTRAL;
-				STEER_REGISTER = steering;
+		//Busy waits for data
+		receive_data(&receive_buffer[0]);
+		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
+		parse(receive_buffer);
+		if (man_left)
+			steering = MAX_STEER_LEFT;
+		else if (man_right)
+			steering = MAX_STEER_RIGHT;
+		else
+			steering = STEER_NEUTRAL;
+		STEER_REGISTER = steering;
 			
-				if (man_forward)
-					SPEED_REGISTER = MAX_SPEED;	
-				else
-					SPEED_REGISTER = 0;
-			}
-			else
-			{
-				// autonomt med pid loop
-			}
-			
-			update = false;
-			clear_buffer(receive_buffer);
-		}
+ 		if (man_forward)
+		 
+ 			SPEED_REGISTER = MAX_SPEED;	
+ 		else
+ 			SPEED_REGISTER = 0;
+		
+		old_millis = millis();	
+		memset(receive_buffer,0,sizeof receive_buffer);
+
     }
 }
 
