@@ -30,6 +30,7 @@
 #define SPEED_PRECISION 1000 // 3 decimalers precision
 #define SPEED_FIVETICKS 0.13 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster
 
+#define RECEIVE_BUFFER_SIZE 50
 
 // Timing variables
 volatile unsigned short interval_counter = 0;
@@ -118,6 +119,16 @@ void setup()
 	sei();
 }
 
+
+void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE)
+{
+	for(int i = 0;i < size ;i++)
+	{
+		buffer[i] = ' ';
+	}
+	buffer[RECEIVE_BUFFER_SIZE-2] = '\n';
+	buffer[RECEIVE_BUFFER_SIZE-1] = '\0';
+}
 int main(void)
 {
 	setup();
@@ -134,9 +145,39 @@ int main(void)
 	volatile unsigned pulse_length = 0;
 	volatile unsigned heltal = 0;
 	volatile unsigned decimal = 0;
+	
+	char receive_buffer[RECEIVE_BUFFER_SIZE]; 
+	clear_buffer(&receive_buffer[0]);
+	volatile int counter =0;
+	volatile bool has_full_string = false;
 	while(1)
 	{
 		new_time = millis();
+
+		if (UCSR0A & (1<<RXC0))
+		{
+
+				unsigned char from_receive_buffer = UDR0;
+				receive_buffer[counter++] = from_receive_buffer;
+		
+				if((from_receive_buffer == '\0') || (counter == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
+				{			 
+					if(counter > 1)
+					{
+						
+					
+						receive_buffer[counter] = '\n';
+						send_data("\nTog emot detta från UART: ");
+						send_data(&receive_buffer[0]);
+						send_data("\n");
+
+					}
+						clear_buffer(&receive_buffer[0]);
+						counter =0;
+				}
+		 }
+		
+		
 		
 		cli();
 		localultrasound = echo_updated;
@@ -168,6 +209,10 @@ int main(void)
 	
 		cli();
 		localsend = sendbool;
+		
+		//TA BORT DENNA START
+		localsend = false;
+		//TA BORT DENNA SLUT
 		sei();
 		if(localsend == true)
 		{
@@ -180,11 +225,11 @@ int main(void)
 				sendbool = false;
 				sei();
 			}
-		}	
+		}
+
 	}
 	return 0;
 }
-
 
 
 // ======================
