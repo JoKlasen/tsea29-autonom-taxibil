@@ -90,7 +90,7 @@ def dl_warp_perspective(image:np.ndarray, roi=None, target_roi=None, debug=False
 	target_roi = np.float32(target_roi)
 
 	transform_matrix = cv2.getPerspectiveTransform(roi, target_roi)
-	# inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
+	inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
 	
 	warped = cv2.warpPerspective(image, transform_matrix, image.shape[::-1]) # [1:]) <- Needed for some types of images?!
 	
@@ -218,8 +218,6 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 			# Fill pixels used to calculate line
 			pre_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = [0, 255, 0] if np.array_equal(lanes[0], lane_package) else [0,0,255]
 			
-			
-			
 			# Draw calculated line on image
 			draw_polynomial_on_image(pre_image, polynomial, [0, 255, 255])
 			
@@ -227,7 +225,7 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 	if debug:
 		camera.preview_image(pre_image)
 	
-	return lanes[0], lanes[1]
+	return lanes[0][0], lanes[1][0]
 
 
 def detect_lines(image:np.ndarray):
@@ -236,7 +234,8 @@ def detect_lines(image:np.ndarray):
 
 	#camera.preview_image(manipulated)
 
-	fisheye_removed = calibrate.get_undistort()(manipulated)
+	undistort = calibrate.get_undistort()
+	fisheye_removed = undistort(manipulated)
 
 	#camera.preview_image(fisheye_removed)
 
@@ -248,38 +247,47 @@ def detect_lines(image:np.ndarray):
 
 	# camera.preview_image(edges*255)
 
-	lane1, lane2 = dl_detect_lanes(edges, debug=True)
+	lane_left, lane_right = dl_detect_lanes(edges)
 	
+	# Calculate center offset
+	camera_pos = image.shape[1]/2 # screen center
+	bottom_y = image.shape[0]
+	lane_left_at_bottom = lane_left[0] * bottom_y ** 2 + lane_left[1] * bottom_y + lane_left[2]
+	lane_right_at_bottom = lane_right[0] * bottom_y ** 2 + lane_right[1] * bottom_y + lane_right[2]	
 
+	center_offset = (lane_left_at_bottom + lane_right_at_bottom)/2 - camera_pos
 
+	# Calculate curvature
+	left_curve = ((1 + (2*lane_left[0]*bottom_y + lane_left[1])**2)**1.5) / np.absolute(2*lane_left[0])
+	right_curve = ((1 + (2*lane_right[0]*bottom_y + lane_right[1])**2)**1.5) / np.absolute(2*lane_right[0])
+
+	
 	# An image to preview result
-	preview_image = edges
-
-	# Edges found
-	param1 = lane1
-	param2 = lane2
-	param3 = None
-
-	#preview_image = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB) * 255
+	preview_image = undistort(image)
+	cv2.circle(preview_image, (int(camera_pos - center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
 	
-	return param1, param2, param3, preview_image
+	#preview_image = draw_polynomial_on_image(preview_image, lane_left)
+	#preview_image = draw_polynomial_on_image(preview_image, lane_right)
+	
+	
+	return center_offset, left_curve, right_curve, preview_image
 
 
 # ------------------------------------------------
 # Testing
-# ------------------------------------------------d
+# ------------------------------------------------
 
 if __name__ == "__main__":
 	
 	image = cv2.imread(TESTFILE)	
 
-	param1, param2, param3, pre_image = detect_lines(image)
-
-	print(param1, param2)
+	center_offset, left_curve, right_curve, pre_image = detect_lines(image)
 
 	# Just so that the final frame is easy to dicern
-	cv2.putText(pre_image, "FINAL FRAME", (10,pre_image.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
-				
+	cv2.putText(pre_image, "FINAL FRAME", (10,pre_image.shape[0]-100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+	cv2.putText(pre_image, "Center offset: {:.2f}".format(center_offset), (10,pre_image.shape[0]-70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+	cv2.putText(pre_image, "Left curve: {:.2f}".format(left_curve), (10,pre_image.shape[0]-40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+	cv2.putText(pre_image, "Right curve: {:.2f}".format(right_curve), (10,pre_image.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
 				
 	camera.preview_image(pre_image, "FINAL FRAME")
 
