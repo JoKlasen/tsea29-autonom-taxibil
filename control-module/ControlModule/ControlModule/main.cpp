@@ -2,12 +2,12 @@
  * ControlModule.cpp
  *
  * Created: 06/11/2022 20:57:21
- * Author : johan
+ * Author : Johan, Hannes
  */ 
 
 #include <avr/io.h>
 
-//Portdefinitions
+//Port Definitions
 #define UART_RX RXD0 // 14
 #define UART_TX TXD0 // 15
 
@@ -21,8 +21,10 @@
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
+#define MAX_SPEED_CONST = 0;
 
-void portinit()
+
+void port_init()
 {
     PORTA = (1 << DIR) | (0 << BRAKE); // Testa om DIR = 1 Eller 0 blir frammåt
     DDRA = (1 << DIR) | (1 << BRAKE);
@@ -47,9 +49,25 @@ void UART_init()
     UCSR0C = (1<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
 }
 
-pwm_init()
+void pwm_init()
 {
-    // TODO: Se inititering av timer1 i sensormodul
+	// Motor-timer 2000Hz (0.5ms) 1-2ms
+	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
+	OCR1A = 8000; // == 0x1F40
+	// CTC = Clear Timer on Compare-mode with no prescaler
+	TCCR1A = (0<<WGM11)|(0<<WGM10); // COM1 in normal operation OC1A/B disabled
+	TCCR1B = (1<<WGM12)|(1<<CS10);
+	// Enable Output Compare A Match Interrupt Enable
+	TIMSK1 = (1<<OCIE1A);
+	
+	// Servo-timer 50Hz (20ms) with 1-2ms PW
+	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
+	OCR3A = 20*2000; // == 0x9C40
+	// CTC = Clear Timer on Compare-mode with 1/8 prescaler
+	TCCR3A = (0<<WGM31)|(0<<WGM30); // COM1 in normal operation OC1A/B disabled
+	TCCR3B = (1<<WGM32)|(1<<CS31);
+	// Enable Output Compare A Match Interrupt Enable
+	TIMSK3 = (1<<OCIE3A);
 }
 
 void setup()
@@ -58,14 +76,39 @@ void setup()
     UART_init();
 }
 
+void forward() {
+	
+}
+
+void reverse() {
+	
+}
+
+void left() {
+	
+}
+
+void right() {
+	
+}
+
+void speedlimiter(int speed) {
+	if (speed > MAX_SPEED_CONST) {
+		speed = MAX_SPEED_CONST;
+	}
+}
+
 int main(void)
 {
     setup();
-    /* Replace with your application code */
+    
     char* welcome_msg= "Hello World! :)\n";
     send_data(welcome_msg);
+	
     while (1) 
     {
+		int input;
+		if (input = 1)
     }
 }
 
