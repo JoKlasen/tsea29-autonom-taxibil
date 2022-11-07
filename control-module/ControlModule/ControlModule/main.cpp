@@ -6,23 +6,41 @@
  */ 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
+#include <stdlib.h>
 
 //Port Definitions
-#define UART_RX RXD0 // 14
-#define UART_TX TXD0 // 15
+#define UART_RX PD0 // 14
+#define UART_TX PD1 // 15
 
-#define PWM OC1A    // 19
+
+#define PWM PD5    // 19
 #define DIR PA0     // 40
 #define BRAKE PA1   // 39
-#define SERVO OC3A  // 7
+#define SERVO PB6  // 7
 
 //Constants
 #define F_CPU 16000000UL
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
-#define MAX_SPEED_CONST = 0;
+#define MAX_SPEED 0
 
+#define MAX_STEER_LEFT 2100
+#define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
+#define MAX_STEER_RIGHT 4200
+
+#define  STEER_REGISTER OCR3A
+#define  SPEED_REGISTER OCR1A
+
+volatile unsigned steering = STEER_NEUTRAL;
+
+volatile bool manual_mode = true;
+
+volatile bool man_left = false;
+volatile bool man_right = false;
+volatile bool man_forward = false;
+volatile bool man_back = false;
 
 void port_init()
 {
@@ -32,9 +50,9 @@ void port_init()
     PORTB = (0 << SERVO);
     DDRB = (1 << SERVO);
 
-    PORTD = (0 << PWM) | (1 << TXD0) | (1 << RXD0);
+    PORTD = (0 << PWM) | (1 << UART_TX) | (1 << UART_RX);
     // output == 1 input == 0
-    DDRD = (1 << PWM) | (1 << TXD10) | (0 << RXD0);
+    DDRD = (1 << PWM) | (1 << UART_TX) | (0 << UART_RX);
 }
 
 void UART_init()
@@ -53,19 +71,26 @@ void pwm_init()
 {
 	// Motor-timer 2000Hz (0.5ms) 1-2ms
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
-	OCR1A = 8000; // == 0x1F40
+	SPEED_REGISTER = 3000; // == 0x1F40
+	ICR1 = 8000; // Set TOP (total period length) to 20 ms
+	
 	// CTC = Clear Timer on Compare-mode with no prescaler
-	TCCR1A = (0<<WGM11)|(0<<WGM10); // COM1 in normal operation OC1A/B disabled
-	TCCR1B = (1<<WGM12)|(1<<CS10);
+	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
+	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS10);
 	// Enable Output Compare A Match Interrupt Enable
 	TIMSK1 = (1<<OCIE1A);
 	
+	
+	
+	
 	// Servo-timer 50Hz (20ms) with 1-2ms PW
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
-	OCR3A = 20*2000; // == 0x9C40
+	STEER_REGISTER = STEER_NEUTRAL; // == 0x9C40
+	ICR3 = 20*2000;
+	
 	// CTC = Clear Timer on Compare-mode with 1/8 prescaler
-	TCCR3A = (0<<WGM31)|(0<<WGM30); // COM1 in normal operation OC1A/B disabled
-	TCCR3B = (1<<WGM32)|(1<<CS31);
+	TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
+	TCCR3B = (1<<WGM33)|(1<<WGM32)|(1<<CS31);
 	// Enable Output Compare A Match Interrupt Enable
 	TIMSK3 = (1<<OCIE3A);
 }
@@ -74,27 +99,39 @@ void setup()
 {
     port_init();
     UART_init();
+	pwm_init();
+}
+
+void send_data(char* data)
+{
+	int counter=0;
+	while(1)
+	{
+		while(!( UCSR0A & (1<<UDRE0)))
+		;
+		
+		UDR0 = data[counter];
+		if (data[counter] == '\0')
+		{
+			break;
+		}
+		counter++;
+
+	}
 }
 
 void forward() {
 	
 }
 
-void reverse() {
+void back() {
 	
 }
 
-void left() {
-	
-}
-
-void right() {
-	
-}
 
 void speedlimiter(int speed) {
-	if (speed > MAX_SPEED_CONST) {
-		speed = MAX_SPEED_CONST;
+	if (speed > MAX_SPEED) {
+		speed = MAX_SPEED;
 	}
 }
 
@@ -108,7 +145,28 @@ int main(void)
     while (1) 
     {
 		int input;
-		if (input = 1)
+		//if (input = 1)
+		
+		
+		
+		
+		if (manual_mode)
+		{
+			// steering
+			if (man_left)
+			steering = MAX_STEER_LEFT;
+			else if (man_right)
+			steering = MAX_STEER_RIGHT;
+			else
+			steering = STEER_NEUTRAL;
+			
+			STEER_REGISTER = steering;
+		}
+		else
+		{
+			// autonomt med pid loop
+		}
+
     }
 }
 

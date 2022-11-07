@@ -190,14 +190,14 @@ int main(void)
 	{
 		new_time = millis();
 		
-		/*
+
 		if ((new_time - old_time) > 1000)
 		{
 			old_time = new_time;
-			char* message = "1 Sec has passed\n";
+			char* message = "HELLO LINUS! :)\n";
 			send_data(message);
 		}
-		*/
+
 		
 		cli();
 		localultrasound = us_updated;
