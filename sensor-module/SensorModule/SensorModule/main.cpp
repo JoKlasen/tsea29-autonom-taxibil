@@ -20,6 +20,7 @@
 
 
 // Timing variables
+volatile unsigned short interval_counter = 0;
 volatile unsigned long long milliseconds = 0;
 volatile unsigned long long us_latest = 0;
 volatile unsigned long long hall_left_latest = 0;
@@ -57,10 +58,7 @@ void send_data(char* data)
 	}
 }
 
-ISR(TIMER1_COMPA_vect)
-{
-	milliseconds++;
-}
+
 
 unsigned long long millis()
 {
@@ -75,6 +73,11 @@ void portinit()
 		PORTD = (0 << PD5) |(0 << PD3) | (0 << PD2) | (1 << PD1) | (1 << PD0);
 		// output == 1 input == 0
 		DDRD = (1 << DDD5)|(1 << DDD4)| (0 << DDD3) | (0 << DDD2) | (1 << DDD1) | (0 << DDD0);
+		
+		
+		DDRA = (1 << DDA1);
+		PORTA = (0 << PA1);
+		DDRB = (0 << DDB2);
 }
 
 void UART_init()
@@ -89,10 +92,24 @@ void UART_init()
 		UCSR0C = (1<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
 }
 
+
+void timer0_init()
+{
+	// Set Output Compare Register to 16000 with is 1 ms at 16MHz
+	OCR0A = 160; // == 10 us
+	
+	//CTC = Clear Timer on Compare-mode with no prescaler
+	TCCR1A = (0<<WGM11)|(0<<WGM10); // COM1 in normal operation OC1A/B disabled
+	TCCR1B = (1<<WGM12)|(1<<CS10);
+	// Enable Output Compare A Match Interrupt Enable
+	// TIMSK0 = (1<<OCIE0A);
+}
+
 void timer1_init()
 {
 	// Set Output Compare Register to 16000 with is 1 ms at 16MHz
 	OCR1A = 16000; // == 0x3E80
+	
 	//CTC = Clear Timer on Compare-mode with no prescaler
 	TCCR1A = (0<<WGM11)|(0<<WGM10); // COM1 in normal operation OC1A/B disabled
 	TCCR1B = (1<<WGM12)|(1<<CS10);
@@ -143,6 +160,30 @@ void setup()
 }
 
 
+ISR(TIMER0_COMPA_vect)
+{
+	// Stäng av timerinterrupten
+	TIMSK0 = (0<<OCIE0A); 
+	// Sätt PIN PB1 låg
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+	milliseconds++;
+	interval_counter++;
+	if(interval_counter == 250)
+	{
+		
+		sendbool = true;
+		interval_counter = 0;
+		//Skicka puls
+		TCNT0 = 0;
+		PORTD |= (1<<PB1)
+		TIMSK0 = (1<<OCIE0A);
+		// Sätt PB1 hög
+		
+	}
+}
 
 //Höger Hallsensor
 ISR(INT0_vect)
@@ -222,8 +263,6 @@ int main(void)
 			decimal = tmp % SPEED_PRECISION;
 
 			hall_left_updated = false;
-			//denna ska sättas i med någon timer i ett rätt intervall.
-			sendbool = true;
 		}
 	
 		cli();
