@@ -9,19 +9,21 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #define F_CPU 16000000UL
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
-#define SPEED_PRECISION 1000000 // 6 decimalers precision
-#define SPEED_FIVETICKS 0.13 * SPEED_PRECISION // 0.13 m shiftat med precisionen 
+#define SPEED_PRECISION 1000 // 6 decimalers precision
+#define SPEED_FIVETICKS 0.13 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster
 
 
 // Timing variables
 volatile unsigned long long milliseconds = 0;
 volatile unsigned long long us_latest = 0;
 volatile unsigned long long hall_left_latest = 0;
+volatile unsigned long long hall_left_old = 0;
 volatile unsigned long long hall_right_latest = 0;
 
 // ISR flags
@@ -145,8 +147,8 @@ void setup()
 //Höger Hallsensor
 ISR(INT0_vect)
 {
-	hall_right_latest = millis();
-	hall_right_updated = true;
+	//hall_right_latest = millis();
+	//hall_right_updated = true;
 	char * data = "Right Hallsensor!\n";
 	send_data(data);
 }
@@ -157,7 +159,10 @@ ISR(INT1_vect)
 	hall_left_counter++;
 	if(hall_left_counter == 5)
 	{
+		hall_left_old = hall_left_latest;
 		hall_left_latest = millis();
+
+
 		hall_left_updated = true;
 		hall_left_counter = 0;
 	}
@@ -183,75 +188,42 @@ int main(void)
 	volatile bool localhallsensor = false;
 	volatile unsigned long long old_time = 0;
 	volatile unsigned long long new_time = 0;
-	
-	volatile unsigned long long hall_left_old = 0;
-	
+	char initial[50];
+	char * speed_msg = &initial[0]; 
+	volatile unsigned heltal = 0;
+	volatile unsigned decimal =0;
 	while(1)
 	{
 		new_time = millis();
-		
-
-		if ((new_time - old_time) > 1000)
-		{
-			old_time = new_time;
-			char* message = "HELLO LINUS! :)\n";
-			send_data(message);
-		}
-
 		
 		cli();
 		localultrasound = us_updated;
 		sei();
 		if (localultrasound)
 		{
+			
+			
+			
 		}
-	
 		cli();
 		localhallsensor = hall_left_updated;
 		sei();
 		if(localhallsensor)
 		{
 			unsigned long long diff = hall_left_latest - hall_left_old; // diff in ms for 5 ticks
-			hall_left_old = hall_left_latest;
-			
-			unsigned long tmp = SPEED_FIVETICKS / ( diff ); // tmp = hastighet i m/s shiftat med precisionen
+
+			unsigned long tmp = SPEED_FIVETICKS / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
 			// ett halvt varv * 1000 / skillnaden i tid i ms = hastighet i cm/s*1000
 			
 
-			char initial[27];
-			char * speed_msg = initial; 
-			"Speed=X.XXXXXX m/s";
-			
-			strcat(speed_msg, "Speed=");
-			char heltal[7];
-			ultoa((tmp / SPEED_PRECISION), heltal, 10);
 
-			strcat(speed_msg, heltal); // Heltal
-			strcat(speed_msg, ".");
-			char decimal[7];
-			ultoa( tmp % SPEED_PRECISION, decimal, 10);
-			strcat(speed_msg,decimal);
-			strcat(speed_msg, " m/s\n\0");
-			
-			//char time_passed[7];
-			//char speed[7];
-			//ultoa(diff, time_passed, 10); 
-			//ultoa(tmp, speed,10);
 
-			send_data(speed_msg);
-			/*send_data("speed in m/ms : ");
-			send_data(speed); // Sends time between each tick in ms
-			send_data("\t");
-			send_data("diff in ms: ");
-			send_data(time_passed);
-			send_data("\n");*/
-			/*TODO: räkna ut hastighet
-							
-				Omkrets är 26cm --> halva hjulet == 13 cm == 5 klick med hallsensorerna
-			
-				13 / deltaT
-			*/
+			heltal = tmp / SPEED_PRECISION;
+			decimal = tmp % SPEED_PRECISION;
+
 			hall_left_updated = false;
+			//denna ska sättas i med någon timer i ett rätt intervall.
+			sendbool = true;
 		}
 	
 		cli();
@@ -259,41 +231,17 @@ int main(void)
 		sei();
 		if(localsend == true)
 		{
-			//send_data_routine();
+			if ((new_time - old_time) > 250)
+			{
+				//send_data_routine();
+				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=none\n", heltal, decimal );
+				send_data(speed_msg);
+				cli();
+				sendbool = false;
+				sei();
+			}
 		}	
 	}
 	return 0;
 }
 
-
-
-
-/*
-
-int main()
-{
-	setup();
-	char* Data= "Hello World! :)\n";
-	while(1)
-	{
-		send_data(Data);
-	}
-	while (1) 
-	{
-		
-		volatile int i = PIND;
-		
-		if( ((i & 0b100) >> 2) == 1)
-		{
-			PORTD |= (1 << PORTD4);
-		}
-		else if ( ((i & 0b100 ) >> 2) == 0)
-		{
-			PORTD &= (0 << PORTD4);
-		}
-		
-	}
-	
-
-}
-*/
