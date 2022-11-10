@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include <string.h>
 
 //Port Definitions
 #define UART_RX PD0 // 14
@@ -73,21 +74,16 @@ void pwm_init()
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
 	SPEED_REGISTER = 3000; // == 0x1F40
 	ICR1 = 8000; // Set TOP (total period length) to 20 ms
-	
 	// CTC = Clear Timer on Compare-mode with no prescaler
 	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS10);
 	// Enable Output Compare A Match Interrupt Enable
 	TIMSK1 = (1<<OCIE1A);
 	
-	
-	
-	
 	// Servo-timer 50Hz (20ms) with 1-2ms PW
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
 	STEER_REGISTER = STEER_NEUTRAL; // == 0x9C40
 	ICR3 = 20*2000;
-	
 	// CTC = Clear Timer on Compare-mode with 1/8 prescaler
 	TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR3B = (1<<WGM33)|(1<<WGM32)|(1<<CS31);
@@ -116,23 +112,82 @@ void send_data(char* data)
 			break;
 		}
 		counter++;
-
 	}
 }
-
-void forward() {
-	
-}
-
-void back() {
-	
-}
-
 
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
 		speed = MAX_SPEED;
 	}
+}
+
+void parse(char* data)
+{
+	int i = 0;
+	char temp1;
+	char temp2;
+	char* command;
+	
+	bool findcommand = true;
+	bool pid = false;
+	bool switchmode = false;
+	bool keys = false;
+	
+	for (char* c = data; *c != NULL; c++) 
+	{
+		temp2 = temp1;
+		temp1 = *c;
+		
+		if (findcommand) {
+			if (temp1 == ':') {
+				strncpy(command, data, i);
+				
+				if (strcmp(command, "keyspressed")) 
+				{
+					keys = true;
+					findcommand = false;
+					i = 0;
+				} else if (strcmp(command, "switchmode")) {
+					switchmode = true;
+					findcommand = false;
+					i = 0;
+				} else if (strcmp(command, "sendpid")) {
+					pid = true;
+					findcommand = false;
+					i = 0;
+				}
+			}
+		} else 
+		{			
+			if (temp1 == ':')
+			{				
+				if (keys)
+				{
+					if (i == 0)
+					man_forward = temp2;
+					else if (i == 1)
+					man_left = temp2;
+					else if (i == 2)
+					man_back = temp2;
+					else if (i == 3)
+					man_right = temp2;
+				}
+				
+				if (switchmode) {
+					
+				}
+				
+				if (pid) {
+					
+				}
+			}
+		
+	
+		}
+		
+		i++;
+	}
+	
 }
 
 int main(void)
@@ -144,23 +199,24 @@ int main(void)
 	
     while (1) 
     {
-		int input;
-		//if (input = 1)
-		
-		
-		
-		
+		char* input = "left1:";
+		parse(input);
 		if (manual_mode)
 		{
 			// steering
 			if (man_left)
-			steering = MAX_STEER_LEFT;
+				steering = MAX_STEER_LEFT;
 			else if (man_right)
-			steering = MAX_STEER_RIGHT;
+				steering = MAX_STEER_RIGHT;
 			else
-			steering = STEER_NEUTRAL;
-			
+				steering = STEER_NEUTRAL;
 			STEER_REGISTER = steering;
+			
+			if (man_back)
+				//back = 0;
+				SPEED_REGISTER = 0;
+			else if (man_forward)
+				SPEED_REGISTER = MAX_SPEED;
 		}
 		else
 		{
