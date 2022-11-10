@@ -75,9 +75,9 @@ void UART_init()
 
 void pwm_init()
 {
-	// Motor-timer 2000Hz (0.5ms) 1-2ms
+	// Motor-timer 2000Hz (0.5ms)
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
-	SPEED_REGISTER = 0; // == 0x1F40
+	SPEED_REGISTER = 3000; // == 0x1F40
 	ICR1 = 8000; // Set TOP (total period length) to 20 ms
 	// CTC = Clear Timer on Compare-mode with no prescaler
 	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
@@ -122,27 +122,24 @@ void send_data(char* data)
 	}
 }
 
-void receive_data(char* receive_buffer,volatile int* counter)
+void receive_data(char* receive_buffer)
 {
-	if (UCSR0A & (1<<RXC0))
-	{
-		unsigned char from_receive_buffer = UDR0;
-		receive_buffer[(*counter)++] = from_receive_buffer;
+	bool receiving = true;
+	int counter = 0;
+	
+	while (receiving) {
+		while (!(UCSR0A & (1<<RXC0)));
 		
-		if((from_receive_buffer == '\0') || ((*counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
-		{
-			if((*counter) > 1)
-			{
-				send_data("\nTog emot detta från UART: ");
-				send_data(receive_buffer);
-				update = true;
-			}
-			//clear_buffer(receive_buffer);
-			*counter =0;
-		}
+		unsigned char from_receive_buffer = UDR0;
+		receive_buffer[(counter)++] = from_receive_buffer;
+		
+		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
 	}
+	
+	send_data("\nTog emot detta från UART: ");
+	send_data(receive_buffer);
+	
 }
-
 
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
@@ -150,7 +147,7 @@ void speedlimiter(int speed) {
 	}
 }
 
-void clear_buffer(char* buffer,int size)
+void clear_buffer(char* buffer, int size)
 {
 	for(int i = 0;i < size ;i++)
 	{
@@ -158,7 +155,7 @@ void clear_buffer(char* buffer,int size)
 	}
 }
 
-void parse(char* input)
+void parse(char input[])
 {
 	char command[20];
 	char value_name[20];
@@ -171,11 +168,13 @@ void parse(char* input)
 	int label_end = 0;
 	int value_separator = 0;
 	
-	for (int i =0; *(input+i) != NULL;i++)
+	//for (int i = 0; *(input+i) != NULL; i++)
+	for (int i = 0; input[i] != NULL; i++)
 	{
 		if (findcommand) 
 		{
-			if (*(input+i) == ':') 
+			//if (*(input+i) == ':') 
+			if (input[i] == ':') 
 			{
 				strncpy(&command[0], input, i);
 				label_end = i;
@@ -199,16 +198,17 @@ void parse(char* input)
 		}
 		else
 		{
-			 
 			if (keys)
 			{
-				if(*(input+i) == '=')
+				//if(*(input+i) == '=')
+				if (input[i] == '=')
 				{
 					clear_buffer(&value_name[0], 20);
 					strncpy(&value_name[0], &input[label_end+1], ((i-1) - label_end));
 					value_separator = i;
 				}
-				else if (*(input+i) == ':')
+				//else if (*(input+i) == ':')
+				else if (input[i] == ':')
 				{	
 					char text_value[10];
 					clear_buffer(&text_value[0], 10);
@@ -258,49 +258,38 @@ int main(void)
 {
     setup();
     
-    char* welcome_msg= "Hello World! :)\n";
+    char* welcome_msg = "Hello World! :)\n";
     send_data(welcome_msg);
 	char receive_buffer[RECEIVE_BUFFER_SIZE];
-	clear_buffer(&receive_buffer[0]);
-	volatile int counter =0;
-	
+	clear_buffer(&receive_buffer[0]);	
 	
 	while (1)
 	{
-		receive_data(&receive_buffer[0],&counter);
-		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
-		char value_msg[50];
-		if(update == true)
-		{
-			parse(receive_buffer);
 		
-			if (manual_mode)
-			{	
-				
-				//sprintf(&value_msg[0], "\nReceived forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
-				//send_data(&value_msg[0]);
-				// steering
-				if (man_left)
-					steering = MAX_STEER_LEFT;
-				else if (man_right)
-					steering = MAX_STEER_RIGHT;
-				else
-					steering = STEER_NEUTRAL;
-				STEER_REGISTER = steering;
+		//Busy waits for data
+		receive_data(&receive_buffer[0]);
+		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
+		parse(receive_buffer);
+	
+		// char value_msg[50];
+		// sprintf(&value_msg[0], "\nReceived forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
+		// send_data(&value_msg[0]);
+		// steering
+		if (man_left)
+			steering = MAX_STEER_LEFT;
+		else if (man_right)
+			steering = MAX_STEER_RIGHT;
+		else
+			steering = STEER_NEUTRAL;
+		STEER_REGISTER = steering;
 			
-				if (man_forward)
-					SPEED_REGISTER = MAX_SPEED;	
-				else
-					SPEED_REGISTER = 0;
-			}
-			else
-			{
-				// autonomt med pid loop
-			}
+// 		if (man_forward)
+// 			SPEED_REGISTER = MAX_SPEED;	
+// 		else
+// 			SPEED_REGISTER = 0;
 			
-			update = false;
-			clear_buffer(receive_buffer);
-		}
+		clear_buffer(receive_buffer);
+	
     }
 }
 
