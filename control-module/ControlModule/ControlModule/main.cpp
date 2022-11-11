@@ -77,7 +77,7 @@ void pwm_init()
 {
 	// Motor-timer 2000Hz (0.5ms)
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
-	SPEED_REGISTER = 3000; // == 0x1F40
+	SPEED_REGISTER = 0; // == 0x1F40
 	ICR1 = 8000; // Set TOP (total period length) to 20 ms
 	// CTC = Clear Timer on Compare-mode with no prescaler
 	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
@@ -169,7 +169,7 @@ void parse(char input[])
 	int value_separator = 0;
 	
 	//for (int i = 0; *(input+i) != NULL; i++)
-	for (int i = 0; input[i] != NULL; i++)
+	for (int i = 0; input[i] != '\0'; i++)
 	{
 		if (findcommand) 
 		{
@@ -220,7 +220,7 @@ void parse(char input[])
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
 					{
-						send_data(&text_value[0]);
+						//send_data(&text_value[0]);
 						man_left = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "back")) 
@@ -283,10 +283,10 @@ int main(void)
 			steering = STEER_NEUTRAL;
 		STEER_REGISTER = steering;
 			
-// 		if (man_forward)
-// 			SPEED_REGISTER = MAX_SPEED;	
-// 		else
-// 			SPEED_REGISTER = 0;
+ 		if (man_forward)
+ 			SPEED_REGISTER = MAX_SPEED;	
+ 		else
+ 			SPEED_REGISTER = 0;
 			
 		clear_buffer(receive_buffer);
 	
