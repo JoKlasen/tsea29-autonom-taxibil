@@ -45,8 +45,11 @@ volatile bool man_left = false;
 volatile bool man_right = false;
 volatile bool man_forward = false;
 volatile bool man_back = false;
+volatile unsigned long long old_millis=0;
 
 volatile bool update = false;
+
+volatile unsigned long long milliseconds =0;
 
 void port_init()
 {
@@ -96,6 +99,37 @@ void pwm_init()
 	TIMSK3 = (1<<OCIE3A);
 }
 
+void timer0_init()
+{
+	// Set Output Compare Register to 160 which is 10 us at 16MHz
+	OCR0A = 250; // 1 millisecond
+	
+	//CTC-mode with 64 prescaler, COM0 in normal operation OC0A/B disabled
+	TCCR0A = (0<<COM0A1) | (0<<COM0A1) | (1<<WGM01) | (0<<WGM00);
+	TCCR0B = (0<<WGM02)	 | (1<<CS00)|(1<<CS01);
+	
+	// Enable Output Compare A Match Interrupt Enable
+	TIMSK0 = (1<<OCIE0A);
+}
+
+
+
+ISR(TIMER0_COMPA_vect)
+{
+	milliseconds++;
+	if(milliseconds - old_millis >= 1000)
+	{
+		SPEED_REGISTER = 0;
+	}
+}
+
+unsigned long long millis()
+{
+	cli();
+	unsigned long long temp = milliseconds;
+	sei();
+	return temp;
+}
 void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE);
 
 void setup()
@@ -309,10 +343,12 @@ int main(void)
 		STEER_REGISTER = steering;
 			
  		if (man_forward)
+		 
  			SPEED_REGISTER = MAX_SPEED;	
  		else
  			SPEED_REGISTER = 0;
-			
+		
+		old_millis = millis();	
 		//clear_buffer(receive_buffer);
 		memset(receive_buffer,0,sizeof receive_buffer);
 
