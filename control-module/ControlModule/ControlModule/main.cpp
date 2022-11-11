@@ -26,7 +26,7 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
-#define MAX_SPEED 3000
+#define MAX_SPEED 4000
 
 #define MAX_STEER_LEFT 2100
 #define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
@@ -35,7 +35,7 @@
 #define  STEER_REGISTER OCR3A
 #define  SPEED_REGISTER OCR1A
 
-#define RECEIVE_BUFFER_SIZE 50
+#define RECEIVE_BUFFER_SIZE 100
 
 volatile unsigned steering = STEER_NEUTRAL;
 
@@ -112,12 +112,12 @@ void send_data(char* data)
 	{
 		while(!( UCSR0A & (1<<UDRE0)))
 		;
-		
-		UDR0 = data[counter];
 		if (data[counter] == '\0')
 		{
 			break;
 		}
+		UDR0 = data[counter];
+
 		counter++;
 	}
 }
@@ -136,8 +136,9 @@ void receive_data(char* receive_buffer)
 		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
 	}
 	
-	send_data("\nTog emot detta från UART: ");
+	send_data("Tog emot detta från UART:\n");
 	send_data(receive_buffer);
+	send_data("\n");
 	
 }
 
@@ -168,19 +169,26 @@ void parse(char input[])
 	int label_end = 0;
 	int value_separator = 0;
 	
+	//send_data(" I parsern\n");
+	
 	//for (int i = 0; *(input+i) != NULL; i++)
 	for (int i = 0; input[i] != '\0'; i++)
 	{
 		if (findcommand) 
 		{
+			//send_data(" in find command\n");
 			//if (*(input+i) == ':') 
 			if (input[i] == ':') 
 			{
-				strncpy(&command[0], input, i);
+				strlcpy(&command[0], input, i+1);
 				label_end = i;
-				
+				//send_data(" found label end\n");
+				//send_data("Command=");
+				//send_data(&command[0]);
+				//send_data("A\n");
 				if (!strcmp(&command[0], "keyspressed")) 
 				{
+				//	send_data(" I Keyspressed\n");
 					keys = true;
 					findcommand = false;
 				} 
@@ -200,39 +208,55 @@ void parse(char input[])
 		{
 			if (keys)
 			{
-				//if(*(input+i) == '=')
+	//			send_data("k e keys\n");
 				if (input[i] == '=')
 				{
 					clear_buffer(&value_name[0], 20);
-					strncpy(&value_name[0], &input[label_end+1], ((i-1) - label_end));
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
 					value_separator = i;
+			//		send_data("found key\n");
 				}
 				//else if (*(input+i) == ':')
 				else if (input[i] == ':')
 				{	
+				//	send_data("comparing keys\n");
 					char text_value[10];
 					clear_buffer(&text_value[0], 10);
-					strncpy(&text_value[0], &input[value_separator+1], ((i-1) - value_separator) );
-					
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+			//		send_data(&value_name[0]);
+				//	send_data("\n");
 					if (!strcmp(&value_name[0], "forward"))
 					{
+				//		send_data(" I forward\n");
 						man_forward = atoi(&text_value[0]);
+				//		if(man_forward) {send_data(" man_forward = 1\n");}
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
 					{
+						//send_data(" I left\n");
+
 						//send_data(&text_value[0]);
 						man_left = atoi(&text_value[0]);
+					//	if(man_left) {send_data(" man_left = 1\n");}
 					} 
 					else if (!strcmp(&value_name[0], "back")) 
 					{
+			//			send_data(" I back\n");
+
 						man_back = atoi(&text_value[0]);
+				//		if(man_back) {send_data(" man_back = 1\n");}
 					} 
 					else if (!strcmp(&value_name[0], "right")) 
 					{
+//						send_data(" I right\n");
+
 						man_right = atoi(&text_value[0]);
+	//					if(man_right) {send_data(" man_right = 1\n");}
 					}
-					
+					char debugstring[50];
 					label_end = i;
+		//			sprintf(&debugstring[0],"labe_lend=%d value_separator=%d\n",label_end,value_separator);
+		//			send_data(&debugstring[0]);
 				}
 			}
 				
@@ -251,6 +275,7 @@ void parse(char input[])
 
 	sprintf(&value_msg[0], "Received forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
 	send_data(&value_msg[0]);
+	
 }
 	
 
@@ -261,8 +286,8 @@ int main(void)
     char* welcome_msg = "Hello World! :)\n";
     send_data(welcome_msg);
 	char receive_buffer[RECEIVE_BUFFER_SIZE];
-	clear_buffer(&receive_buffer[0]);	
-	
+	//clear_buffer(&receive_buffer[0]);	
+	memset(receive_buffer,0,sizeof receive_buffer);
 	while (1)
 	{
 		
@@ -288,8 +313,9 @@ int main(void)
  		else
  			SPEED_REGISTER = 0;
 			
-		clear_buffer(receive_buffer);
-	
+		//clear_buffer(receive_buffer);
+		memset(receive_buffer,0,sizeof receive_buffer);
+
     }
 }
 
