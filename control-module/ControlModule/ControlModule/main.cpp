@@ -86,7 +86,7 @@ void pwm_init()
 	TCCR1A = (1<<COM1A1)|(0<<COM1A0)|(1<<WGM11)|(0<<WGM10); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS10);
 	// Enable Output Compare A Match Interrupt Enable
-	TIMSK1 = (1<<OCIE1A);
+	//TIMSK1 = (1<<OCIE1A);
 	
 	// Servo-timer 50Hz (20ms) with 1-2ms PW
 	// Set Output Compare Register to 16000 which is 1 ms at 16MHz
@@ -96,8 +96,9 @@ void pwm_init()
 	TCCR3A = (1<<COM3A1)|(0<<COM3A0)|(1<<WGM31)|(0<<WGM30); // COM1 in Clear on CTC, WGM in Fast PWM with ICR1 as TOP
 	TCCR3B = (1<<WGM33)|(1<<WGM32)|(1<<CS31);
 	// Enable Output Compare A Match Interrupt Enable
-	TIMSK3 = (1<<OCIE3A);
+	//TIMSK3 = (1<<OCIE3A);
 }
+
 
 /*
 void timer0_init()
@@ -123,6 +124,32 @@ ISR(TIMER0_COMPA_vect)
 		SPEED_REGISTER = 0;
 	}
 }
+*/
+
+
+void timer2_init()
+{
+		// Set Output Compare Register to 160 which is 10 us at 16MHz
+		OCR2A = 250; // 1 millisecond
+		
+		//CTC-mode with 64 prescaler, COM0 in normal operation OC0A/B disabled
+		TCCR2A = (1<<COM2A1) | (0<<COM2A0) | (1<<WGM21) | (0<<WGM20);
+		TCCR2B = (0<<WGM22)	 | (1<<CS20)|(1<<CS21);
+		
+		// Enable Output Compare A Match Interrupt Enable
+		TIMSK2 = (1<<OCIE2A);
+	
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+	
+	milliseconds++;
+	if(milliseconds - old_millis >= 1000)
+	{
+		SPEED_REGISTER = 0;
+	}
+}
 
 unsigned long long millis()
 {
@@ -130,7 +157,9 @@ unsigned long long millis()
 	unsigned long long temp = milliseconds;
 	sei();
 	return temp;
-}*/
+}
+
+
 void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE);
 
 void setup()
@@ -138,6 +167,10 @@ void setup()
     port_init();
     UART_init();
 	pwm_init();
+	timer2_init();
+	sei();
+	//timer0_init();
+	//sei();
 }
 
 void send_data(char* data)
@@ -365,7 +398,7 @@ int main(void)
  		else
  			SPEED_REGISTER = 0;
 		
-		//old_millis = millis();	
+		old_millis = millis();	
 		//clear_buffer(receive_buffer);
 		memset(receive_buffer,0,sizeof receive_buffer);
 
