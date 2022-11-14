@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>ATCA - Autonomous Taxi Control App</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="css/style.css" rel="stylesheet">
+        <script src="script/communicate.js"></script> 
+        <script src="script/keyboard.js"></script>
+        <script src="script/ui.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+        <script src="script/telemetry-chart.js"></script>
+        <script src="script/map.js"></script>
+    </head>
+    <body>
+        <div id="app-container">    
+            <div>
+                <div 
+                    id="telemetry"
+                    class="sub-containers"
+                >
+                    <div>
+                        <div>
+                            Telemetry Table
+                        </div>
+                        <div>
+                            <table
+                                id="telemetry-table"
+                            >
+                                <!--tr>
+                                    <th>Variable</th>
+                                    <th>Value</th>
+                                </tr>
+                                <tr>
+                                    <td>Speed</td>
+                                    <td>100 m/s</td>
+                                </tr>
+                                <tr>
+                                    <td>Steering</td>
+                                    <td>-15%</td>
+                                </tr>
+                                <tr>
+                                    <td>Error</td>
+                                    <td>5.7%</td>
+                                </tr-->
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div>
+                            Telemetry Chart
+                        </div>
+                            <canvas id="telemetry-chart" style="height: 30vh; width: 40vw;" />
+                    </div>
+                </div>
+
+                <div
+                    id="control"
+                    class="sub-containers"
+                >
+                <div>
+                    
+                    Manual Controls
+
+                    <div style="
+                        display: flex; 
+                        flex-direction: column;
+                        align-items: center;
+
+                        margin-top: 2vh;
+                    ">
+                    <br>
+                        <div id="control-w" class="control-buttons">W</div>
+                        <div
+                            style="display: flex;"
+                        >
+                            <div id="control-a" class="control-buttons">A</div>
+                            <div id="control-s"class="control-buttons">S</div>
+                            <div id="control-d" class="control-buttons">D</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-evenly;">    
+                        <div class="control-extrabuttons" onclick="emergencyStop()">
+                            <p id="control-emergency">STOP</p>
+                        </div>
+                        <div id="control-manual-switch" class="control-extrabuttons" onclick="switchMode()">
+                            <p id="control-mode">Manual</p>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">P</p>
+                            <textarea id="control-pid-p" class="control-pid-input"></textarea>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">I</p>
+                            <textarea id="control-pid-i" class="control-pid-input"></textarea>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">D</p>
+                            <textarea id="control-pid-d" class="control-pid-input"></textarea>
+                        </div>
+
+                        <button id="control-pid-button" class="control-extrabuttons" onclick="sendPID()">Send PID</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <div>
+                <div
+                    id="map"
+                    class="sub-containers"
+                    style="
+                        display: flex;
+                    "
+                >
+                    <div style="width: 50%; border-right: 1px solid var(--border-color);">
+                        Map
+
+                        <canvas id="map-canvas" 
+                            width="300"
+                            height="300"
+                            style="
+                                border: 1px solid var(--border-color);
+                                margin-left: 2.2%;
+                                width: 95%;
+                                margin-top: 2.2%;
+                                height: 91.6%;
+                                display: flex;
+                            " />
+                    </div>
+                    <div style="width: 50%; display: flex; flex-direction: column;">
+                        Buttons
+                        <div style="display: flex; justify-content: space-evenly; flex-direction: column;">
+                            <div>
+                                <button class="buttons-standard" onclick="downloadChartData()">
+                                    Download<br>Chart<br>CSV
+                                </button>
+                                <button class="buttons-standard" onclick="resetTelemetryChart()">
+                                    Reset<br>Telemetry<br>Chart
+                                </button>
+                            </div>
+                            <div>
+                                <button id="buttons-logging-button" class="buttons-standard" onclick="toggleLogging()">
+                                    Toggle<br>Logging<br>Enabled
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div 
+                    id="camera"
+                    class="sub-containers"
+                >
+                    <div style="width: 90%; height: 90%;">
+                        Live Feed
+                        <br>
+                        <iframe 
+                            type="text/html"
+                            src="http://192.168.240.128:8000/index.html" 
+                            width="100%" height="90%"> 
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </body>
+</html>
