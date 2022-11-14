@@ -99,6 +99,7 @@ void pwm_init()
 	TIMSK3 = (1<<OCIE3A);
 }
 
+/*
 void timer0_init()
 {
 	// Set Output Compare Register to 160 which is 10 us at 16MHz
@@ -129,7 +130,7 @@ unsigned long long millis()
 	unsigned long long temp = milliseconds;
 	sei();
 	return temp;
-}
+}*/
 void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE);
 
 void setup()
@@ -348,7 +349,7 @@ int main(void)
  		else
  			SPEED_REGISTER = 0;
 		
-		old_millis = millis();	
+		//old_millis = millis();	
 		//clear_buffer(receive_buffer);
 		memset(receive_buffer,0,sizeof receive_buffer);
 
