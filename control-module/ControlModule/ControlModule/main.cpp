@@ -251,7 +251,16 @@ void parse(char* input)
 	sprintf(&value_msg[0], "Received forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
 	send_data(&value_msg[0]);
 }
-	
+
+void pid_init(int in_p, int in_i, int in_d) {
+    int P = in_p;
+    int I = in_i;
+    int D = in_d;
+}
+
+int pid_loop(int error) {
+
+}
 
 int main(void)
 {
