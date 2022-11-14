@@ -143,7 +143,6 @@ void receive_data(char* receive_buffer,volatile int* counter)
 	}
 }
 
-
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
 		speed = MAX_SPEED;
