@@ -399,7 +399,7 @@ int main(void)
 		
 		}
 	}
-	send_data("Innan andra while\n");
+	//send_data("Innan andra while\n");
 	while (1)
 	{
 
@@ -416,12 +416,12 @@ int main(void)
 
 				if (man_left)
 				{
-					send_data("Turning left\n");
+					//send_data("Turning left\n");
 					steering = MAX_STEER_LEFT;
 				}
 				else if (man_right)
 				{
-					send_data("Turning right\n");
+					//send_data("Turning right\n");
 					steering = MAX_STEER_RIGHT;
 				}
 				else
@@ -431,7 +431,7 @@ int main(void)
 				STEER_REGISTER = steering;
 				if (man_forward)
 				{
-					send_data("Wroom woom\n");
+					//send_data("Wroom woom\n");
 					SPEED_REGISTER = MAX_SPEED;
 				}
 				else
