@@ -48,11 +48,9 @@ volatile bool man_back = false;
 volatile unsigned long long old_millis=0;
 
 volatile bool update = false;
-
-
 volatile unsigned long long milliseconds =0;
 
-volatile bool received = false;
+volatile bool received = false; 
 char receive_buffer[RECEIVE_BUFFER_SIZE];
 char working_buffer[RECEIVE_BUFFER_SIZE];
 volatile int receive_buffer_index = 0;
@@ -116,12 +114,18 @@ ISR (USART0_RX_vect)
 	
 	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
 	{
-		received = true;
 		send_data("From UART: ");
 		send_data(receive_buffer);
 		send_data("\n");
 		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
+		send_data("I working buffer i ISR: ");
+		send_data(working_buffer);
+		send_data("\n");
 		memset(receive_buffer,0,receive_buffer_index);
+		receive_buffer_index =0;
+		received = true;
+
+
 	}
 }
 
@@ -265,6 +269,12 @@ void parse(char input[])
 					pid = true;
 					findcommand = false;
 				}
+				else if (!strcmp(&command[0], "emergencystop")) 
+				{
+					SPEED_REGISTER = 0;
+					man_forward =0;
+					return;
+				}
 			}
 		}
 		else
@@ -311,7 +321,13 @@ void parse(char input[])
 				
 			if (pid) 
 			{
-			}	
+			}
+			
+			/*
+			if (emergencystop)
+			{
+			}*/
+				
 		}	 
 	}
 	
@@ -337,16 +353,45 @@ int pid_loop(int error) {
     return steering;
 }
 
+bool parse_handshake()
+{
+	send_data("I Parse_handshake: ");
+	send_data(working_buffer);
+	if(!strcmp(&working_buffer[0], "ACK\n"))
+	{
+		return true;
+	}
+	return false;
+}
+
 int main(void)
 {
     setup();
-    
-    char* welcome_msg = "Hello World! :)\n";
-    send_data(welcome_msg);
 	
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 
+	while(1)
+	{
+		if(millis()-old_millis > 100)
+		{
+			old_millis = millis();
+			send_data("control_module\n");
+			
+			if(received)
+			{
+				cli();
+				received = false;
+				if(parse_handshake()) //ACK
+				{
+					break;	
+				}
+				sei();
+				
+			}
+		
+		}
+	}
 	while (1)
 	{
 		
@@ -356,26 +401,36 @@ int main(void)
 		
 		if(received)
 		{
-		received = false;	
-		parse(working_buffer);
-		receive_buffer_index =0;
-		if (man_left)
-			steering = MAX_STEER_LEFT;
-		else if (man_right)
-			steering = MAX_STEER_RIGHT;
-		else
-			steering = STEER_NEUTRAL;
-		STEER_REGISTER = steering;
-			
- 		if (man_forward)
-		 
- 			SPEED_REGISTER = MAX_SPEED;	
- 		else
- 			SPEED_REGISTER = 0;
-		
-		old_millis = millis();	
+			received = false;
+			parse(working_buffer);
+			if(manual_mode)
+			{
+
+				if (man_left)
+				steering = MAX_STEER_LEFT;
+				else if (man_right)
+				steering = MAX_STEER_RIGHT;
+				else
+				steering = STEER_NEUTRAL;
+				STEER_REGISTER = steering;
+				
+				if (man_forward)
+				
+				SPEED_REGISTER = MAX_SPEED;
+				else
+				SPEED_REGISTER = 0;
+				
+				old_millis = millis();
+				
+			}
+			else
+			{
+				
+				
+			}
 		memset(receive_buffer,0,sizeof receive_buffer);
 		}
     }
+	
 }
 
