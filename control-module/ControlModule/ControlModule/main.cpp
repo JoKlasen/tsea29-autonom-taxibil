@@ -49,7 +49,15 @@ volatile unsigned long long old_millis=0;
 
 volatile bool update = false;
 
+
 volatile unsigned long long milliseconds =0;
+
+volatile bool received = false;
+char receive_buffer[RECEIVE_BUFFER_SIZE];
+char working_buffer[RECEIVE_BUFFER_SIZE];
+volatile int receive_buffer_index = 0;
+
+void send_data(char * buffer);
 
 void port_init()
 {
@@ -74,6 +82,47 @@ void UART_init()
     UCSR0B = (1<<RXEN0)|(1<<TXEN0);
     /* Set frame format: 8data, 1stop bit */
     UCSR0C = (0<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
+	
+	UCSR0B |= (1 << RXCIE0);
+}
+
+/*
+void receive_data(char* receive_buffer)
+{
+	bool receiving = true;
+	int counter = 0;
+	
+	while (receiving) {
+		while (!(UCSR0A & (1<<RXC0)));
+		
+		unsigned char from_receive_buffer = UDR0;
+		receive_buffer[(counter)++] = from_receive_buffer;
+		
+		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
+	}
+
+	
+	send_data("Tog emot detta från UART:\n");
+	send_data(receive_buffer);
+	send_data("\n");
+	
+}*/
+
+ISR (USART0_RX_vect)
+{
+	
+	unsigned char from_receive_buffer = UDR0;
+	receive_buffer[(receive_buffer_index)++] = from_receive_buffer;
+	
+	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
+	{
+		received = true;
+		send_data("From UART: ");
+		send_data(receive_buffer);
+		send_data("\n");
+		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
+		memset(receive_buffer,0,receive_buffer_index);
+	}
 }
 
 void pwm_init()
@@ -162,26 +211,7 @@ void send_data(char* data)
 	}
 }
 
-void receive_data(char* receive_buffer)
-{
-	bool receiving = true;
-	int counter = 0;
-	
-	while (receiving) {
-		while (!(UCSR0A & (1<<RXC0)));
-		
-		unsigned char from_receive_buffer = UDR0;
-		receive_buffer[(counter)++] = from_receive_buffer;
-		
-		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
-	}
 
-	
-	send_data("Tog emot detta från UART:\n");
-	send_data(receive_buffer);
-	send_data("\n");
-	
-}
 
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
@@ -313,16 +343,22 @@ int main(void)
     
     char* welcome_msg = "Hello World! :)\n";
     send_data(welcome_msg);
-	char receive_buffer[RECEIVE_BUFFER_SIZE];
-	//clear_buffer(&receive_buffer[0]);	
+	
 	memset(receive_buffer,0,sizeof receive_buffer);
+	memset(working_buffer,0,sizeof working_buffer);
+
 	while (1)
 	{
 		
 		//Busy waits for data
-		receive_data(&receive_buffer[0]);
+		//receive_data(&receive_buffer[0]);
 		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
-		parse(receive_buffer);
+		
+		if(received)
+		{
+		received = false;	
+		parse(working_buffer);
+		receive_buffer_index =0;
 		if (man_left)
 			steering = MAX_STEER_LEFT;
 		else if (man_right)
@@ -339,7 +375,7 @@ int main(void)
 		
 		old_millis = millis();	
 		memset(receive_buffer,0,sizeof receive_buffer);
-
+		}
     }
 }
 
