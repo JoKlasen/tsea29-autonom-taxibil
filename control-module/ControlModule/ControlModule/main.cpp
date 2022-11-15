@@ -111,16 +111,18 @@ ISR (USART0_RX_vect)
 	
 	unsigned char from_receive_buffer = UDR0;
 	receive_buffer[(receive_buffer_index)++] = from_receive_buffer;
-	
-	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'))
+
+
+	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
 	{
-		send_data("From UART: ");
-		send_data(receive_buffer);
-		send_data("\n");
+		receive_buffer[receive_buffer_index] = from_receive_buffer;
+		//send_data("From UART: ");
+		//send_data(receive_buffer);
+		//send_data("\n");
 		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
-		send_data("I working buffer i ISR: ");
-		send_data(working_buffer);
-		send_data("\n");
+		//send_data("I working buffer i ISR: ");
+		//send_data(working_buffer);
+		//send_data("\n");
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
@@ -271,9 +273,10 @@ void parse(char input[])
 				}
 				else if (!strcmp(&command[0], "emergencystop")) 
 				{
-					SPEED_REGISTER = 0;
-					man_forward =0;
-					return;
+					//send_data("HEJ\n");
+					//SPEED_REGISTER = 0;
+					//man_forward =0;
+					//return;
 				}
 			}
 		}
@@ -294,6 +297,7 @@ void parse(char input[])
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "forward"))
 					{
+						send_data("I man forward i parsern\n");
 						man_forward = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
@@ -355,9 +359,10 @@ int pid_loop(int error) {
 
 bool parse_handshake()
 {
-	send_data("I Parse_handshake: ");
-	send_data(working_buffer);
-	if(!strcmp(&working_buffer[0], "ACK\n"))
+	//send_data("I Parse_handshake: ");
+	//send_data(working_buffer);
+	//send_data("\n");
+	if(!strcmp(&working_buffer[0], "ACK"))
 	{
 		return true;
 	}
@@ -376,14 +381,16 @@ int main(void)
 		if(millis()-old_millis > 100)
 		{
 			old_millis = millis();
+			//Denna ska va här ---- start
 			send_data("control_module\n");
-			
+			//Denna ska va här ---- slut
 			if(received)
 			{
 				cli();
 				received = false;
 				if(parse_handshake()) //ACK
 				{
+					sei();
 					break;	
 				}
 				sei();
@@ -392,9 +399,10 @@ int main(void)
 		
 		}
 	}
+	send_data("Innan andra while\n");
 	while (1)
 	{
-		
+
 		//Busy waits for data
 		//receive_data(&receive_buffer[0]);
 		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
@@ -407,19 +415,29 @@ int main(void)
 			{
 
 				if (man_left)
-				steering = MAX_STEER_LEFT;
+				{
+					send_data("Turning left\n");
+					steering = MAX_STEER_LEFT;
+				}
 				else if (man_right)
-				steering = MAX_STEER_RIGHT;
+				{
+					send_data("Turning right\n");
+					steering = MAX_STEER_RIGHT;
+				}
 				else
-				steering = STEER_NEUTRAL;
+				{
+					steering = STEER_NEUTRAL;
+				}
 				STEER_REGISTER = steering;
-				
 				if (man_forward)
-				
-				SPEED_REGISTER = MAX_SPEED;
+				{
+					send_data("Wroom woom\n");
+					SPEED_REGISTER = MAX_SPEED;
+				}
 				else
-				SPEED_REGISTER = 0;
-				
+				{
+					SPEED_REGISTER = 0;
+				}
 				old_millis = millis();
 				
 			}
@@ -428,7 +446,7 @@ int main(void)
 				
 				
 			}
-		memset(receive_buffer,0,sizeof receive_buffer);
+			memset(receive_buffer,0,sizeof receive_buffer);
 		}
     }
 	
