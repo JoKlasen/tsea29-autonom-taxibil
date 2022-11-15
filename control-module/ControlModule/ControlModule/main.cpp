@@ -84,28 +84,6 @@ void UART_init()
 	UCSR0B |= (1 << RXCIE0);
 }
 
-/*
-void receive_data(char* receive_buffer)
-{
-	bool receiving = true;
-	int counter = 0;
-	
-	while (receiving) {
-		while (!(UCSR0A & (1<<RXC0)));
-		
-		unsigned char from_receive_buffer = UDR0;
-		receive_buffer[(counter)++] = from_receive_buffer;
-		
-		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
-	}
-
-	
-	send_data("Tog emot detta från UART:\n");
-	send_data(receive_buffer);
-	send_data("\n");
-	
-}*/
-
 ISR (USART0_RX_vect)
 {
 	
@@ -116,13 +94,7 @@ ISR (USART0_RX_vect)
 	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
 	{
 		receive_buffer[receive_buffer_index] = from_receive_buffer;
-		//send_data("From UART: ");
-		//send_data(receive_buffer);
-		//send_data("\n");
 		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
-		//send_data("I working buffer i ISR: ");
-		//send_data(working_buffer);
-		//send_data("\n");
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
@@ -359,9 +331,7 @@ int pid_loop(int error) {
 
 bool parse_handshake()
 {
-	//send_data("I Parse_handshake: ");
-	//send_data(working_buffer);
-	//send_data("\n");
+
 	if(!strcmp(&working_buffer[0], "ACK"))
 	{
 		return true;
@@ -399,7 +369,6 @@ int main(void)
 		
 		}
 	}
-	//send_data("Innan andra while\n");
 	while (1)
 	{
 
@@ -416,12 +385,10 @@ int main(void)
 
 				if (man_left)
 				{
-					//send_data("Turning left\n");
 					steering = MAX_STEER_LEFT;
 				}
 				else if (man_right)
 				{
-					//send_data("Turning right\n");
 					steering = MAX_STEER_RIGHT;
 				}
 				else
@@ -431,7 +398,6 @@ int main(void)
 				STEER_REGISTER = steering;
 				if (man_forward)
 				{
-					//send_data("Wroom woom\n");
 					SPEED_REGISTER = MAX_SPEED;
 				}
 				else
