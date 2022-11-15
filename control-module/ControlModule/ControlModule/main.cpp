@@ -48,8 +48,14 @@ volatile bool man_back = false;
 volatile unsigned long long old_millis=0;
 
 volatile bool update = false;
-
 volatile unsigned long long milliseconds =0;
+
+volatile bool received = false; 
+char receive_buffer[RECEIVE_BUFFER_SIZE];
+char working_buffer[RECEIVE_BUFFER_SIZE];
+volatile int receive_buffer_index = 0;
+
+void send_data(char * buffer);
 
 void port_init()
 {
@@ -74,6 +80,27 @@ void UART_init()
     UCSR0B = (1<<RXEN0)|(1<<TXEN0);
     /* Set frame format: 8data, 1stop bit */
     UCSR0C = (0<<USBS0)|(3<<UCSZ00)|(0<<UPM00)|(0<<UPM01);
+	
+	UCSR0B |= (1 << RXCIE0);
+}
+
+ISR (USART0_RX_vect)
+{
+	
+	unsigned char from_receive_buffer = UDR0;
+	receive_buffer[(receive_buffer_index)++] = from_receive_buffer;
+
+
+	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
+	{
+		receive_buffer[receive_buffer_index] = from_receive_buffer;
+		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
+		memset(receive_buffer,0,receive_buffer_index);
+		receive_buffer_index =0;
+		received = true;
+
+
+	}
 }
 
 void pwm_init()
@@ -162,26 +189,7 @@ void send_data(char* data)
 	}
 }
 
-void receive_data(char* receive_buffer)
-{
-	bool receiving = true;
-	int counter = 0;
-	
-	while (receiving) {
-		while (!(UCSR0A & (1<<RXC0)));
-		
-		unsigned char from_receive_buffer = UDR0;
-		receive_buffer[(counter)++] = from_receive_buffer;
-		
-		receiving = !((from_receive_buffer == '\0') || ((counter) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n'));
-	}
 
-	
-	send_data("Tog emot detta från UART:\n");
-	send_data(receive_buffer);
-	send_data("\n");
-	
-}
 
 void speedlimiter(int speed) {
 	if (speed > MAX_SPEED) {
@@ -235,6 +243,13 @@ void parse(char input[])
 					pid = true;
 					findcommand = false;
 				}
+				else if (!strcmp(&command[0], "emergencystop")) 
+				{
+					//send_data("HEJ\n");
+					//SPEED_REGISTER = 0;
+					//man_forward =0;
+					//return;
+				}
 			}
 		}
 		else
@@ -254,6 +269,7 @@ void parse(char input[])
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "forward"))
 					{
+						send_data("I man forward i parsern\n");
 						man_forward = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
@@ -281,7 +297,13 @@ void parse(char input[])
 				
 			if (pid) 
 			{
-			}	
+			}
+			
+			/*
+			if (emergencystop)
+			{
+			}*/
+				
 		}	 
 	}
 	
@@ -307,39 +329,92 @@ int pid_loop(int error) {
     return steering;
 }
 
+bool parse_handshake()
+{
+
+	if(!strcmp(&working_buffer[0], "ACK"))
+	{
+		return true;
+	}
+	return false;
+}
+
 int main(void)
 {
     setup();
-    
-    char* welcome_msg = "Hello World! :)\n";
-    send_data(welcome_msg);
-	char receive_buffer[RECEIVE_BUFFER_SIZE];
-	//clear_buffer(&receive_buffer[0]);	
+	
 	memset(receive_buffer,0,sizeof receive_buffer);
+	memset(working_buffer,0,sizeof working_buffer);
+
+	while(1)
+	{
+		if(millis()-old_millis > 100)
+		{
+			old_millis = millis();
+			//Denna ska va här ---- start
+			send_data("control_module\n");
+			//Denna ska va här ---- slut
+			if(received)
+			{
+				cli();
+				received = false;
+				if(parse_handshake()) //ACK
+				{
+					sei();
+					break;	
+				}
+				sei();
+				
+			}
+		
+		}
+	}
 	while (1)
 	{
-		
-		//Busy waits for data
-		receive_data(&receive_buffer[0]);
-		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
-		parse(receive_buffer);
-		if (man_left)
-			steering = MAX_STEER_LEFT;
-		else if (man_right)
-			steering = MAX_STEER_RIGHT;
-		else
-			steering = STEER_NEUTRAL;
-		STEER_REGISTER = steering;
-			
- 		if (man_forward)
-		 
- 			SPEED_REGISTER = MAX_SPEED;	
- 		else
- 			SPEED_REGISTER = 0;
-		
-		old_millis = millis();	
-		memset(receive_buffer,0,sizeof receive_buffer);
 
+		//Busy waits for data
+		//receive_data(&receive_buffer[0]);
+		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
+		
+		if(received)
+		{
+			received = false;
+			parse(working_buffer);
+			if(manual_mode)
+			{
+
+				if (man_left)
+				{
+					steering = MAX_STEER_LEFT;
+				}
+				else if (man_right)
+				{
+					steering = MAX_STEER_RIGHT;
+				}
+				else
+				{
+					steering = STEER_NEUTRAL;
+				}
+				STEER_REGISTER = steering;
+				if (man_forward)
+				{
+					SPEED_REGISTER = MAX_SPEED;
+				}
+				else
+				{
+					SPEED_REGISTER = 0;
+				}
+				old_millis = millis();
+				
+			}
+			else
+			{
+				
+				
+			}
+			memset(receive_buffer,0,sizeof receive_buffer);
+		}
     }
+	
 }
 
