@@ -55,6 +55,15 @@ char receive_buffer[RECEIVE_BUFFER_SIZE];
 char working_buffer[RECEIVE_BUFFER_SIZE];
 volatile int receive_buffer_index = 0;
 
+volatile int P;
+volatile int I;
+volatile int D;
+volatile int velocity;
+volatile int steering_from_pi;
+volatile int error;
+volatile int detection;
+
+
 void send_data(char * buffer);
 
 void port_init()
@@ -210,12 +219,14 @@ void parse(char input[])
 {
 	char command[20];
 	char value_name[20];
+	char text_value[10];
 	
 	bool findcommand = true;
 	bool pid = false;
 	bool switchmode = false;
 	bool keys = false;
-	
+	bool telemetry = false;
+	bool emergencystop = false;
 	int label_end = 0;
 	int value_separator = 0;
 	
@@ -245,10 +256,13 @@ void parse(char input[])
 				}
 				else if (!strcmp(&command[0], "emergencystop")) 
 				{
-					//send_data("HEJ\n");
-					//SPEED_REGISTER = 0;
-					//man_forward =0;
-					//return;
+					SPEED_REGISTER = 0;
+					emergencystop = true;
+				}
+				else if (!strcmp(&command[0], "telemetry"))
+				{
+					telemetry = true;
+					findcommand = false;
 				}
 			}
 		}
@@ -264,12 +278,10 @@ void parse(char input[])
 				}
 				else if (input[i] == ':')
 				{	
-					char text_value[10];
 					clear_buffer(&text_value[0], 10);
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "forward"))
 					{
-						send_data("I man forward i parsern\n");
 						man_forward = atoi(&text_value[0]);
 					} 
 					else if (!strcmp(&value_name[0], "left")) 
@@ -284,37 +296,125 @@ void parse(char input[])
 					{
 						man_right = atoi(&text_value[0]);
 					}
-					char debugstring[50];
 					label_end = i;
 
+				}			
+			}
+			else if (switchmode) 
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "mode"))
+					{
+						manual_mode = atoi(&text_value[0]);
+					}
+					label_end = i;
+				}
+					
+
+			}
+			else if(telemetry)
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "velocity"))
+					{
+						velocity = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "steering"))
+					{
+						steering_from_pi = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "error"))
+					{
+						error = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "detection"))
+					{
+						detection = atoi(&text_value[0]);
+					}
+					label_end = i;
 				}
 			}
-				
-			if (switchmode) 
+			else if (pid)
 			{
-					
-			}
-				
-			if (pid) 
-			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "p"))
+					{
+						P = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "i"))
+					{
+						I = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "d"))
+					{
+						D = atoi(&text_value[0]);
+					}
+					label_end = i;
+				}
 			}
 			
-			/*
-			if (emergencystop)
-			{
-			}*/
+			
 				
 		}	 
 	}
+		char value_msg[50];
+		
+		if(keys)
+		{
+			sprintf(&value_msg[0], "Received forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
+		}
+		else if(switchmode)
+		{
+			sprintf(&value_msg[0], "Received mode:%d\n", manual_mode );
+		}
+		else if(pid)
+		{
+			sprintf(&value_msg[0], "Received p:%d i:%d d:%d\n", P,I,D );
+		}
+		else if(telemetry)
+		{
+			sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
+		}
+		else if(emergencystop)
+		{
+			sprintf(&value_msg[0], "Received EMERGENCYSTOP\n");
+		}
+		else
+		{
+			sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
+		}
+		send_data(&value_msg[0]);
 	
-	char value_msg[50];
-
-	sprintf(&value_msg[0], "Received forward:%d left:%d back:%d right:%d\n", man_forward, man_left, man_back, man_right );
-	send_data(&value_msg[0]);
-	
+					
 }
 
-int P, I, D;
 void pid_init(int in_p, int in_i, int in_d) {
     P = in_p;
     I = in_i;
@@ -339,47 +439,57 @@ bool parse_handshake()
 	return false;
 }
 
+void handshake()
+{
+		while(1)
+		{
+			if(millis()-old_millis > 100)
+			{
+				old_millis = millis();
+				//Denna ska va här ---- start
+				send_data("control_module\n");
+				//Denna ska va här ---- slut
+				if(received)
+				{
+					cli();
+					received = false;
+					if(parse_handshake()) //ACK
+					{
+						sei();
+						return;
+					}
+					sei();
+					
+				}
+				
+			}
+		}
+}
+
 int main(void)
 {
     setup();
 	
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
-
-	while(1)
-	{
-		if(millis()-old_millis > 100)
-		{
-			old_millis = millis();
-			//Denna ska va här ---- start
-			send_data("control_module\n");
-			//Denna ska va här ---- slut
-			if(received)
-			{
-				cli();
-				received = false;
-				if(parse_handshake()) //ACK
-				{
-					sei();
-					break;	
-				}
-				sei();
-				
-			}
-		
-		}
-	}
+	
+	handshake();
+	send_data("After handshake\n");
 	while (1)
 	{
 
 		//Busy waits for data
 		//receive_data(&receive_buffer[0]);
-		//char* input = "keyspressed:forward=0:left=1:back=0:right=0:";
-		
+		//"keyspressed:forward=0:left=1:back=0:right=0:";
+		//"emergencystop:"
+		//"switchmode:mode=1:" == manual "switchmode:mode=0:" == autonomous
+		//"telemetry:velocity=2:steering=2:error=2:detection=2:"
+		//"sendpid:p=4:i=3:d=23:"
 		if(received)
 		{
 			received = false;
 			parse(working_buffer);
+
 			if(manual_mode)
 			{
 
@@ -409,10 +519,13 @@ int main(void)
 			}
 			else
 			{
+				send_data("In autonomous mode xD\n");	
 				
+				//PID LOOP/FUNCTION for speed
+				
+				//PID LOOP/FUNCTION for steerring
 				
 			}
-			memset(receive_buffer,0,sizeof receive_buffer);
 		}
     }
 	
