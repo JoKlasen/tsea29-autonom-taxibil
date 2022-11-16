@@ -92,11 +92,12 @@ class Graph:
         i = 0
         while i < len(current.neighbours):
             if((current.neighbours[i].explored == False) and (current.right_direction(prevnode,current.neighbours[i]))):
+                print(current.name, " explores ",current.neighbours[i].name)
                 if(self.DFS(current,current.neighbours[i],destination,templist.copy()) == False):
                     current.explored = False 
             i+=1
         recursiondepth -=1
-
+        current.explored = False
         return False
 
     def DFS_start(self,start_node,dest_node):
@@ -120,6 +121,7 @@ class Graph:
                 length = len(all_paths[i])
                 path = all_paths[i]
             i+=1
+        print(path)
         return path
 
     def print_paths(self):
@@ -164,18 +166,27 @@ def main():
     #Creating all nodes
     A = Node("A",0,0)
     Fake_A = Node("Fake A",0,0)
-    B = Node("B",1,0)
-    Fake_B = Node("Fake B",2,0)
-    C = Node("C",1,2)
-    Fake_C = Node("Fake C",2,2)
+    
+    B = Node("B",3,0)
+    Fake_B = Node("Fake B",3,0)
+    
+    C = Node("C",3,2)
+    Fake_C = Node("Fake C",3,2)
+    
     D = Node("D",0,2)
     Fake_D = Node("Fake D",0,2)
+    
     Korsning_1 = Node("Kors 1",0,1)
     Fake_Korsning_1 = Node("Fake Kors 1",0,1)
+    
     E = Node("E",1,1)
-    F = Node("F",1,1)
-    Korsning_2 = Node("Kors 2",2,1)
-    Fake_Korsning_2 = Node("Fake Kors 2",2,1)
+    Fake_E = Node("Fake E",1,1)
+    
+    Fake_F = Node("Fake F",2,1)
+    F = Node("F",2,1)   
+
+    Korsning_2 = Node("Kors 2",3,1)
+    Fake_Korsning_2 = Node("Fake Kors 2",3,1)
 
     Graph_1.add_node(A)
     Graph_1.add_node(Fake_A)
@@ -202,29 +213,34 @@ def main():
     
     Korsning_1.add_Edge(D)
     Korsning_1.add_Edge(Fake_A)
-    Korsning_1.add_Edge(E)
+    Korsning_1.add_Edge(Fake_E)
 
     Fake_Korsning_1.add_Edge(Fake_A)
     Fake_Korsning_1.add_Edge(D)
-
+    
     Korsning_2.add_Edge(Fake_B)
     Korsning_2.add_Edge(C)
-    Korsning_2.add_Edge(F)
+    Korsning_2.add_Edge(Fake_F)
     
     Fake_Korsning_2.add_Edge(C)
     Fake_Korsning_2.add_Edge(Fake_B)
-
+    #Fake_Korsning_2.add_Edge(Fake_F)
+    
     Fake_C.add_Edge(Korsning_2)
     C.add_Edge(Fake_D)
 
     D.add_Edge(Fake_C)
     Fake_D.add_Edge(Korsning_1)
 
-    F.add_Edge(Fake_Korsning_1)
-
-    E.add_Edge(Fake_Korsning_2)
     
-    Graph_1.get_paths_DFS("A","C","D")
+    Fake_E.add_Edge(F)
+    E.add_Edge(Fake_Korsning_1)
+    
+    F.add_Edge(Fake_Korsning_2)
+    Fake_F.add_Edge(E)
+    
+    
+    Graph_1.get_paths_DFS("E","F","E")
     Graph_1.print_paths()
 
 main()
