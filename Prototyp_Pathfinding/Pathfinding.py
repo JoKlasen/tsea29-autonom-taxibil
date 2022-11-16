@@ -13,6 +13,13 @@ class Node:
     def add_Edge(self,destinationnode):
         self.neighbours.append(destinationnode)
 
+    def right_direction(self,prevnode,nextnode):
+        if prevnode == None:
+            return True
+        return not((prevnode.x == nextnode.x) and (prevnode.y == nextnode.y))
+
+all_paths = []
+
 class Graph:
     def __init__(self):
         self.nodelist = []
@@ -56,38 +63,94 @@ class Graph:
                     queue.append(current.neighbours[i])
                     current.neighbours[i].prev = current
                     current.neighbours[i].explored = True
-                    i+=1
-                else:
-                    i+=1
+                i+=1
+            if (current.name == endnode.name):
+                break
             current.explored = True
         print("Hej")
         path = []
-        while current.prev != None:
+        while current != None:
             path.append(current)
             current = current.prev
             print("Tjabba ")
         return path
 
+    def DFS(self,prevnode,current,destination,templist):
+        global all_paths
+        global recursiondepth
+        print("Recursiondepth = ",recursiondepth)
+        recursiondepth +=1
+        
+        templist.append(current)
+        current.explored = True
+        if (current.name == destination.name):
+            print("Hej")
+            all_paths.append(templist)
+            current.explored = False
+            recursiondepth -= 1
+            return True
+        i = 0
+        while i < len(current.neighbours):
+            if((current.neighbours[i].explored == False) and (current.right_direction(prevnode,current.neighbours[i]))):
+                if(self.DFS(current,current.neighbours[i],destination,templist.copy()) == False):
+                    current.explored = False 
+            i+=1
+        recursiondepth -=1
+
+        return False
+
+    def DFS_start(self,start_node,dest_node):
+        global all_paths
+        all_paths = []
+        global recursiondepth
+        recursiondepth = 0
+        self.reset_exploration()
+        startnode = self.find_node(start_node)
+        startnode.explored = True
+        endnode = self.find_node(dest_node)
+        previous = None
+        startlist = []
+        self.DFS(previous,startnode,endnode,startlist)
+
+        path = []
+        length = 100000
+        i=0
+        while i < len(all_paths):
+            if(length > len(all_paths[i])):
+                length = len(all_paths[i])
+                path = all_paths[i]
+            i+=1
+        return path
+
     def print_paths(self):
         sizeof_pickup_path = len(self.pickup_path)
-        for i in range(sizeof_pickup_path-1):
-            stringtoprint = self.pickup_path[i].name
-            if i != sizeof_pickup_path-1:
+        i = 0
+        stringtoprint = ""
+        while i < sizeof_pickup_path:
+            stringtoprint += self.pickup_path[i].name
+            if i < sizeof_pickup_path-1:
                 stringtoprint += " -->"
+            i+=1
         print(stringtoprint+"\n")
         stringtoprint = ""
         sizeof_dropoffpath = len(self.dropoff_path)
-        for i in range(sizeof_dropoffpath-1):
-            stringtoprint = self.dropoff_path[i].name
-            if i != sizeof_dropoffpath-1:
+        i = 0
+        while i < sizeof_dropoffpath:
+            stringtoprint += self.dropoff_path[i].name
+            if i < sizeof_dropoffpath-1:
                 stringtoprint += " -->"
+            i+=1
         print(stringtoprint+"\n")
             
         
     
-    def get_paths(self,start_node1,start_node2,endnode2):
+    def get_paths_BFS(self,start_node1,start_node2,endnode2):
         self.pickup_path = self.BFS(start_node1,start_node2)
         self.dropoff_path = self.BFS(start_node2,endnode2)
+    
+    def get_paths_DFS(self,start_node1,start_node2,endnode2):
+        self.pickup_path = self.DFS_start(start_node1,start_node2)
+        self.dropoff_path = self.DFS_start(start_node2,endnode2)
 
 
 
@@ -160,8 +223,8 @@ def main():
     F.add_Edge(Fake_Korsning_1)
 
     E.add_Edge(Fake_Korsning_2)
-
-    Graph_1.get_paths("A","C","D")
+    
+    Graph_1.get_paths_DFS("A","C","D")
     Graph_1.print_paths()
 
 main()
