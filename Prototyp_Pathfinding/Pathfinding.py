@@ -75,28 +75,31 @@ class Graph:
             print("Tjabba ")
         return path
 
+    def print_a_path(self,path):
+        sizeof_pickup_path = len(path)
+        i = 0
+        stringtoprint = ""
+        while i < sizeof_pickup_path:
+            stringtoprint += path[i].name
+            if i < sizeof_pickup_path-1:
+                stringtoprint += " -->"
+            i+=1
+        print(stringtoprint)
+
     def DFS(self,prevnode,current,destination,templist):
-        global all_paths
-        global recursiondepth
-        print("Recursiondepth = ",recursiondepth)
-        recursiondepth +=1
-        
+        global all_paths 
         templist.append(current)
         current.explored = True
         if (current.name == destination.name):
-            print("Hej")
             all_paths.append(templist)
             current.explored = False
-            recursiondepth -= 1
             return True
         i = 0
         while i < len(current.neighbours):
             if((current.neighbours[i].explored == False) and (current.right_direction(prevnode,current.neighbours[i]))):
-                print(current.name, " explores ",current.neighbours[i].name)
                 if(self.DFS(current,current.neighbours[i],destination,templist.copy()) == False):
                     current.explored = False 
             i+=1
-        recursiondepth -=1
         current.explored = False
         return False
 
@@ -116,13 +119,16 @@ class Graph:
         path = []
         length = 100000
         i=0
+        #print("There are " + str(len(all_paths)) + " paths and those are:")
         while i < len(all_paths):
             if(length > len(all_paths[i])):
+                #self.print_a_path(all_paths[i])
                 length = len(all_paths[i])
                 path = all_paths[i]
             i+=1
-        print(path)
+        #print("\n")
         return path
+
 
     def print_paths(self):
         sizeof_pickup_path = len(self.pickup_path)
@@ -240,7 +246,7 @@ def main():
     Fake_F.add_Edge(E)
     
     
-    Graph_1.get_paths_DFS("E","F","E")
+    Graph_1.get_paths_DFS("A","B","D")
     Graph_1.print_paths()
 
 main()
