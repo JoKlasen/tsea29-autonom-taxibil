@@ -5,6 +5,15 @@ function connectToServers() {
 
     let cam = document.getElementById("camera-iframe");
     cam.src = "http://" + ip + ":8000/index.js"
+
+    let ip_container = document.getElementById("ip-address-container");
+    let ip_textarea = document.getElementById("ip-address-textarea");
+    let ip_button = document.getElementById("ip-address-button");
+
+    // hide ip_container, ip_textarea and ip_button
+    ip_container.style.display = "none";
+    ip_textarea.style.display = "none";
+    ip_button.style.display = "none";
 }
 
 let status_table = {

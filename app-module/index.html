@@ -14,6 +14,7 @@
     </head>
     <body>
         <div
+            id="ip-address-container"
             style="
                 position: absolute;
                 top: 5vh;
@@ -30,9 +31,9 @@
                 flex-direction: column;
             "
         >
-            <p style="color: white; margin: 0; margin-bottom: 2vh;">Input IP Address</p>
+            <p id="ip-address-text" style="color: white; margin: 0; margin-bottom: 2vh;">Input IP Address</p>
             <textarea id="ip-address-textarea" style="margin-bottom: 1vh;"></textarea>
-            <button onclick="connectToServers()">Start Application</button>
+            <button id="ip-address-button" onclick="connectToServers()">Start Application</button>
         </div>
 
         <div id="app-container">    
