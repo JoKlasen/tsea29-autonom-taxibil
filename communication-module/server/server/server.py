@@ -45,6 +45,11 @@ def sendToAVR(message):
         message = message + "\0"
         print(message)
         ser.write(message.encode());
+    elif (message_type == 'override'):
+        print("Got 'override' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
     
 # Send message to all connected clients§
 async def sendAll(websocket):
