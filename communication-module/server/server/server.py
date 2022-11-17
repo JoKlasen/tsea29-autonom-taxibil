@@ -53,6 +53,7 @@ async def sendAll(websocket):
         sendToAVR(message)
         if websocket not in CLIENTS:
             if "[webapp]" in message:
+                CLIENTS.clear()
                 CLIENTS.append(websocket)
         try:
             for socket in CLIENTS:
