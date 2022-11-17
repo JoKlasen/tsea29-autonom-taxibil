@@ -31,8 +31,8 @@
             "
         >
             <p style="color: white; margin: 0; margin-bottom: 2vh;">Input IP Address</p>
-            <textarea style="margin-bottom: 1vh;"></textarea>
-            <button>Start Application</button>
+            <textarea id="ip-address-textarea" style="margin-bottom: 1vh;"></textarea>
+            <button onclick="connectToServers()">Start Application</button>
         </div>
 
         <div id="app-container">    
@@ -184,10 +184,13 @@
                             type="text/html"
                             src="http://192.168.240.128:8000/index.html" 
                             width="100%" height="90%"--> 
+                        <iframe 
+                            id="camera-iframe"
+                            type="text/html"
+                            width="100%" height="90%">
                     </div>
                 </div>
             </div>
         </div>
-        
     </body>
 </html>

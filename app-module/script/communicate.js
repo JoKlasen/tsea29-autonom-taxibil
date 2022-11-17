@@ -1,4 +1,11 @@
-let webSocket = new WebSocket("ws://192.168.240.128:8765/")
+let webSocket = null;
+function connectToServers() {
+    let ip = document.getElementById("ip-address-textarea").value
+    webSocket = new WebSocket("ws://" + ip + ":8765/")
+
+    let cam = document.getElementById("camera-iframe");
+    cam.src = "http://" + ip + ":8000/index.js"
+}
 
 let status_table = {
     "speed": 'N/A',
@@ -36,26 +43,6 @@ function updateTable() {
         "<td>Error</td>" +
         "<td>" + status_table["error"] + "</td>"
         "</tr>"
-        
-
-/*
-<tr>
-    <th>Variable</th>
-    <th>Value</th>
-</tr>
-<tr>
-    <td>Speed</td>
-    <td>100 m/s</td>
-</tr>
-<tr>
-    <td>Steering</td>
-    <td>-15%</td>
-</tr>
-<tr>
-    <td>Error</td>
-    <td>5.7%</td>
-</tr>
-*/
 }
 
 webSocket.onmessage = (event) => {
