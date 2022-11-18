@@ -17,8 +17,10 @@
 
 volatile unsigned steering = STEER_NEUTRAL;
 
-volatile bool manual_mode = true;
 
+//Ska defaulta true
+volatile bool manual_mode = false;
+//
 volatile bool man_left = false;
 volatile bool man_right = false;
 volatile bool man_forward = false;
@@ -33,13 +35,42 @@ char receive_buffer[RECEIVE_BUFFER_SIZE];
 char working_buffer[RECEIVE_BUFFER_SIZE];
 volatile int receive_buffer_index = 0;
 
-volatile int P;
-volatile int I;
-volatile int D;
 volatile int velocity;
 volatile int steering_from_pi;
 volatile int error;
 volatile int detection;
+volatile bool turn_error_received = false;
+volatile bool speed_error_received = false;
+
+volatile int ConstantP, ConstantI, ConstantD;
+volatile int PTerm, ITerm, DTerm;
+volatile int CurrentI, MaxI, MinI;
+volatile int dTemp = 0;
+
+void turn_percent(int correction)
+{
+	if (correction < 0)
+	{
+		steering += correction;
+		if (steering < MAX_STEER_LEFT)
+		{
+			steering = MAX_STEER_LEFT;
+		}
+	}
+	else if (correction > 0)
+	{
+		steering += correction;
+		if (steering > MAX_STEER_RIGHT)
+		{
+			steering = MAX_STEER_RIGHT;
+		}
+	}
+	else
+	{
+		steering = STEER_NEUTRAL;
+	}
+	STEER_REGISTER = steering;
+}
 
 int main(void)
 {
@@ -47,16 +78,19 @@ int main(void)
 	
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
-	
-	handshake();
+	char debugdata[50];
+	memset(debugdata,0,sizeof debugdata);
+	//handshake();
+	send_data("Handshake utkommenterat\n");
+	send_data("After handshake\n");
 	while (1)
 	{
 
 		//"keyspressed:forward=0:left=1:back=0:right=0:";
 		//"emergencystop:"
 		//"switchmode:mode=1:" == manual "switchmode:mode=0:" == autonomous
-		//"telemetry:velocity=2:steering=2:error=2:detection=2:"
-		//"sendpid:p=4:i=3:d=23:"
+		//"telemetry:velocity=2:steering=2:error=800:detection=2:"
+		//"sendpid:p=1:i=0:d=0:"
 		if(received)
 		{
 			received = false;
@@ -64,7 +98,12 @@ int main(void)
 
 			if(manual_mode)
 			{
-				send_data("In manual mode :) \n");
+				if(detection < 2)
+				{
+					SPEED_REGISTER = 0;
+				}
+				
+				
 				if (man_left)
 				{
 					steering = MAX_STEER_LEFT;
@@ -91,11 +130,29 @@ int main(void)
 			}
 			else
 			{
-				send_data("In autonomous mode xD\n");
 				
+				if(detection < 2)
+				{
+					SPEED_REGISTER = 0;
+				}
+				
+				//PID LOOP/FUNCTION for sterring
+				if(turn_error_received)
+				{
+					int correction = PIDIteration(error);
+					sprintf(debugdata,"Correction = %d\n",correction);
+					send_data(debugdata);
+					memset(debugdata,0,50);
+					turn_percent(correction);
+					turn_error_received = false;
+				}
 				//PID LOOP/FUNCTION for speed
-				
-				//PID LOOP/FUNCTION for steerring
+				if(velocity_received)
+				{
+					// variabeln == "velocity"
+					speed_error_received = false;
+				}
+				old_millis = millis();
 				
 			}
 		}

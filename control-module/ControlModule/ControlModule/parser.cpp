@@ -129,6 +129,7 @@ void parse(char input[])
 					if (!strcmp(&value_name[0], "velocity"))
 					{
 						velocity = atoi(&text_value[0]);
+						velocity_received = true;
 					}
 					else if (!strcmp(&value_name[0], "steering"))
 					{
@@ -137,6 +138,7 @@ void parse(char input[])
 					else if (!strcmp(&value_name[0], "error"))
 					{
 						error = atoi(&text_value[0]);
+						turn_error_received = true;
 					}
 					else if (!strcmp(&value_name[0], "detection"))
 					{
@@ -159,15 +161,15 @@ void parse(char input[])
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "p"))
 					{
-						P = atoi(&text_value[0]);
+						ConstantP = atoi(&text_value[0]);
 					}
 					else if (!strcmp(&value_name[0], "i"))
 					{
-						I = atoi(&text_value[0]);
+						ConstantI = atoi(&text_value[0]);
 					}
 					else if (!strcmp(&value_name[0], "d"))
 					{
-						D = atoi(&text_value[0]);
+						ConstantI = atoi(&text_value[0]);
 					}
 					label_end = i;
 				}
@@ -189,7 +191,7 @@ void parse(char input[])
 	}
 	else if(pid)
 	{
-		sprintf(&value_msg[0], "Received p:%d i:%d d:%d\n", P,I,D );
+		sprintf(&value_msg[0], "Received p:%d i:%d d:%d\n", ConstantP,ConstantI,ConstantD );
 	}
 	else if(telemetry)
 	{
