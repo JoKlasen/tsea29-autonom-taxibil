@@ -17,6 +17,49 @@ class Node:
         if prevnode == None:
             return True
         return not((prevnode.x == nextnode.x) and (prevnode.y == nextnode.y))
+    
+    def get_direction(self,prevnode,destination):
+        # if(prevnode == None):
+        #     print("Previous ",prevnode," Current ",self.name, " Destination ",destination.name)
+        #     print("Previous coordinates {0}, current coordinates x,y {1},{2} destination coordinates x,y {3},{4}".format(prevnode,self.x,self.y,destination.x,destination.y))
+
+        # elif(destination == None):
+        #     print("Previous ",prevnode.name," Current ",self.name, " Destination ",destination)
+        #     print("Previous coordinates x,y {0},{1}, current coordinates x,y {2},{3} destination coordinates {4}".format(prevnode.x,prevnode.y,self.x,self.y,destination))
+
+        # else:
+        #     print("Previous ",prevnode.name," Current ",self.name, " Destination ",destination.name)
+        #     print("Previous coordinates x,y {0},{1}, current coordinates x,y {2},{3} destination coordinates {4},{5}".format(prevnode.x,prevnode.y,self.x,self.y,destination.x,destination.y))
+        
+        if self.name != "Kors 1" and self.name != "Kors 2":
+            return "FORWARD"
+        
+        # dirx = prevnode.x - self.x
+        # diry = prevnode.y - self.y
+        dirx = self.x - prevnode.x
+        diry = self.y - prevnode.y
+        #print("dirx,diry {0},{1}".format(dirx,diry))
+
+        #dir2x = dirx - destination.x
+        #dir2y = diry - destination.y
+        
+        dir2x = destination.x - self.x
+        dir2y = destination.y - self.y
+
+
+        #print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
+        
+        directionx = dir2x - dirx
+        directiony = dir2y - diry
+
+        #print("directionx,directiony {0},{1}".format(directionx,directiony))
+        if directionx == -1:
+            return "LEFT"
+        elif directionx == 1:
+            return "RIGHT"
+        else:
+            return "FORWARD"
+        #Continue with this
 
 all_paths = []
 
@@ -25,7 +68,9 @@ class Graph:
         self.nodelist = []
         self.size = 0
         self.pickup_path = []
+        self.pickup_directions = []
         self.dropoff_path = []
+        self.dropoff_directions = []
 
     def add_node(self,node):
         self.nodelist.append(node)
@@ -41,10 +86,7 @@ class Graph:
             if self.nodelist[i].name == node:
                 return self.nodelist[i]
     
-    def get_direction(destination):
-        if self.name != "Kors 1" and self.name != "Kors 2":
-            return "Follow the road"
-        #Continue with this
+
         
 
     
@@ -137,26 +179,34 @@ class Graph:
         return path
 
 
-    def print_paths(self):
-        sizeof_pickup_path = len(self.pickup_path)
+    def print_path(self,container):
+        containersize = len(container)
         i = 0
         stringtoprint = ""
-        while i < sizeof_pickup_path:
-            stringtoprint += self.pickup_path[i].name
-            if i < sizeof_pickup_path-1:
+        while i < containersize:
+            stringtoprint += container[i].name
+            if i < containersize-1:
                 stringtoprint += " --> "
             i+=1
         print(stringtoprint+"\n")
-        stringtoprint = ""
-        sizeof_dropoffpath = len(self.dropoff_path)
+
+    def print_directions(self,container):
+        containersize = len(container)
         i = 0
-        while i < sizeof_dropoffpath:
-            stringtoprint += self.dropoff_path[i].name
-            if i < sizeof_dropoffpath-1:
+        stringtoprint = ""
+        while i < containersize:
+            stringtoprint += container[i]
+            if i < containersize-1:
                 stringtoprint += " --> "
             i+=1
         print(stringtoprint+"\n")
-            
+
+    def print_paths_and_directions(self):
+        self.print_path(self.pickup_path)
+        self.print_directions(self.pickup_directions)
+        self.print_path(self.dropoff_path)
+        self.print_directions(self.dropoff_directions)
+
         
     
     def get_paths_BFS(self,start_node1,start_node2,endnode2):
@@ -168,7 +218,30 @@ class Graph:
         self.dropoff_path = self.DFS_start(start_node2,endnode2)
 
     def get_directions(self):
-        pass
+        prevnode = None
+        last = None
+        self.pickup_path.append(last)
+        i=0
+        while i < len(self.pickup_path):
+            if self.pickup_path[i] != None:
+                print(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
+                self.pickup_directions.append(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
+                prevnode = self.pickup_path[i]
+            i+=1
+
+        self.pickup_path.pop()
+        
+        prevnode = None
+        last = None
+        self.dropoff_path.append(last)
+        i=0
+        while i < len(self.dropoff_path):
+            if self.dropoff_path[i] != None:
+                print(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
+                self.dropoff_directions.append(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
+                prevnode = self.dropoff_path[i]
+            i+=1
+        self.dropoff_path.pop()
 
 
 
@@ -254,7 +327,9 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("RA","RB","RD")
-    Graph_1.print_paths()
+    Graph_1.get_paths_DFS("RF","RB","RD")
+    Graph_1.get_directions()
+    Graph_1.print_paths_and_directions()
+
 
 main()
