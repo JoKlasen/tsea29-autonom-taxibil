@@ -118,6 +118,7 @@ void setup()
 	UART_init();
 	pwm_init();
 	timer2_init();
+	PIDSetup(1,0,0);
 	sei();
 }
 
@@ -153,22 +154,6 @@ void clear_buffer(char* buffer, int size)
 	{
 		buffer[i] = '\0';
 	}
-}
-
-
-
-void pid_init(int in_p, int in_i, int in_d) {
-	P = in_p;
-	I = in_i;
-	D = in_d;
-}
-
-int pid_loop(int error) {
-	int steering = 0;
-	
-	steering -= error*P;
-
-	return steering;
 }
 
 bool parse_handshake()

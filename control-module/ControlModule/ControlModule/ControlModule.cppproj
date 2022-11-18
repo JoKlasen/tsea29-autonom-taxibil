@@ -186,6 +186,9 @@
     <Compile Include="parser.cpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="pid.cpp">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
