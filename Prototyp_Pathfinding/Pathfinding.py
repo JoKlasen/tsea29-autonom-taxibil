@@ -1,5 +1,5 @@
 
-
+all_paths = []
 
 class Node:
     def __init__(self,name,x,y):
@@ -18,6 +18,9 @@ class Node:
             return True
         return not((prevnode.x == nextnode.x) and (prevnode.y == nextnode.y))
     
+    def __repr__(self):
+        return self.name
+
     def get_direction(self,prevnode,destination):
         # if(prevnode == None):
         #     print("Previous ",prevnode," Current ",self.name, " Destination ",destination.name)
@@ -31,37 +34,54 @@ class Node:
         #     print("Previous ",prevnode.name," Current ",self.name, " Destination ",destination.name)
         #     print("Previous coordinates x,y {0},{1}, current coordinates x,y {2},{3} destination coordinates {4},{5}".format(prevnode.x,prevnode.y,self.x,self.y,destination.x,destination.y))
         
-        if self.name != "Kors 1" and self.name != "Kors 2":
+        if (self.name != "Kors 1" and self.name != "Kors 2") or prevnode.x == destination.x:
             return "FORWARD"
         
-        # dirx = prevnode.x - self.x
-        # diry = prevnode.y - self.y
+
         dirx = self.x - prevnode.x
         diry = self.y - prevnode.y
-        #print("dirx,diry {0},{1}".format(dirx,diry))
+        print("dirx,diry {0},{1}".format(dirx,diry))
 
-        #dir2x = dirx - destination.x
-        #dir2y = diry - destination.y
+        currentx = self.x
+        currenty = self.y
+        destx = destination.x
+        desty =destination.y
+        if dirx == 1 : ## If we go to the right
+            ##counterclockwise rotation x,y -> -y,x
+            currentx = -self.y
+            currenty = self.x
+            destx = -destination.y
+            desty = destination.x
+
+        elif dirx == -1: ## If we go to the left
+            ##clockwise rotation x,y -> y,-x
+            currentx = self.y
+            currenty = -self.x
+            destx = destination.y
+            desty = -destination.x
+
+        elif diry == -1: ## If we go down
+            ## 180 rotation x,y -> -x,-y
+            currentx = -self.x
+            currenty = -self.y
+            destx = -destx
+            desty = -desty
         
-        dir2x = destination.x - self.x
-        dir2y = destination.y - self.y
+        dir2x = currentx - destx
+        dir2y = currenty - desty
 
-
-        #print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
+        print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
         
-        directionx = dir2x - dirx
-        directiony = dir2y - diry
 
-        #print("directionx,directiony {0},{1}".format(directionx,directiony))
-        if directionx == -1:
+        if dir2x == 1 and dir2y == 0:
             return "LEFT"
-        elif directionx == 1:
+        elif dir2x == -1 and dir2y == 0:
             return "RIGHT"
         else:
-            return "FORWARD"
+            return "SAAAY WHATT??"
         #Continue with this
 
-all_paths = []
+
 
 class Graph:
     def __init__(self):
@@ -155,8 +175,6 @@ class Graph:
     def DFS_start(self,start_node,dest_node):
         global all_paths
         all_paths = []
-        global recursiondepth
-        recursiondepth = 0
         self.reset_exploration()
         startnode = self.find_node(start_node)
         startnode.explored = True
@@ -164,18 +182,26 @@ class Graph:
         previous = None
         startlist = []
         self.DFS(previous,startnode,endnode,startlist)
-
         path = []
         length = 100000
+        indexoflength = -1
         i=0
-        #print("There are " + str(len(all_paths)) + " paths and those are:")
+        print(all_paths)
         while i < len(all_paths):
             if(length > len(all_paths[i])):
-                #self.print_a_path(all_paths[i])
                 length = len(all_paths[i])
+                indexoflength = i
                 path = all_paths[i]
+            elif length == len(all_paths[i]):
+                testpath = all_paths[indexoflength]
+                for nodes in testpath:
+                    if ("RF" == nodes.name) or ("LF" == nodes.name) or ("RE" == nodes.name) or ("LE" == nodes.name):
+                        path = testpath
+                for nodes in all_paths[i]:
+                    if ("RF" == nodes.name) or ("LF" == nodes.name) or ("RE" == nodes.name) or ("LE" == nodes.name):
+                        path = all_paths[i]
+
             i+=1
-        #print("\n")
         return path
 
 
@@ -230,7 +256,7 @@ class Graph:
             i+=1
 
         self.pickup_path.pop()
-        
+        print("\n\n")
         prevnode = None
         last = None
         self.dropoff_path.append(last)
@@ -242,6 +268,8 @@ class Graph:
                 prevnode = self.dropoff_path[i]
             i+=1
         self.dropoff_path.pop()
+        print("\n\n")
+
 
 
 
@@ -327,7 +355,9 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("RF","RB","RD")
+    Graph_1.get_paths_DFS("LA","RB","LB")
+
+
     Graph_1.get_directions()
     Graph_1.print_paths_and_directions()
 
