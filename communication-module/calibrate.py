@@ -11,6 +11,8 @@ from datetime import datetime
 
 CALIBRATOR_PARAMS_FILENAME = 'Calibration-Params.txt'
 
+CALIBRATOR_IMAGES_FOLDER = './Chesstest_640x480'
+
 
 def get_undistort():
 	calibrator_file = open(CALIBRATOR_PARAMS_FILENAME, 'r')
@@ -35,7 +37,7 @@ def create_calibration_images():
 
 	cam = camera.create_a_camera()
 
-	path = "./Chesstest/"
+	path = CALIBRATOR_IMAGES_FOLDER
 
 	if not os.path.exists(path):
 		os.mkdir(path)
@@ -53,12 +55,12 @@ def create_calibration_images():
 		
 		now = datetime.now()
 		
-		img.save("{}CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+		img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
 
 
 
-def create_and_save_calibration_params():
-	parameters = calibrate_camera()
+def create_and_save_calibration_params(debug = False):
+	parameters = calibrate_camera(debug)
 		
 	#def rec_convert(l):
 		
@@ -77,8 +79,9 @@ def create_and_save_calibration_params():
 	
 	mtx = parameters[0]
 	
-	print(mtx, type(mtx))
-	print(mtx[0], type(mtx[0]))
+	if debug:
+		print(mtx, type(mtx))
+		print(mtx[0], type(mtx[0]))
 	
 	f = open(CALIBRATOR_PARAMS_FILENAME, 'w')
 	f.write(str(parameters))
@@ -86,7 +89,7 @@ def create_and_save_calibration_params():
 	f.close()
 
 
-def calibrate_camera(debug = 0):
+def calibrate_camera(debug = False):
 	CHECKERBOARD = (7, 7)
 
 	criteria = (cv2.TERM_CRITERIA_EPS + 
@@ -102,7 +105,11 @@ def calibrate_camera(debug = 0):
 	objectp3d[0, :, :2] = np.mgrid[0:CHECKERBOARD[0],
 								   0:CHECKERBOARD[1]].T.reshape(-1, 2)
 
-	images = glob.glob('./Chesstest/*.jpg')
+	images = glob.glob(f'{CALIBRATOR_IMAGES_FOLDER}/*.jpg')
+
+	if not len(images):
+		print("No images found!")
+		return None, None
 
 	for filename in images:
 		image = cv2.imread(filename)
@@ -116,8 +123,6 @@ def calibrate_camera(debug = 0):
 		
 		print(filename)
 
-		
-
 		if ret == True:
 			threedpoints.append(objectp3d)
 			
@@ -127,17 +132,25 @@ def calibrate_camera(debug = 0):
 			twodpoints.append(corners2)
 			
 			image = cv2.drawChessboardCorners(image, CHECKERBOARD, corners2, ret)
+			
 		if debug:
 			cv2.imshow('img', image)
 			cv2.waitKey(0)
 
-	h, w = image.shape[:2]
+#	h, w = image.shape[:2]
 
 	ret, matrix, distortion, r_vecs, t_vecs = cv2.calibrateCamera(
 	threedpoints, twodpoints, grayColor.shape[::-1], None, None)
 	
 	if debug:
 		cv2.destroyAllWindows()
+
+		mean_error = 0
+		for i in range(len(threedpoints)):
+			twodpoints2, _ = cv2.projectPoints(threedpoints[i], r_vecs[i], t_vecs[i], matrix, distortion)
+			error = cv2.norm(twodpoints[i], twodpoints2, cv2.NORM_L2)/len(twodpoints2)
+			mean_error += error
+		print( "Total error: {}".format(mean_error/len(threedpoints)) )
 
 		print(" Camera matrix:")
 		print(matrix)
@@ -151,7 +164,7 @@ def calibrate_camera(debug = 0):
 		print("\n Translation Vectors:")
 		print(t_vecs)
 		
-	print( ret, matrix, distortion, r_vecs, t_vecs)
+	print(matrix, distortion, r_vecs, t_vecs)
 		
 	return matrix, distortion
 
@@ -159,7 +172,7 @@ if __name__ == "__main__":
 	
 	#calibrate_camera(1)
 	
-	#create_and_save_calibration_params()
+	create_and_save_calibration_params(True)
 	
-	create_calibration_images()
+	#create_calibration_images()
 	

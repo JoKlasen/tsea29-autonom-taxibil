@@ -11,8 +11,8 @@ PREFERED_PREVIEW_SIZE = (50,50,1500,800)
 
 def create_a_camera():
 	camera = PiCamera()
-	camera.resolution = (250,190)
-	camera.framerate = 32
+	camera.resolution = (640, 480)
+	camera.framerate = 16
 #	camera.rotation = 0
 	camera.contrast = 30
 	
@@ -50,24 +50,26 @@ def create_example_images():
 		img.save("{}EI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
 		print("image taken")
 
-def camera_capture_image(camera:PiCamera):
+def camera_capture_image(camera:PiCamera, debug=False):
 	stream = BytesIO()
 
-	camera.start_preview()
-	camera.preview.window = (0,0,1000,800)
-	camera.preview.fullscreen = False
+	if debug:
+		camera.start_preview()
+		camera.preview.window = (0,0,1000,800)
+		camera.preview.fullscreen = False
+		input("")
 	# time.sleep(3)
     
-	input("")
 
 	camera.capture(stream, format='jpeg')
 
-	# camera.stop_preview()    
+	if debug:
+		camera.stop_preview()    
     
 	stream.seek(0)
 	image = Image.open(stream)
     
-	return image
+	return np.asarray(image)
 
 
 def preview_image(image:np.array, title="¡YEAY!"):

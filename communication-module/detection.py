@@ -42,14 +42,12 @@ def draw_polynomial_on_image(image:np.ndarray, polynomial, color=(255,255,255)):
 		cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, [0,255,255], 2)
 		
 		
-def fill_between_polynomials(size, poly1, poly2):
+def fill_between_polynomials(size, poly1, poly2, debug=True):
 	""" Creates a bitmap where the area inbetween the two provided 
 	second degree polynomials are filled with ones.
 	"""
 	
 	bitmap = np.empty(size)
-
-	print(bitmap.shape)
 	
 	# A func that have value be inside of bitmap to avoid incorrect x
 	clamp = lambda x: max(min(x, bitmap.shape[1]), 0)
@@ -63,7 +61,8 @@ def fill_between_polynomials(size, poly1, poly2):
 	
 		bitmap[y, min(x1,x2):max(x1,x2)] = 1
 
-	camera.preview_image(bitmap*255)
+	if debug:
+		camera.preview_image(bitmap*255)
 		
 	return bitmap
 	
@@ -193,7 +192,6 @@ def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
 
 	sobel_image = np.ones_like(sobel, dtype=image.dtype)
 	sobel_image[threshold(sobel)] = 0
-	print(np.sum(sobel_image, axis = 0))
 
 	
 	return sobel_image
@@ -298,14 +296,18 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 
 def detect_lines(image:np.ndarray):
 	
+	camera.preview_image(image)
+	
 	undistort = calibrate.get_undistort()
+
 	fisheye_removed = undistort(image)
 
 	warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed)
 	warped = warp_func(fisheye_removed)
-		
+				
 	# Does things to image but not warps it
 	edges = test_dl_mark_edges(warped)
+
 
 	lane_left, lane_right = dl_detect_lanes(edges, debug=True)
 	
@@ -332,6 +334,8 @@ def detect_lines(image:np.ndarray):
 	# Add marker for center of road
 	cv2.circle(preview_image, (int(camera_pos - center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
 	# ____________________________________________
+	
+	camera.preview_image(preview_image)
 		
 	
 	return center_offset, left_curve, right_curve, preview_image
