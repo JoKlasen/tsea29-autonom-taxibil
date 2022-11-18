@@ -22,6 +22,8 @@
 #define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
 #define MAX_STEER_RIGHT 4200
 
+#define ONE_THOUSAND_RIGHT ((MAX_STEER_RIGHT - STEER_NEUTRAL) / 1000)
+
 #define  STEER_REGISTER OCR3A
 #define  SPEED_REGISTER OCR1A
 
@@ -57,4 +59,9 @@ bool parse_handshake();
 void handshake();
 
 void parse(char input[]);
+
+int PIDIteration(int Error);
+
+void PIDSetup(int InputP, int InputI, int InputD);
+
 #endif
