@@ -89,6 +89,11 @@ def preview_image_grid(img_grid):
 	rows = []
 	
 	for img_row in img_grid:
+		for i in range(len(img_row)):
+			if img_row[i].ndim == 2:
+				img_row[i] = np.expand_dims(img_row[i], axis=2)
+				img_row[i] = np.concatenate((img_row[i],)*3, axis=2)
+						
 		rows.append(np.concatenate(img_row, axis=1))
 		
 	final = np.concatenate(rows)

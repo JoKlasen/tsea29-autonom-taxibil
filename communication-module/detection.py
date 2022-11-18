@@ -6,8 +6,8 @@ import calibrate
 
 TESTFILE =  "CI_22.11.05.00.11.17.jpg"
 
-#DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)]
-DEFAULT_ROI = [(700,0),(0,800),(2000,800),(1600,0)]
+#DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)] # 2000x1000
+DEFAULT_ROI = [(0,180),(0,440),(640,440),(640,180)] # 640x480 180 was 130 changed offset of above part to 0
 
 # ------------------------------------------------
 # Display data on image
@@ -42,7 +42,7 @@ def draw_polynomial_on_image(image:np.ndarray, polynomial, color=(255,255,255)):
 		cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, [0,255,255], 2)
 		
 		
-def fill_between_polynomials(size, poly1, poly2, debug=True):
+def fill_between_polynomials(size, poly1, poly2, debug=False):
 	""" Creates a bitmap where the area inbetween the two provided 
 	second degree polynomials are filled with ones.
 	"""
@@ -114,6 +114,8 @@ def get_warp_perspective_funcs(image:np.ndarray, roi=None, target_roi=None, debu
 	
 	# ----------DEBUG-----------
 	if debug:
+		warped = warp_func(image)
+		
 		warped_preview = warped.copy()
 		for point in np.int32(target_roi):
 			cv2.circle(warped_preview, point, 10, (0,0,255), cv2.FILLED)
@@ -196,14 +198,14 @@ def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
 	
 	return sobel_image
 
-def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to_recenter_window=10, debug = False):
+def dl_detect_lanes(image:np.ndarray, numb_windows=20, lane_margin=150, min_to_recenter_window=10, debug=False, get_pics=False):
 	"""	Takes an bitmap and returns lanes tracked on it """
 	 
 	# Find where pixels are concentrated
 	distrubution = np.sum(
-		image[:,:], 	# Check whole image
-#		image[:int(image.shape[0]/2),:],	# Below half image
-#		image[int(image.shape[0]/2):,:], 	# Above half image
+#		image[:,:], 	# Check whole image
+#		image[:int(image.shape[0]/2),:],	# Above half image
+		image[int(image.shape[0]/2):,:], 	# Below half image
 		axis=0
 	)
 	
@@ -213,7 +215,7 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 	right_lane_start = np.argmax(distrubution[mid:]) + mid
 	
 	# ----------DEBUG-----------
-	if debug:
+	if debug or get_pics:
 		pre_image = cv2.cvtColor(image*255, cv2.COLOR_GRAY2RGB)
 		
 		# Fill histogram with pixels after distrubution and fill
@@ -235,7 +237,7 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 	window_height = int(image.shape[0]/numb_windows)
 	lanes = ([left_lane_start], [right_lane_start])
 	
-	if debug:
+	if debug or get_pics:
 		pre_image = cv2.cvtColor(image*255, cv2.COLOR_GRAY2RGB)
 	
 	for lane_package in lanes:
@@ -249,8 +251,8 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 		for win_i in range(numb_windows):
 		
 			win_x = (
-				current_x - lane_margin,
-				current_x + lane_margin,
+				max(0, current_x - lane_margin),
+				min(image.shape[1], current_x + lane_margin)
 			)
 			win_y = (
 				image.shape[0] - (win_i + 1) * window_height,
@@ -268,7 +270,7 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 				# Recenter around found pixels
 				current_x = int(np.mean(pixels_in_window[1])) + win_x[0]
 	
-			if debug:
+			if debug or get_pics:
 				# Displays where the window were when finding the pixels
 				cv2.rectangle(pre_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), (255,255,255), 2)
 				# Displays where the window is after moving it
@@ -280,7 +282,7 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 		# Store found values
 		lane_package[0] = polynomial
 		
-		if debug:
+		if debug or get_pics:
 			# Fill pixels used to calculate line
 			pre_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = [0, 255, 0] if np.array_equal(lanes[0], lane_package) else [0,0,255]
 			
@@ -291,28 +293,32 @@ def dl_detect_lanes(image:np.ndarray, numb_windows = 20, lane_margin=100, min_to
 	if debug:
 		camera.preview_image_grid([[pre_image], [graph]])
 	
-	return lanes[0][0], lanes[1][0]
-
-
-def detect_lines(image:np.ndarray):
+	if not get_pics:
+		graph = None
+		pre_image = None
 	
-	camera.preview_image(image)
+	return lanes[0][0], lanes[1][0], graph, pre_image
+
+
+def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False):
+	
+	# camera.preview_image(image)
 	
 	undistort = calibrate.get_undistort()
 
 	fisheye_removed = undistort(image)
 
-	warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed)
+	warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
 	warped = warp_func(fisheye_removed)
 				
 	# Does things to image but not warps it
 	edges = test_dl_mark_edges(warped)
 
-
-	lane_left, lane_right = dl_detect_lanes(edges, debug=True)
+	lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges, debug=False, get_pics=preview_steps)
 	
 	# Calculate center offset
-	camera_pos = image.shape[1]/2 # screen center
+	
+	camera_pos = int(image.shape[1]/2) # screen center
 	bottom_y = image.shape[0]
 	lane_left_at_bottom = lane_left[0] * bottom_y ** 2 + lane_left[1] * bottom_y + lane_left[2]
 	lane_right_at_bottom = lane_right[0] * bottom_y ** 2 + lane_right[1] * bottom_y + lane_right[2]	
@@ -320,8 +326,8 @@ def detect_lines(image:np.ndarray):
 	center_offset = (lane_left_at_bottom + lane_right_at_bottom)/2 - camera_pos
 
 	# Calculate curvature
-	left_curve = ((1 + (2*lane_left[0]*bottom_y + lane_left[1])**2)**1.5) / np.absolute(2*lane_left[0])
-	right_curve = ((1 + (2*lane_right[0]*bottom_y + lane_right[1])**2)**1.5) / np.absolute(2*lane_right[0])
+	left_curve = np.sign(lane_left[0]) * ((1 + (2*lane_left[0]*bottom_y + lane_left[1])**2)**1.5) / np.absolute(2*lane_left[0])
+	right_curve = np.sign(lane_right[0]) * ((1 + (2*lane_right[0]*bottom_y + lane_right[1])**2)**1.5) / np.absolute(2*lane_right[0])
 
 	# _________________PREVIEW____________________
 	# An image to preview result
@@ -332,12 +338,36 @@ def detect_lines(image:np.ndarray):
 	preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
 
 	# Add marker for center of road
-	cv2.circle(preview_image, (int(camera_pos - center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
-	# ____________________________________________
+	cv2.circle(preview_image, (int(camera_pos + center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
+	cv2.circle(lanes_image, (int(camera_pos + center_offset + 0.5), bottom_y), 10, [0,255,255], 18)
+
+	# Draw a straight line through image
+	for y in range(lanes_image.shape[1]):
+		x = int((
+			(lane_left[0] + lane_right[0]) * y**2 + 
+			(lane_left[1] + lane_right[1]) * y +
+			(lane_left[2] + lane_right[2])
+		) / 2)
+		cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
 	
-	camera.preview_image(preview_image)
+	cv2.line(lanes_image, (camera_pos, 0), (camera_pos, lanes_image.shape[0]), (100, 100, 255), 5)
+
+	# vvv REMOVE THIS vvv
+	turnconst = 1000
+	turn_error = 1/left_curve + 1/right_curve
+	offsetconst = 0.01
+	error = turnconst*turn_error + center_offset * offsetconst 
+	print(f"___________________________\nLeft Radius: {left_curve} \nRight Radius: {right_curve} \nTurn: {turn_error} (x{turnconst})\nOffset: {center_offset} (x{offsetconst})\nError: {error}")
+	# ^^^			  ^^^
+
+
+	if preview_steps:
+		camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
 		
-	
+	if preview_result:
+		camera.preview_image_grid([[image], [result]])
+	# ____________________________________________
+		
 	return center_offset, left_curve, right_curve, preview_image
 
 
