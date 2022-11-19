@@ -15,6 +15,9 @@ CALIBRATOR_IMAGES_FOLDER = './Chesstest_640x480'
 
 
 def get_undistort():
+	"""Creates a lambda function that takes an image and undistorts it
+	after the calibration parameters stored in the dedicated file.
+	"""
 	calibrator_file = open(CALIBRATOR_PARAMS_FILENAME, 'r')
 			
 #	mtxL, distL = json.load(calibrator_file)
@@ -34,6 +37,10 @@ def get_undistort():
 
 
 def create_calibration_images():
+	""" Starts a session where the user can use the camera to create
+	images to use for calibration. The images will be stored in the
+	dedicated folder.
+	"""
 
 	cam = camera.create_a_camera()
 
@@ -44,38 +51,30 @@ def create_calibration_images():
 			
 	cam.start_preview()
 
+	# Have user take image when pressing enter, end if first typed "end"
 	while "end" != input("").lower():
 		stream = BytesIO()
 
 		cam.capture(stream, format='jpeg')
 		
-		stream.seek(0)
-		
+		# Create image from data
+		stream.seek(0)		
 		img = Image.open(stream)
 		
-		now = datetime.now()
-		
+		# Store image
+		now = datetime.now()		
 		img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
 
 
 
 def create_and_save_calibration_params(debug = False):
+	""" Goes through each image in the dedicated folder and use them to
+	create cailbration params in form of a 3x3 matrix. Uses 
+	checkerboard patterns on images.
+	
+	Use debug=True if the calculations are to be displayed.
+	"""
 	parameters = calibrate_camera(debug)
-		
-	#def rec_convert(l):
-		
-	#	if len(list) > 0:
-	#		result = list()
-			
-	#		for child in l:
-	#			result.append(rec_convert(child))
-				
-	#	else:
-	#		result = l
-				
-	#	return result
-		
-	#parameters = rec_convert(parameters)
 	
 	mtx = parameters[0]
 	
@@ -85,7 +84,6 @@ def create_and_save_calibration_params(debug = False):
 	
 	f = open(CALIBRATOR_PARAMS_FILENAME, 'w')
 	f.write(str(parameters))
-	#json.dump(list(parameters), f, indent = 6)
 	f.close()
 
 

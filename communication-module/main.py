@@ -28,9 +28,7 @@ def main():
 		offset, left, right, _ = detection.detect_lines(image)
 		
 		print("Step 4 Create an error")
-		turnconst = 1.5
-		offsetconst = 1.5
-		error = (left+right)*turnconst + offset * offsetconst 
+		error = detection.calc_error(left, right, offset, debug=True)
 		
 		print("Step 5 Create a message")
 		message = f"ERROR:{error}:"
@@ -52,6 +50,8 @@ def test_folder(folder):
 		image = cv2.imread(filename)
 
 		offset, left, right, preview_image = detection.detect_lines(image, preview_steps=True)
+		
+		error = detection.calc_error(left, right, offset)
 		
 		#cam.preview_image(preview_image)
 	
