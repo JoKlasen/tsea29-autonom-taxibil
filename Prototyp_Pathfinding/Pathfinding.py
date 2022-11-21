@@ -22,17 +22,9 @@ class Node:
         return self.name
 
     def get_direction(self,prevnode,destination):
-        # if(prevnode == None):
-        #     print("Previous ",prevnode," Current ",self.name, " Destination ",destination.name)
-        #     print("Previous coordinates {0}, current coordinates x,y {1},{2} destination coordinates x,y {3},{4}".format(prevnode,self.x,self.y,destination.x,destination.y))
 
-        # elif(destination == None):
-        #     print("Previous ",prevnode.name," Current ",self.name, " Destination ",destination)
-        #     print("Previous coordinates x,y {0},{1}, current coordinates x,y {2},{3} destination coordinates {4}".format(prevnode.x,prevnode.y,self.x,self.y,destination))
-
-        # else:
-        #     print("Previous ",prevnode.name," Current ",self.name, " Destination ",destination.name)
-        #     print("Previous coordinates x,y {0},{1}, current coordinates x,y {2},{3} destination coordinates {4},{5}".format(prevnode.x,prevnode.y,self.x,self.y,destination.x,destination.y))
+        if destination == None:
+            return "STOP"
         
         if (self.name != "Kors 1" and self.name != "Kors 2") or prevnode.x == destination.x:
             return "FORWARD"
@@ -40,7 +32,7 @@ class Node:
 
         dirx = self.x - prevnode.x
         diry = self.y - prevnode.y
-        print("dirx,diry {0},{1}".format(dirx,diry))
+        #print("dirx,diry {0},{1}".format(dirx,diry))
 
         currentx = self.x
         currenty = self.y
@@ -70,14 +62,14 @@ class Node:
         dir2x = currentx - destx
         dir2y = currenty - desty
 
-        print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
+        #print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
         
 
         if dir2x == 1 and dir2y == 0:
             return "LEFT"
         elif dir2x == -1 and dir2y == 0:
             return "RIGHT"
-        else:
+        else:##Kommer aldrig hamna här
             return "SAAAY WHATT??"
         #Continue with this
 
@@ -186,7 +178,7 @@ class Graph:
         length = 100000
         indexoflength = -1
         i=0
-        print(all_paths)
+        #print(all_paths)
         while i < len(all_paths):
             if(length > len(all_paths[i])):
                 length = len(all_paths[i])
@@ -250,25 +242,25 @@ class Graph:
         i=0
         while i < len(self.pickup_path):
             if self.pickup_path[i] != None:
-                print(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
+                #print(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
                 self.pickup_directions.append(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
                 prevnode = self.pickup_path[i]
             i+=1
 
         self.pickup_path.pop()
-        print("\n\n")
+        #print("\n\n")
         prevnode = None
         last = None
         self.dropoff_path.append(last)
         i=0
         while i < len(self.dropoff_path):
             if self.dropoff_path[i] != None:
-                print(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
+                #print(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
                 self.dropoff_directions.append(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
                 prevnode = self.dropoff_path[i]
             i+=1
         self.dropoff_path.pop()
-        print("\n\n")
+        #print("\n\n")
 
 
 
@@ -355,7 +347,7 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("LA","RB","LB")
+    Graph_1.get_paths_DFS("RF","LB","RA")
 
 
     Graph_1.get_directions()
