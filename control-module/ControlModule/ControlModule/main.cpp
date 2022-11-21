@@ -41,6 +41,7 @@ volatile int error;
 volatile int detection;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
+volatile bool velocity_received = false;
 
 volatile int ConstantP, ConstantI, ConstantD;
 volatile int PTerm, ITerm, DTerm;
@@ -80,9 +81,7 @@ int main(void)
 	memset(working_buffer,0,sizeof working_buffer);
 	char debugdata[50];
 	memset(debugdata,0,sizeof debugdata);
-	//handshake();
-	send_data("Handshake utkommenterat\n");
-	send_data("After handshake\n");
+	handshake();
 	while (1)
 	{
 
@@ -150,7 +149,7 @@ int main(void)
 				if(velocity_received)
 				{
 					// variabeln == "velocity"
-					speed_error_received = false;
+					velocity_received = false;		
 				}
 				old_millis = millis();
 				

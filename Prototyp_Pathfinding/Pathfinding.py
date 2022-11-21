@@ -38,7 +38,7 @@ class Node:
         # diry = prevnode.y - self.y
         dirx = self.x - prevnode.x
         diry = self.y - prevnode.y
-        #print("dirx,diry {0},{1}".format(dirx,diry))
+        print("dirx,diry {0},{1}".format(dirx,diry))
 
         #dir2x = dirx - destination.x
         #dir2y = diry - destination.y
@@ -47,12 +47,13 @@ class Node:
         dir2y = destination.y - self.y
 
 
-        #print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
+        print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
         
-        directionx = dir2x - dirx
-        directiony = dir2y - diry
-
-        #print("directionx,directiony {0},{1}".format(directionx,directiony))
+        #directionx = dir2x - dirx
+        #directiony = dir2y - diry
+        directionx = dir2x + dirx
+        directiony = dir2y + diry
+        print("directionx,directiony {0},{1}".format(directionx,directiony))
         if directionx == -1:
             return "LEFT"
         elif directionx == 1:
@@ -230,7 +231,7 @@ class Graph:
             i+=1
 
         self.pickup_path.pop()
-        
+        print("\n\n")
         prevnode = None
         last = None
         self.dropoff_path.append(last)
@@ -242,6 +243,7 @@ class Graph:
                 prevnode = self.dropoff_path[i]
             i+=1
         self.dropoff_path.pop()
+        print("\n\n")
 
 
 
@@ -252,29 +254,29 @@ def main():
     Graph_1 = Graph()
 
     #Creating all nodes
-    RA = Node("RA",0,0)
-    LA = Node("LA",0,0)
+    RA = Node("RA",1,1)
+    LA = Node("LA",1,1)
     
-    RB = Node("RB",3,0)
-    LB = Node("LB",3,0)
+    RB = Node("RB",4,1)
+    LB = Node("LB",4,1)
     
-    RC = Node("RC",3,2)
-    LC = Node("LC",3,2)
+    RC = Node("RC",4,3)
+    LC = Node("LC",4,3)
     
-    RD = Node("RD",0,2)
-    LD = Node("LD",0,2)
+    RD = Node("RD",1,3)
+    LD = Node("LD",1,3)
     
-    Korsning_1 = Node("Kors 1",0,1)
-    Fake_Korsning_1 = Node("Kors 1",0,1)
+    Korsning_1 = Node("Kors 1",1,2)
+    Fake_Korsning_1 = Node("Kors 1",1,2)
     
-    RE = Node("RE",1,1)
-    LE = Node("LE",1,1)
+    RE = Node("RE",2,2)
+    LE = Node("LE",2,2)
     
-    RF = Node("RF",2,1)
-    LF = Node("LF",2,1)   
+    RF = Node("RF",3,3)
+    LF = Node("LF",3,3)   
 
-    Korsning_2 = Node("Kors 2",3,1)
-    Fake_Korsning_2 = Node("Kors 2",3,1)
+    Korsning_2 = Node("Kors 2",4,2)
+    Fake_Korsning_2 = Node("Kors 2",4,2)
 
     Graph_1.add_node(RA)
     Graph_1.add_node(LA)
@@ -327,7 +329,7 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("RF","RB","RD")
+    Graph_1.get_paths_DFS("RF","RA","RE")
     Graph_1.get_directions()
     Graph_1.print_paths_and_directions()
 

@@ -3,7 +3,7 @@
 extern volatile unsigned steering;
 
 extern volatile bool manual_mode;
-
+extern volatile bool velocity_received;
 extern volatile bool man_left;
 extern volatile bool man_right;
 extern volatile bool man_forward;
