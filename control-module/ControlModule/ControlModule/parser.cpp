@@ -20,6 +20,7 @@ void parse(char input[])
 	bool keys = false;
 	bool telemetry = false;
 	bool emergencystop = false;
+	bool error_b = false;
 	int label_end = 0;
 	int value_separator = 0;
 	
@@ -56,6 +57,10 @@ void parse(char input[])
 				{
 					telemetry = true;
 					findcommand = false;
+				}else if (!strcmp(&command[0], "error"))
+				{
+				error = true;
+				findcommand = false;
 				}
 			}
 		}
@@ -174,6 +179,27 @@ void parse(char input[])
 					label_end = i;
 				}
 			}
+			else if (error_b)
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "e"))
+					{
+						error = atoi(&text_value[0]);
+						turn_error_received = true;
+					}
+
+					label_end = i;
+				}
+			}
 			
 			
 			
@@ -200,6 +226,10 @@ void parse(char input[])
 	else if(emergencystop)
 	{
 		sprintf(&value_msg[0], "Received EMERGENCYSTOP\n");
+	}
+	else if (error_b)
+	{
+		sprintf(&value_msg[0],"Received turnerror e=%d",error);
 	}
 	else
 	{

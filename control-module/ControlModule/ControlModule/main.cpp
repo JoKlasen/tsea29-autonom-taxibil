@@ -97,7 +97,7 @@ int main(void)
 
 			if(manual_mode)
 			{
-				if(detection < 2)
+				if(detection <= 2)
 				{
 					SPEED_REGISTER = 0;
 				}
@@ -130,9 +130,13 @@ int main(void)
 			else
 			{
 				
-				if(detection < 2)
+				if(detection <= 2)
 				{
 					SPEED_REGISTER = 0;
+				}
+				else
+				{
+					SPEED_REGISTER = 3500;
 				}
 				
 				//PID LOOP/FUNCTION for sterring
@@ -149,6 +153,7 @@ int main(void)
 				if(velocity_received)
 				{
 					// variabeln == "velocity"
+					//SPEED_REGISTER = 3500;
 					velocity_received = false;		
 				}
 				old_millis = millis();
