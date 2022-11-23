@@ -11,6 +11,7 @@ void PIDSetup(int InputP, int InputI, int InputD) {
 
 // Returns amount of steering to counteract error.
 int PIDIteration(int Error) {
+	
     PTerm = (Error * ConstantP);
     
     CurrentI += Error;
@@ -25,7 +26,7 @@ int PIDIteration(int Error) {
     DTerm = ConstantD * (dTemp - Error);
     dTemp = Error;
 
-    return (PTerm + ITerm + DTerm);
+    return ((PTerm + ITerm + DTerm) );
 }
 
 /*

@@ -38,7 +38,7 @@ volatile int receive_buffer_index = 0;
 volatile int velocity;
 volatile int steering_from_pi;
 volatile int error;
-volatile int detection;
+volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
 volatile bool velocity_received = false;
@@ -81,7 +81,7 @@ int main(void)
 	memset(working_buffer,0,sizeof working_buffer);
 	char debugdata[50];
 	memset(debugdata,0,sizeof debugdata);
-	handshake();
+	//handshake();
 	while (1)
 	{
 
@@ -90,6 +90,7 @@ int main(void)
 		//"switchmode:mode=1:" == manual "switchmode:mode=0:" == autonomous
 		//"telemetry:velocity=2:steering=2:error=800:detection=2:"
 		//"sendpid:p=1:i=0:d=0:"
+		//error:e=-500:
 		if(received)
 		{
 			received = false;
@@ -136,7 +137,7 @@ int main(void)
 				}
 				else
 				{
-					SPEED_REGISTER = 3500;
+					//SPEED_REGISTER = 3500;
 				}
 				
 				//PID LOOP/FUNCTION for sterring

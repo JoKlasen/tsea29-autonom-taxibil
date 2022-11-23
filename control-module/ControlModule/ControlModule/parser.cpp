@@ -59,8 +59,8 @@ void parse(char input[])
 					findcommand = false;
 				}else if (!strcmp(&command[0], "error"))
 				{
-				error = true;
-				findcommand = false;
+					error_b = true;
+					findcommand = false;
 				}
 			}
 		}
@@ -229,7 +229,7 @@ void parse(char input[])
 	}
 	else if (error_b)
 	{
-		sprintf(&value_msg[0],"Received turnerror e=%d",error);
+		sprintf(&value_msg[0],"Received turnerror e=%d\n",error);
 	}
 	else
 	{
