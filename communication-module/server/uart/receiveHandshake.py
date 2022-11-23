@@ -17,6 +17,3 @@ def start_communication(port):
 
 serial_port = ' '.join(sys.argv[1:])
 start_communication(serial_port)
-
-print("Started Listening on port=")
-print(serial_port)
