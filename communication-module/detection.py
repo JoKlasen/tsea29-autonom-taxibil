@@ -339,7 +339,10 @@ def dl_detect_lanes(image:np.ndarray, numb_windows=20, lane_margin=150, min_to_r
 	return lanes[0][0], lanes[1][0], graph, pre_image
 
 
-def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False):
+def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, get_image_data=False):
+	""" A line detection function that from an inputed image detect two
+	seperate lines and return them as 2nd degree polynomials.
+	"""
 	
 	# camera.preview_image(image)
 	
@@ -353,7 +356,7 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False):
 	# Does things to image but not warps it
 	edges = dl_mark_edges(warped)
 
-	lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges, debug=False, get_pics=preview_steps)
+	lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges, debug=False, get_pics=True)
 	
 	# Calculate center offset
 	camera_pos = int(image.shape[1]/2)
@@ -397,8 +400,13 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False):
 	if preview_result:
 		camera.preview_image_grid([[image], [result]])
 	# ____________________________________________
+
+	if get_image_data:
+		return_image = lanes_image
+	else:
+		return_image = preview_image
 		
-	return center_offset, left_curve, right_curve, preview_image
+	return center_offset, left_curve, right_curve, return_image
 
 
 # ------------------------------------------------

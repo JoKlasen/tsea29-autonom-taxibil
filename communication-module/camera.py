@@ -24,6 +24,14 @@ def create_a_camera():
 	
 	return camera
 	
+	
+def get_timestamp():
+	
+	now = datetime.now()
+		
+	return now.strftime("%y.%m.%d-%H.%M.%S")	
+
+	
 def create_example_images():
 
 	cam = create_a_camera()
@@ -47,7 +55,7 @@ def create_example_images():
 		
 		now = datetime.now()
 		
-		img.save("{}EI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+		img.save("{}EI_{}.jpg".format(path, get_timestamp()))
 		print("image taken")
 
 def camera_capture_image(camera:PiCamera, debug=False):
