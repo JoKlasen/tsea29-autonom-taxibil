@@ -33,7 +33,7 @@ def main():
 
 	print("Start loop")
 
-	while index < 50:
+	while True:
 		#print(f"Iteration {index} start")
 		start_time = time.time()
 		
@@ -43,14 +43,14 @@ def main():
 		#print("Step 3 Detect_lines")
 		
 		start_calc_time = time.time()
-		offset, left, right, resulting_image = detection.detect_lines(image, get_image_data=True)
+		offset, left, right, turn, resulting_image = detection.detect_lines(image, get_image_data=True)
 		calc_time = time.time() - start_calc_time
 		
 		#print("Step 4 Create an error")
-		error = detection.calc_error(left, right, offset)
+		error = detection.calc_error(left, right, offset, turn)
 		
 		#print("Step 5 Create a message")
-		message = f"error:e={int(error*10000)}:"
+		message = f"error:e={int(-error*100)}:"
 		
 		#print("Step 6 send to server")
 		asyncio.run(send(message, "ws://localhost:8765"))
@@ -83,9 +83,9 @@ def test_folder(folder):
 	for filename in images:
 		image = cv2.imread(filename)
 
-		offset, left, right, preview_image = detection.detect_lines(image, preview_steps=True)
+		offset, left, right, turn, preview_image = detection.detect_lines(image, preview_steps=True)
 		
-		error = detection.calc_error(left, right, offset)
+		error = detection.calc_error(left, right, offset, turn)
 		
 		#cam.preview_image(preview_image)
 	
@@ -93,6 +93,6 @@ def test_folder(folder):
 
 
 if __name__ == "__main__":
-	main()
+	#main()
 	
-	#test_folder(sys.argv[1])
+	test_folder(sys.argv[1])

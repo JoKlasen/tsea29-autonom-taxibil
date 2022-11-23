@@ -45,6 +45,26 @@ def sendToAVR(message):
         message = message + "\0"
         print(message)
         ser.write(message.encode());
+    elif (message_type == 'error'):
+        print("Got 'error' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'sendpid'):
+        print("Got 'sendpid' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'switchmode'):
+        print("Got 'switchmode' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'telemetry'):
+        print("Got 'telemetry' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
     elif (message_type == 'override'):
         print("Got 'override' command, sending to Control Unit")
         message = message + "\0"
