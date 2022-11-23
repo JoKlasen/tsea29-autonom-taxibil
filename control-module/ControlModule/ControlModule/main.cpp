@@ -19,7 +19,7 @@ volatile unsigned steering = STEER_NEUTRAL;
 
 
 //Ska defaulta true
-volatile bool manual_mode = false;
+volatile bool manual_mode = true;
 //
 volatile bool man_left = false;
 volatile bool man_right = false;
@@ -98,10 +98,11 @@ int main(void)
 
 			if(manual_mode)
 			{
-				if(detection <= 2)
+				
+				/*if(detection <= 2)
 				{
 					SPEED_REGISTER = 0;
-				}
+				}*/
 				
 				
 				if (man_left)
@@ -131,6 +132,7 @@ int main(void)
 			else
 			{
 				
+				/*
 				if(detection <= 2)
 				{
 					SPEED_REGISTER = 0;
@@ -139,7 +141,10 @@ int main(void)
 				{
 					//SPEED_REGISTER = 3500;
 				}
+				*/
 				
+				// Hårdkodad sålänge
+				SPEED_REGISTER = 3000;
 				//PID LOOP/FUNCTION for sterring
 				if(turn_error_received)
 				{

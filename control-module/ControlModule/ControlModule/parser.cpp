@@ -113,6 +113,15 @@ void parse(char input[])
 					if (!strcmp(&value_name[0], "mode"))
 					{
 						manual_mode = atoi(&text_value[0]);
+						if (manual_mode == 1)
+						{
+							send_data("Switched to manual mode\n");
+
+						}
+						else if (manual_mode == 0)
+						{
+							send_data("Switched to autonomous mode\n");
+						}
 					}
 					label_end = i;
 				}
