@@ -72,83 +72,61 @@ def fill_between_polynomials(size, poly1, poly2, debug=False):
 # Calculate errors
 # ------------------------------------------------
 
-def calc_center_offset(lane_left, lane_right, camera_offset, camera_height):
-	""" Calculate the center offset from the provided 2nd degree
-	polynomial that represents the left and right lane.
-	"""
-	
-	# No lane found
-	if lane_left is None and lane_right is None:
-		# Yolo
-		return 0
-		
-
-	# One lane found
-	elif (lane_left is None) != (lane_right is None):
-		# Just follow curvature
-		return 0
-	
-	# Both lanes found
-	elif lane_left is not None and lane_right is not None:
-		
-		lane_left_at_bottom = lane_left[0] * camera_height ** 2 + lane_left[1] * camera_height + lane_left[2]
-		lane_right_at_bottom = lane_right[0] * camera_height ** 2 + lane_right[1] * camera_height + lane_right[2]	
-
-		center_offset = (lane_left_at_bottom + lane_right_at_bottom)/2 - camera_offset
-
-		return center_offset
-
-
-def calc_curve_of_lane(lane, camera_height):
-	""" Takes a 2nd degree polynomial and calculates its curvature	"""
-	if lane is None:
-		return 10**6
-	
-	curve = np.sign(lane[0]) * ((1 + (2*lane[0]*camera_height + lane[1])**2)**1.5) / np.absolute(2*lane[0])
-	
-	return curve
-
 
 def calc_adjust_turn(left_lane, right_lane, camera_pos, hit_height=200):
 	""" left_lane and right_lane is a 2nd degree polynomial. 
 	camera_pos = (x,y) 
 	"""
 	
-	# Flip x, y axises cause mixed
-	hit_x = hit_height
+	if left_lane is None and right_lane is None:
+	
+		return 0, 0
+	
+	else:
+		# Flip x, y axises cause mixed
+		hit_x = hit_height
+			
+		# Calculate lane to follow
+		if right_lane is None:
+			hit_x += int(left_lane[0]*camera_pos[0]**2 + left_lane[1]*camera_pos[0]+left_lane[2])
+			lane = np.asarray(left_lane) 
+		elif left_lane is None:
+			hit_x -= int(right_lane[0]*camera_pos[0]**2 + right_lane[1]*camera_pos[0]+right_lane[2])
+			lane = np.asarray(right_lane) 
+		else:
+			lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
 		
-	lane = [(left_lane[i] + right_lane[i]) / 2 for i in range(3)]
+		hit_y = lane[0] * hit_x ** 2 + lane[1] * hit_x + lane[2]
 		
-	hit_y = lane[0] * hit_x ** 2 + lane[1] * hit_x + lane[2] 		
-	
-	hit_vector = (hit_x - camera_pos[0], hit_y - camera_pos[1])
-	# Rotate so 0 is straight forward
-	hit_vector = (hit_vector[1], -hit_vector[0])
+		hit_vector = (hit_x - camera_pos[0], hit_y - camera_pos[1])
+		# Rotate so 0 is straight forward
+		hit_vector = (hit_vector[1], -hit_vector[0])
 
-	turn_to_hit = math.atan2(hit_vector[0], hit_vector[1])	
-	
-	align_slope = 2*lane[0]*hit_x + lane[1]
-	align_vector = (1, align_slope)
+		turn_to_hit = math.atan2(hit_vector[0], hit_vector[1])	
+		
+		align_slope = 2*lane[0]*hit_x + lane[1]
+		align_vector = (1, align_slope)
+		# Rotate so 0 is straight forward
+		align_vector = (-align_vector[1], align_vector[0])
 
-	turn_to_align = math.atan2(align_vector[0], align_vector[1])
-	
-	return turn_to_hit, turn_to_align, (hit_x, hit_y), align_vector
+		turn_to_align = math.atan2(align_vector[0], align_vector[1])
+		
+		return turn_to_hit, turn_to_align, (hit_x, hit_y), align_vector
 
 
-def calc_error(left_curve, right_curve, offset, turn, curveconst=1000, offsetconst=0.01, turnconst=1, debug=False):
+def calc_error(turn_hit, turn_align, turnconst=1.4, alignconst=1, debug=False):
 	""" 
 	"""
 		
-	curve_error = 0
-	if left_curve != None:
-		curve_error += 1/left_curve
-	if right_curve != None:
-		curve_error += 1/right_curve
-
-	error = curveconst*curve_error + offset * offsetconst + turn*turnconst
+	error = turn_hit*turnconst + turn_align*alignconst
 
 	if debug:
-		print(f"___________________________\nLeft Radius: {left_curve} \nRight Radius: {right_curve} \nCurvature: {curve_error} (x{curveconst})\nOffset: {offset} (x{offsetconst})\nTurn: {turn} (x{turnconst})\nError: {error}")
+		print(f"""
+		___________________________
+		Turn to hit:  {turn_hit} (x{turnconst})
+		Turn to align {turn_align} (x{alignconst})
+		Error: 		  {error}
+		""")
 
 	return error
 
@@ -216,20 +194,6 @@ def get_warp_perspective_funcs(image:np.ndarray, roi=None, target_roi=None, debu
 	
 	return warp_func, warp_back_func
 
-'''
-	cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
-
-	_, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
-	
-	blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
-
-	sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, 7))
-	sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, 7))
-	
-	sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
-
-	sobel_image = np.ones_like(sobel, dtype=image.dtype)
-	sobel_image[threshold(sobel)] = 0'''
 
 def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
 	""" Returns an image of the provided one where the edges are
@@ -387,11 +351,6 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 	
 	# Calculate center offset
 	camera_pos = (int(image.shape[1]/2), image.shape[0])
-	center_offset = calc_center_offset(lane_left, lane_right, camera_pos[0], camera_pos[1])
-
-	# Calculate curvature
-	left_curve = calc_curve_of_lane(lane_left, camera_pos[1])
-	right_curve = calc_curve_of_lane(lane_right, camera_pos[1])
 
 	# Calculate turn error
 	turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]))
@@ -416,9 +375,6 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 			cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
 
 
-	# Add marker for center of road
-	cv2.circle(preview_image, (int(camera_pos[0] + center_offset + 0.5), camera_pos[1]), 10, [0,255,255], 18)
-
 	# Add line to mark hit vector to turn towards
 	hit_point = np.flip(np.asarray(hit_point, int))
 	cv2.line(lanes_image, camera_pos, hit_point, [0,255,255], 5)
@@ -427,15 +383,14 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 	cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
 	
 	# Add align vector on hit_point	
-	align_vector = np.asarray((-align_vector[1], -align_vector[0]))
+	align_vector = np.asarray((align_vector[0], -align_vector[1]))
 	align_vector = (50*align_vector/np.linalg.norm(align_vector)).astype(int)
 	align_point = hit_point + align_vector
 
 	cv2.line(lanes_image, hit_point, align_point, (100, 255, 100), 5)
-	print(align_point, "\n")
 
 	if preview_steps:
-		calc_error(left_curve, right_curve, center_offset, turn_hit, debug=True)
+		calc_error(turn_hit, turn_align, debug=True)
 		camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
 		
 	if preview_result:
@@ -447,7 +402,7 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 	else:
 		return_image = preview_image
 		
-	return center_offset, left_curve, right_curve, turn_hit, return_image
+	return turn_hit, turn_align, return_image
 
 
 # ------------------------------------------------
