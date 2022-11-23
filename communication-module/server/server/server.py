@@ -7,16 +7,20 @@ import datetime
 import serial
 import sys
 
+# take command line arguments
 serial_port = ' '.join(sys.argv[1:])
 
+# Get timestamp
 def timestamp():
 	timestamp = time.time()
 	date_time = datetime.datetime.fromtimestamp(timestamp)
 	str_date_time = date_time.strftime("%d/%m %H:%M:%S")
 	return str_date_time
 
+# array of connected clients
 CLIENTS = []
 
+# Send message to client
 async def send(websocket, message):
     try:
         await websocket.send(message) 
@@ -29,8 +33,8 @@ async def send(websocket, message):
         print("Exiting program...")
         exit()
 
-print("Starting server...")
 
+# Start serial connection
 ser = serial.Serial (serial_port, 57600)
 def sendToAVR(message):
     message_type = message.split(':')[0]
@@ -41,15 +45,20 @@ def sendToAVR(message):
         message = message + "\0"
         print(message)
         ser.write(message.encode());
+    elif (message_type == 'override'):
+        print("Got 'override' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
     
+# Send message to all connected clients§
 async def sendAll(websocket):
-    #print(websocket)
-    
     async for message in websocket:
         print(timestamp() + " " + message)
         sendToAVR(message)
         if websocket not in CLIENTS:
             if "[webapp]" in message:
+                CLIENTS.clear()
                 CLIENTS.append(websocket)
         try:
             for socket in CLIENTS:
@@ -63,8 +72,10 @@ async def sendAll(websocket):
             print("Exiting program...")
             exit()
 
+# Start server
 async def main():
     async with serve(sendAll, "0.0.0.0", 8765):
         await asyncio.Future()  # run forever
 
+print("Starting server...")
 asyncio.run(main())

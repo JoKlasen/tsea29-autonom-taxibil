@@ -171,7 +171,22 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="definitions.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="global_variables.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="implementations.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="parser.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="pid.cpp">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

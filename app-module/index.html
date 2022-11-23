@@ -13,6 +13,29 @@
         <script src="script/map.js"></script>
     </head>
     <body>
+        <div
+            id="ip-address-container"
+            style="
+                position: absolute;
+                top: 5vh;
+                left: 5vh;
+                z-index: 2;
+                background-color: #152238;
+                border: 0.2vh solid white;
+                border-radius: 2vh;
+                height: fit-content;
+                width: fit-content;
+                text-align: center;
+                padding: 5vh;
+                display: flex;
+                flex-direction: column;
+            "
+        >
+            <p id="ip-address-text" style="color: white; margin: 0; margin-bottom: 2vh;">Input IP Address</p>
+            <textarea id="ip-address-textarea" style="margin-bottom: 1vh;"></textarea>
+            <button id="ip-address-button" onclick="connectToServers()">Start Application</button>
+        </div>
+
         <div id="app-container">    
             <div>
                 <div 
@@ -157,14 +180,18 @@
                     <div style="width: 90%; height: 90%;">
                         Live Feed
                         <br>
-                        <iframe 
+                        <!--iframe 
+                            id="camera-iframe"
                             type="text/html"
                             src="http://192.168.240.128:8000/index.html" 
-                            width="100%" height="90%"> 
+                            width="100%" height="90%"--> 
+                        <iframe 
+                            id="camera-iframe"
+                            type="text/html"
+                            width="100%" height="90%">
                     </div>
                 </div>
             </div>
         </div>
-        
     </body>
 </html>
