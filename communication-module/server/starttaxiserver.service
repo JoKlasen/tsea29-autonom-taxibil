@@ -1,0 +1,14 @@
+[Unit]
+Description=web server monitor
+After=systemd-networkd-wait-online.service
+Wants=systemd-networkd-wait-online.service
+
+[Service]
+WorkingDirectory=/home/g13/
+User=g13
+TasksMax=30
+KillMode=process
+ExecStart=/usr/bin/python3 /home/g13/Documents/projekt/communication-module/server/start_taxi.py
+
+[Install]
+WantedBy=multi-user.target
