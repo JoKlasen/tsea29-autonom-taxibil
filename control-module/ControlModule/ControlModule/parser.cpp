@@ -145,6 +145,7 @@ void parse(char input[])
 						velocity = atoi(&text_value[0]);
 						velocity_received = true;
 					}
+					/*
 					else if (!strcmp(&value_name[0], "steering"))
 					{
 						steering_from_pi = atoi(&text_value[0]);
@@ -153,7 +154,7 @@ void parse(char input[])
 					{
 						error = atoi(&text_value[0]);
 						turn_error_received = true;
-					}
+					}*/
 					else if (!strcmp(&value_name[0], "detection"))
 					{
 						detection = atoi(&text_value[0]);
@@ -214,6 +215,7 @@ void parse(char input[])
 			
 		}
 	}
+	/*
 	char value_msg[50];
 	
 	if(keys)
@@ -230,7 +232,9 @@ void parse(char input[])
 	}
 	else if(telemetry)
 	{
-		sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
+		//sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
+		sprintf(&value_msg[0], "Received speed:%d detection:%d\n", velocity,detection );
+
 	}
 	else if(emergencystop)
 	{
@@ -245,6 +249,7 @@ void parse(char input[])
 		sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
 	}
 	send_data(&value_msg[0]);
+	*/
 	
 	
 }

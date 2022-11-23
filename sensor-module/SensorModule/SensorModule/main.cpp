@@ -168,6 +168,7 @@ int main(void)
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 	
+	/*
 		while(1)
 		{
 			if(millis()-new_time > 100)
@@ -191,7 +192,9 @@ int main(void)
 				
 			}
 		}
+		
 	send_data("After handshake\n");
+	*/
 	while(1)
 	{
 		new_time = millis();
@@ -231,7 +234,7 @@ int main(void)
 			if ((new_time - old_time) > 250)
 			{
 				//send_data_routine();
-				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u\n", heltal, decimal, pulse_length );
+				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
 				send_data(speed_msg);
 				cli();
 				sendbool = false;
@@ -343,13 +346,13 @@ ISR (USART0_RX_vect)
 	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
 	{
 		receive_buffer[receive_buffer_index] = from_receive_buffer;
-		send_data("From UART: ");
+		/*send_data("From UART: ");
 		send_data(receive_buffer);
-		send_data("\n");
+		send_data("\n");*/
 		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
-		send_data("I working buffer i ISR: ");
+		/*send_data("I working buffer i ISR: ");
 		send_data(working_buffer);
-		send_data("\n");
+		send_data("\n");*/
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
