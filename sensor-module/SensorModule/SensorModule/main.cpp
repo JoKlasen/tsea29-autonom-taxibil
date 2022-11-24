@@ -168,7 +168,6 @@ int main(void)
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 	
-	/*
 		while(1)
 		{
 			if(millis()-new_time > 100)
@@ -192,7 +191,7 @@ int main(void)
 				
 			}
 		}
-		
+		/*
 	send_data("After handshake\n");
 	*/
 	while(1)
@@ -231,7 +230,7 @@ int main(void)
 		sei();
 		if(localsend == true)
 		{
-			if ((new_time - old_time) > 250)
+			if ((new_time - old_time) > 500)
 			{
 				//send_data_routine();
 				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );

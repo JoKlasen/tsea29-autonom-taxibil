@@ -82,7 +82,7 @@ int main(void)
 	char debugdata[50];
 	memset(debugdata,0,sizeof debugdata);
 	int localspeed = 0;
-	//handshake();
+	handshake();
 	while (1)
 	{
 
@@ -134,7 +134,7 @@ int main(void)
 			else
 			{
 				
-				
+				//Bugg här nånstans
 				if(detection <= 3)
 				{
 					SPEED_REGISTER = 0;
@@ -142,30 +142,32 @@ int main(void)
 				else
 				{
 					SPEED_REGISTER = localspeed;
+					int changes = 100;
+					if(man_forward)
+					{
+						if((localspeed + changes) > MAX_AUTO_SPEED)
+						{
+							localspeed = MAX_AUTO_SPEED;
+						}
+						else
+						{
+							localspeed += changes;
+						}
+						SPEED_REGISTER = localspeed;
+					}
+					else if(man_back)
+					{
+						if((localspeed - changes) >= 0)
+						{
+							localspeed -= changes;
+						}
+						SPEED_REGISTER = localspeed;
+					}
 				}
+				//Buggen ovan
 				
 				// Hårdkodad sålänge
-				int changes = 100;
-				if(man_forward)
-				{
-					if((localspeed + changes) > MAX_AUTO_SPEED)
-					{
-						localspeed = MAX_AUTO_SPEED;
-					}
-					else
-					{
-						localspeed += changes;
-					}
-					SPEED_REGISTER = localspeed;
-				}
-				else if(man_back)
-				{
-					if((localspeed - changes) >= 0)
-					{
-						localspeed -= changes;
-					}
-					SPEED_REGISTER = localspeed;
-				}
+
 				//sprintf(debugdata,"Speed register = %d",SPEED_REGISTER);
 				//send_data(debugdata);
 				//memset(debugdata,0,50);
