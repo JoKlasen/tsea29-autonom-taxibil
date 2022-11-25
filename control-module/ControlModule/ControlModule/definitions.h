@@ -2,14 +2,14 @@
 #define DEFINITIONS_F
 
 //Port Definitions
-#define UART_RX PD0 // 14
-#define UART_TX PD1 // 15
+#define UART_RX PD0 // Ben 14
+#define UART_TX PD1 // Ben 15
 
 
-#define PWM PD5    // 19
-#define DIR PA0     // 40
-#define BRAKE PA1   // 39
-#define SERVO PB6  // 7
+#define PWM PD5    // Ben 19
+#define DIR PB0     // Ben 1
+#define BRAKE PB1   // Ben 2
+#define SERVO PB6  // Ben 7
 
 //Constants
 #define F_CPU 16000000UL

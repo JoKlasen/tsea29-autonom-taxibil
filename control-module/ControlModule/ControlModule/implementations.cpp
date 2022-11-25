@@ -10,11 +10,8 @@
 
 void port_init()
 {
-	PORTA = (1 << DIR) | (0 << BRAKE); // Testa om DIR = 1 Eller 0 blir frammåt
-	DDRA = (1 << DIR) | (1 << BRAKE);
-
-	PORTB = (0 << SERVO);
-	DDRB = (1 << SERVO);
+	PORTB = (1 << DIR) | (0 << BRAKE) | (0 << SERVO);
+	DDRB =	(1 << DIR) | (1 << BRAKE) | (1 << SERVO);
 
 	PORTD = (0 << PWM) | (1 << UART_TX) | (1 << UART_RX);
 	// output == 1 input == 0
