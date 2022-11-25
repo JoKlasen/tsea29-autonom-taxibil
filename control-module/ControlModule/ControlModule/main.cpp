@@ -99,14 +99,7 @@ int main(void)
 
 			if(manual_mode)
 			{
-				
-				/*
-				if(detection <= 2)
-				{
-					SPEED_REGISTER = 0;
-				}*/
-				
-				
+			
 				if (man_left)
 				{
 					steering = MAX_STEER_LEFT;
@@ -131,39 +124,39 @@ int main(void)
 				old_millis = millis();
 				
 			}
-			else
+			else//Automatic Mode
 			{
 				
 				//Bugg här nånstans
 				if(detection <= 3)
 				{
 					SPEED_REGISTER = 0;
+					localspeed = 0;
+
 				}
-				else
+				int changes = 100;
+				
+				if(man_forward)
 				{
+					if((localspeed + changes) > MAX_AUTO_SPEED)
+					{
+						localspeed = MAX_AUTO_SPEED;
+					}
+					else
+					{
+						localspeed += changes;
+					}
 					SPEED_REGISTER = localspeed;
-					int changes = 100;
-					if(man_forward)
-					{
-						if((localspeed + changes) > MAX_AUTO_SPEED)
-						{
-							localspeed = MAX_AUTO_SPEED;
-						}
-						else
-						{
-							localspeed += changes;
-						}
-						SPEED_REGISTER = localspeed;
-					}
-					else if(man_back)
-					{
-						if((localspeed - changes) >= 0)
-						{
-							localspeed -= changes;
-						}
-						SPEED_REGISTER = localspeed;
-					}
 				}
+				else if(man_back)
+				{
+					if((localspeed - changes) >= 0)
+					{
+						localspeed -= changes;
+					}
+					SPEED_REGISTER = localspeed;
+				}
+				
 				//Buggen ovan
 				
 				// Hårdkodad sålänge
