@@ -54,6 +54,43 @@ ISR (USART0_RX_vect)
 	}
 }
 
+/*
+sätt USR0B |= (1 << TXCIE0)
+stäng av USR0B &= (0 << TXCIE0)
+ISR(USART0_TX_vect)
+{
+	
+}
+
+char send_buffer[RECEIVE_BUFFER_SIZE];
+volatile int send_buffer_counter = 0;
+void send_data(char * data)
+{
+	kolla om bool TXinterrupt == false;
+	sätt send_buffer = data;
+		starta interupten
+
+	
+}
+
+void send_data(char* data)
+{
+	int counter=0;
+	while(1)
+	{
+		while(!( UCSR0A & (1<<UDRE0)))
+		;
+		if (data[counter] == '\0')
+		{
+			break;
+		}
+		UDR0 = data[counter];
+
+		counter++;
+	}
+}
+*/
+
 void pwm_init()
 {
 	// Motor-timer 2000Hz (0.5ms)
@@ -138,6 +175,8 @@ void send_data(char* data)
 		counter++;
 	}
 }
+
+
 
 
 

@@ -18,7 +18,7 @@ volatile unsigned steering = STEER_NEUTRAL;
 
 
 //Ska defaulta true
-volatile bool manual_mode = false;
+volatile bool manual_mode = true;
 //
 volatile bool man_left = false;
 volatile bool man_right = false;
@@ -37,7 +37,7 @@ volatile int receive_buffer_index = 0;
 volatile int velocity;
 volatile int steering_from_pi;
 volatile int error;
-volatile int detection;
+volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
 volatile bool velocity_received = false;
@@ -80,6 +80,7 @@ int main(void)
 	memset(working_buffer,0,sizeof working_buffer);
 	char debugdata[50];
 	memset(debugdata,0,sizeof debugdata);
+	int localspeed = 0;
 	handshake();
 	PORTA |= (1 << LED2); // Turn on handshake LED
 	while (1)
@@ -90,6 +91,7 @@ int main(void)
 		//"switchmode:mode=1:" == manual "switchmode:mode=0:" == autonomous
 		//"telemetry:velocity=2:steering=2:error=800:detection=2:"
 		//"sendpid:p=1:i=0:d=0:"
+		//error:e=-500:
 		if(received)
 		{
 			received = false;
@@ -97,12 +99,7 @@ int main(void)
 
 			if(manual_mode)
 			{
-				if(detection < 2)
-				{
-					SPEED_REGISTER = 0;
-				}
-				
-				
+			
 				if (man_left)
 				{
 					steering = MAX_STEER_LEFT;
@@ -127,14 +124,47 @@ int main(void)
 				old_millis = millis();
 				
 			}
-			else
+			else//Automatic Mode
 			{
 				
-				if(detection < 2)
+				//Bugg här nånstans
+				if(detection <= 3)
 				{
 					SPEED_REGISTER = 0;
+					localspeed = 0;
+
+				}
+				int changes = 100;
+				
+				if(man_forward)
+				{
+					if((localspeed + changes) > MAX_AUTO_SPEED)
+					{
+						localspeed = MAX_AUTO_SPEED;
+					}
+					else
+					{
+						localspeed += changes;
+					}
+					SPEED_REGISTER = localspeed;
+				}
+				else if(man_back)
+				{
+					if((localspeed - changes) >= 0)
+					{
+						localspeed -= changes;
+					}
+					SPEED_REGISTER = localspeed;
 				}
 				
+				//Buggen ovan
+				
+				// Hårdkodad sålänge
+
+				//sprintf(debugdata,"Speed register = %d",SPEED_REGISTER);
+				//send_data(debugdata);
+				//memset(debugdata,0,50);
+
 				//PID LOOP/FUNCTION for sterring
 				if(turn_error_received)
 				{
@@ -149,6 +179,7 @@ int main(void)
 				if(velocity_received)
 				{
 					// variabeln == "velocity"
+					//SPEED_REGISTER = 3500;
 					velocity_received = false;		
 				}
 				old_millis = millis();
