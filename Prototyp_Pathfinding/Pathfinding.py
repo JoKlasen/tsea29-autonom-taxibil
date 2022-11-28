@@ -96,44 +96,6 @@ class Graph:
         for i in range(self.size-1):
             if self.nodelist[i].name == node:
                 return self.nodelist[i]
-    
-
-        
-
-    
-    def BFS(self,start_node,dest_node):
-        self.reset_exploration()
-        queue = []
-        print("1")
-        startnode = self.find_node(start_node)
-        startnode.explored = True
-        queue.append(startnode)
-        endnode = self.find_node(dest_node)
-        current = None
-        print("2")
-
-        while len(queue) != 0:
-            current = queue.pop(0)
-            #for i in current.neighbours:
-            i = 0
-            print("3")
-
-            while i < len(current.neighbours): 
-                if(current.neighbours[i].explored == False):
-                    queue.append(current.neighbours[i])
-                    current.neighbours[i].prev = current
-                    current.neighbours[i].explored = True
-                i+=1
-            if (current.name == endnode.name):
-                break
-            current.explored = True
-        print("Hej")
-        path = []
-        while current != None:
-            path.append(current)
-            current = current.prev
-            print("Tjabba ")
-        return path
 
     def print_a_path(self,path):
         sizeof_pickup_path = len(path)
@@ -224,12 +186,6 @@ class Graph:
         self.print_path(self.dropoff_path)
         self.print_directions(self.dropoff_directions)
 
-        
-    
-    def get_paths_BFS(self,start_node1,start_node2,endnode2):
-        self.pickup_path = self.BFS(start_node1,start_node2)
-        self.dropoff_path = self.BFS(start_node2,endnode2)
-    
     def get_paths_DFS(self,start_node1,start_node2,endnode2):
         self.pickup_path = self.DFS_start(start_node1,start_node2)
         self.dropoff_path = self.DFS_start(start_node2,endnode2)
