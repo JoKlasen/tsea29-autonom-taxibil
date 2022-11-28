@@ -10,6 +10,9 @@
 
 void port_init()
 {
+	PORTA = (1 << LED1) | (0 << LED2);
+	DDRA = (1 << LED1) | (1 << LED2);
+	
 	PORTB = (1 << DIR) | (0 << BRAKE) | (0 << SERVO);
 	DDRB =	(1 << DIR) | (1 << BRAKE) | (1 << SERVO);
 

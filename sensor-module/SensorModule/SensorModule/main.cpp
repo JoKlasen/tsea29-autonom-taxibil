@@ -12,9 +12,12 @@
 #include <stdio.h>
 
 
-//Port Definitions
+//Port Definitions			Ben:
 #define UART_RX		 PD0 // 14
 #define UART_TX		 PD1 // 15
+
+#define LED1		 PA0 // 40
+#define LED2		 PA1 // 39
 
 #define ECHO_OUTPUT	 PB2 // 3
 #define ECHO_TRIGGER PB3 // 4
@@ -168,30 +171,32 @@ int main(void)
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 	
-		while(1)
+	while(1)
+	{
+		if(millis()-new_time > 100)
 		{
-			if(millis()-new_time > 100)
+			new_time = millis();
+			//Denna ska va här ---- start
+			send_data("sensor_module\n");
+			//Denna ska va här ---- slut
+			if(received)
 			{
-				new_time = millis();
-				//Denna ska va här ---- start
-				send_data("sensor_module\n");
-				//Denna ska va här ---- slut
-				if(received)
+				cli();
+				received = false;
+				if(parse_handshake()) //ACK
 				{
-					cli();
-					received = false;
-					if(parse_handshake()) //ACK
-					{
-						sei();
-						break;
-					}
 					sei();
-					
+					break;
 				}
-				
+				sei();
+					
 			}
+				
 		}
+	}
+	PORTA |= (1 << LED2);
 	send_data("After handshake\n");
+	
 	while(1)
 	{
 		new_time = millis();
@@ -306,6 +311,9 @@ ISR(INT2_vect)
 
 void portinit()
 {
+	PORTA = (1 << LED1) | (0 << LED2);
+	DDRA = (1 << LED1) | (1 << LED2);
+	
 	PORTD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (1 << UART_RX); // (0 << PD5) for testing
 	// output == 1 input == 0
 	DDRD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (0 << UART_RX); // (1 << DDD5)|(1 << DDD4) for testing

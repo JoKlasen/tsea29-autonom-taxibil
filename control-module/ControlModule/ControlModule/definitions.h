@@ -5,6 +5,8 @@
 #define UART_RX PD0 // Ben 14
 #define UART_TX PD1 // Ben 15
 
+#define LED1 PA0 // Ben 40
+#define LED2 PA1 // Ben 39
 
 #define PWM PD5    // Ben 19
 #define DIR PB0     // Ben 1

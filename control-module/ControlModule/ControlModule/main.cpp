@@ -82,6 +82,7 @@ int main(void)
 	char debugdata[50];
 	memset(debugdata,0,sizeof debugdata);
 	handshake();
+	PORTA |= (1 << LED2); // Turn on handshake LED
 	while (1)
 	{
 
