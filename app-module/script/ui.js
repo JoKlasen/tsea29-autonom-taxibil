@@ -6,11 +6,11 @@ function switchMode() {
 
     if (mode == 1) {
         document.getElementById("control-mode").innerHTML = "Manual"
-        sendMessage("switchmode:mode=manual")
+        sendMessage("switchmode:mode=1:")
     }
     else {
         document.getElementById("control-mode").innerHTML = "Auto"
-        sendMessage("switchmode:mode=auto")
+        sendMessage("switchmode:mode=0:")
     }
 }
 
