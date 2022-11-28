@@ -72,6 +72,8 @@ void turn_percent(int correction)
 	STEER_REGISTER = steering;
 }
 
+
+
 int main(void)
 {
 	setup();
@@ -130,32 +132,35 @@ int main(void)
 				//Bugg här nånstans
 				if(detection <= 3)
 				{
-					SPEED_REGISTER = 0;
-					localspeed = 0;
+					brake();
+				}
+				else
+				{
+					release_brake();
+					int changes = 100;
+					
+					if(man_forward)
+					{
+						if((localspeed + changes) > MAX_AUTO_SPEED)
+						{
+							localspeed = MAX_AUTO_SPEED;
+						}
+						else
+						{
+							localspeed += changes;
+						}
+						SPEED_REGISTER = localspeed;
+					}
+					else if(man_back)
+					{
+						if((localspeed - changes) >= 0)
+						{
+							localspeed -= changes;
+						}
+						SPEED_REGISTER = localspeed;
+					}
+				}
 
-				}
-				int changes = 100;
-				
-				if(man_forward)
-				{
-					if((localspeed + changes) > MAX_AUTO_SPEED)
-					{
-						localspeed = MAX_AUTO_SPEED;
-					}
-					else
-					{
-						localspeed += changes;
-					}
-					SPEED_REGISTER = localspeed;
-				}
-				else if(man_back)
-				{
-					if((localspeed - changes) >= 0)
-					{
-						localspeed -= changes;
-					}
-					SPEED_REGISTER = localspeed;
-				}
 				
 				//Buggen ovan
 				

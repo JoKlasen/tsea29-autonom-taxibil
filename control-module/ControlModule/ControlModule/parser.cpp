@@ -116,7 +116,7 @@ void parse(char input[])
 						if (manual_mode == 1)
 						{
 							send_data("Switched to manual mode\n");
-
+							release_brake();
 						}
 						else if (manual_mode == 0)
 						{

@@ -31,7 +31,7 @@
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
 #define SPEED_PRECISION 1000 // 3 decimalers precision
-#define SPEED_FIVETICKS 0.13 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster
+#define SPEED_CONSTANT 0.026 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster, för 1 tick
 
 #define RECEIVE_BUFFER_SIZE 100
 
@@ -159,6 +159,9 @@ int main(void)
 	char initial[50];
 	char * speed_msg = &initial[0]; 
 	
+	volatile int local_hall_counter = 0;
+	volatile unsigned long long local_hall_left_latest = 0;
+	
 	volatile unsigned pulse_length = 0;
 	volatile unsigned heltal = 0;
 	volatile unsigned decimal = 0;
@@ -215,37 +218,35 @@ int main(void)
 			echo_updated = false;
 		}
 		
-		cli();
-		localhallsensor = hall_left_updated;
-		sei();
-		if(localhallsensor)
-		{
-			unsigned long long diff = hall_left_latest - hall_left_old; // diff in ms for 5 ticks
-
-			unsigned long tmp = SPEED_FIVETICKS / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
-			
-			heltal = tmp / SPEED_PRECISION;
-			decimal = tmp % SPEED_PRECISION;
-
-			hall_left_updated = false;
-		}
-	
+		
 		cli();
 		localsend = sendbool;
 		sei();
-		if(localsend == true)
+		if(localsend)
 		{
-			if ((new_time - old_time) > 500)
-			{
-				//send_data_routine();
-				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
-				send_data(speed_msg);
-				cli();
-				sendbool = false;
-				sei();
-			}
-		}
+			hall_left_old = local_hall_left_latest;
+			cli();
+			local_hall_counter = hall_left_counter;
+			local_hall_left_latest = hall_left_latest;
+			hall_left_counter = 0;
+			sei();
+			
+			unsigned long long diff = local_hall_left_latest - hall_left_old; // diff in ms for 5 ticks
 
+			unsigned long tmp = local_hall_counter * SPEED_CONSTANT / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
+			
+			heltal = tmp / SPEED_PRECISION;
+			decimal = tmp % SPEED_PRECISION;
+			
+			//send_data_routine();
+			sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
+			send_data(speed_msg);
+			cli();
+			sendbool = false;
+			sei();
+			
+		}
+		
 	}
 	return 0;
 }
@@ -288,14 +289,7 @@ ISR(INT0_vect)
 ISR(INT1_vect)
 {
 	hall_left_counter++;
-	if(hall_left_counter == 5)
-	{
-		hall_left_old = hall_left_latest;
-		hall_left_latest = millis();
-
-		hall_left_updated = true;
-		hall_left_counter = 0;
-	}
+	hall_left_latest = millis();
 }
 
 //ECHO_OUTPUT
@@ -319,10 +313,6 @@ void portinit()
 	PORTD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (1 << UART_RX); // (0 << PD5) for testing
 	// output == 1 input == 0
 	DDRD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (0 << UART_RX); // (1 << DDD5)|(1 << DDD4) for testing
-		
-	// Flyttar echo_trigger från PA1 till PB3
-	//DDRA = (1 << DDA1); 
-	//PORTA = (0 << PA1);
 		
 	PORTD = (0 << ECHO_TRIGGER);
 	DDRB = (1 << ECHO_TRIGGER)|(0 << ECHO_OUTPUT);
@@ -400,5 +390,5 @@ void ext_intr_init()
 	//Modes: 2 == falling edge // 3 == raising edge // 1 == any change
 	
 	EICRA = (2 << ISC20) | (3 << ISC10) | (3 << ISC00);
-	EIMSK = (1 << INT2) | (1 << INT1) | (1 << INT0);
+	EIMSK = (1 << INT2) | (1 << INT1) | (0 << INT0);
 }

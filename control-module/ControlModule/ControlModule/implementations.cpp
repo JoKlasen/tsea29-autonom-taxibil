@@ -147,6 +147,16 @@ unsigned long long millis()
 	return temp;
 }
 
+void brake()
+{
+	SPEED_REGISTER = 0;
+	PORTB |= (1 << BRAKE);
+}
+
+void release_brake()
+{
+	PORTB &= !(1 << BRAKE);
+}
 
 
 void setup()

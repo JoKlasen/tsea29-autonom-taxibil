@@ -67,4 +67,8 @@ int PIDIteration(int Error);
 
 void PIDSetup(int InputP, int InputI, int InputD);
 
+void brake();
+
+void release_brake();
+
 #endif
