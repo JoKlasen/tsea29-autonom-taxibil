@@ -1,4 +1,3 @@
-
 /*
  * ControlModule.cpp
  *
