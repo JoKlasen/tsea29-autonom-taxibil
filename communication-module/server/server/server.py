@@ -23,6 +23,8 @@ CLIENTS = []
 # Send message to client
 async def send(websocket, message):
     try:
+        message_type = message.split(':')[0]
+    #if (message_type == 'error'):
         await websocket.send(message) 
     except Exception as e:
         print("========== ERROR 1 ===========")
@@ -30,8 +32,7 @@ async def send(websocket, message):
         print("Sending brake signal to Control Unit.")
         sendToAVR("keyspressed:forward=0:left=0:back=1:right=0:")
         print("Sent brake signal.")
-        print("Exiting program...")
-        exit()
+        #exit()
 
 
 # Start serial connection
@@ -42,6 +43,26 @@ def sendToAVR(message):
     
     if (message_type == 'keyspressed'):
         print("Got 'keyspressed' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'error'):
+        print("Got 'error' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'sendpid'):
+        print("Got 'sendpid' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'switchmode'):
+        print("Got 'switchmode' command, sending to Control Unit")
+        message = message + "\0"
+        print(message)
+        ser.write(message.encode());
+    elif (message_type == 'telemetry'):
+        print("Got 'telemetry' command, sending to Control Unit")
         message = message + "\0"
         print(message)
         ser.write(message.encode());
@@ -69,8 +90,8 @@ async def sendAll(websocket):
             print("Sending brake signal to Control Unit.")
             sendToAVR("keyspressed:forward=0:left=0:back=1:right=0:")
             print("Sent brake signal.")
-            print("Exiting program...")
-            exit()
+            #print("Exiting program...")
+            #exit()
 
 # Start server
 async def main():

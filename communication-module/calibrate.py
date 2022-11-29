@@ -6,12 +6,14 @@ import os
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
+import picamera
+import time
 #import json
 
 
-CALIBRATOR_PARAMS_FILENAME = 'Calibration-Params.txt'
+CALIBRATOR_PARAMS_FILENAME = 'Calibration-Params_Test.txt'
 
-CALIBRATOR_IMAGES_FOLDER = './Chesstest_640x480'
+CALIBRATOR_IMAGES_FOLDER = './Chesstest_160x128'
 
 
 def get_undistort():
@@ -35,27 +37,29 @@ def get_undistort():
 	
 	return (lambda img: cv2.undistort(img, mtx, dist, None, mtx))
 
-
 def create_calibration_images():
 	""" Starts a session where the user can use the camera to create
 	images to use for calibration. The images will be stored in the
 	dedicated folder.
 	"""
 
-	cam = camera.create_a_camera()
+	#with picamera.PiCamera() as camera:
+	camera = picamera.PiCamera()
+	camera.resolution = (320,256)
+	camera.framerate = 24
+	time.sleep(2)
 
 	path = CALIBRATOR_IMAGES_FOLDER
 
 	if not os.path.exists(path):
 		os.mkdir(path)
 			
-	cam.start_preview()
+	camera.start_preview()
 
 	# Have user take image when pressing enter, end if first typed "end"
 	while "end" != input("").lower():
 		stream = BytesIO()
-
-		cam.capture(stream, format='jpeg')
+		camera.capture(stream, format='jpeg')
 		
 		# Create image from data
 		stream.seek(0)		

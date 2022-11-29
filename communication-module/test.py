@@ -1,6 +1,6 @@
 import os
 import cv2
-from picamera.array import PiRGBArray
+import picamera
 from PIL import Image
 import time
 from calibrate import get_undistort
@@ -55,17 +55,24 @@ def test_calibrated_image():
 if __name__ == '__main__':
 
 	#test_calibrated_image()
+	with picamera.PiCamera() as camera:
+		camera.resolution = (160,128)
+		camera.framerate = 24
+		time.sleep(2)
+		image =np.empty((128,160,3), dtype=np.uint8)
+		camera.capture(image, 'rgb')
+	testImage = Image.fromarray(image)
+	testImage.show()
+	#cam = camera.create_a_camera()
+	#undist = get_undistort()	
 	
-	cam = camera.create_a_camera()
-	undist = get_undistort()	
+	#image = np.array(camera.camera_capture_image(cam))
+	#undisted = undist(image)
+	#undistedImage = Image.fromarray(undisted)
 	
-	image = np.array(camera.camera_capture_image(cam))
-	undisted = undist(image)
-	undistedImage = Image.fromarray(undisted)
+	#undistedImage.show()
 	
-	undistedImage.show()
-	
-	undistedImage.save("chess_test.jpg")
+	#undistedImage.save("chess_test.jpg")
 	
 	
     
