@@ -20,6 +20,7 @@ void parse(char input[])
 	bool keys = false;
 	bool telemetry = false;
 	bool emergencystop = false;
+	bool error_b = false;
 	int label_end = 0;
 	int value_separator = 0;
 	
@@ -55,6 +56,10 @@ void parse(char input[])
 				else if (!strcmp(&command[0], "telemetry"))
 				{
 					telemetry = true;
+					findcommand = false;
+				}else if (!strcmp(&command[0], "error"))
+				{
+					error_b = true;
 					findcommand = false;
 				}
 			}
@@ -108,6 +113,15 @@ void parse(char input[])
 					if (!strcmp(&value_name[0], "mode"))
 					{
 						manual_mode = atoi(&text_value[0]);
+						if (manual_mode == 1)
+						{
+							send_data("Switched to manual mode\n");
+							release_brake();
+						}
+						else if (manual_mode == 0)
+						{
+							send_data("Switched to autonomous mode\n");
+						}
 					}
 					label_end = i;
 				}
@@ -131,6 +145,7 @@ void parse(char input[])
 						velocity = atoi(&text_value[0]);
 						velocity_received = true;
 					}
+					/*
 					else if (!strcmp(&value_name[0], "steering"))
 					{
 						steering_from_pi = atoi(&text_value[0]);
@@ -139,7 +154,7 @@ void parse(char input[])
 					{
 						error = atoi(&text_value[0]);
 						turn_error_received = true;
-					}
+					}*/
 					else if (!strcmp(&value_name[0], "detection"))
 					{
 						detection = atoi(&text_value[0]);
@@ -174,11 +189,33 @@ void parse(char input[])
 					label_end = i;
 				}
 			}
+			else if (error_b)
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "e"))
+					{
+						error = atoi(&text_value[0]);
+						turn_error_received = true;
+					}
+
+					label_end = i;
+				}
+			}
 			
 			
 			
 		}
 	}
+	/*
 	char value_msg[50];
 	
 	if(keys)
@@ -195,17 +232,24 @@ void parse(char input[])
 	}
 	else if(telemetry)
 	{
-		sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
+		//sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
+		sprintf(&value_msg[0], "Received speed:%d detection:%d\n", velocity,detection );
+
 	}
 	else if(emergencystop)
 	{
 		sprintf(&value_msg[0], "Received EMERGENCYSTOP\n");
+	}
+	else if (error_b)
+	{
+		sprintf(&value_msg[0],"Received turnerror e=%d\n",error);
 	}
 	else
 	{
 		sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
 	}
 	send_data(&value_msg[0]);
+	*/
 	
 	
 }

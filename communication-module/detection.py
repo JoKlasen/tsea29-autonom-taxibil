@@ -178,7 +178,6 @@ def calc_error(turn_hit, turn_align, turnconst=1, alignconst=1, debug=False):
 
     return error
 
-
 # ------------------------------------------------
 # Line detection as a whole
 # ------------------------------------------------
@@ -255,7 +254,6 @@ def get_warp_perspective_funcs(image:np.ndarray, roi=None, target_roi=None, debu
     print("time: ", debug_time)
     
     return warp_func, warp_back_func
-
 
 def dl_mark_edges(image:np.ndarray, threshold=lambda pix: (pix < 30)):
     """ Returns an image of the provided one where the edges are
@@ -492,14 +490,11 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 
     return turn_hit, turn_align, return_image
 
-
 # ------------------------------------------------
 # Testing
 # ------------------------------------------------
 
 if __name__ == "__main__":
-    
-    
     image = cv2.imread(TESTFILE)    
 
     center_offset, left_curve, right_curve, pre_image = detect_lines(image)
@@ -531,7 +526,3 @@ if __name__ == "__main__":
         [h_img, l_img],
         [s_img, pre_image]
     ])
-    
-
-
-

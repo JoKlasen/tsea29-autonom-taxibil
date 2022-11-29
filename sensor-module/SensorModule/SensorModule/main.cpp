@@ -12,9 +12,12 @@
 #include <stdio.h>
 
 
-//Port Definitions
+//Port Definitions			Ben:
 #define UART_RX		 PD0 // 14
 #define UART_TX		 PD1 // 15
+
+#define LED1		 PA0 // 40
+#define LED2		 PA1 // 39
 
 #define ECHO_OUTPUT	 PB2 // 3
 #define ECHO_TRIGGER PB3 // 4
@@ -28,7 +31,7 @@
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
 #define SPEED_PRECISION 1000 // 3 decimalers precision
-#define SPEED_FIVETICKS 0.13 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster
+#define SPEED_CONSTANT 0.026 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster, för 1 tick
 
 #define RECEIVE_BUFFER_SIZE 100
 
@@ -156,6 +159,9 @@ int main(void)
 	char initial[50];
 	char * speed_msg = &initial[0]; 
 	
+	volatile int local_hall_counter = 0;
+	volatile unsigned long long local_hall_left_latest = 0;
+	
 	volatile unsigned pulse_length = 0;
 	volatile unsigned heltal = 0;
 	volatile unsigned decimal = 0;
@@ -168,30 +174,34 @@ int main(void)
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 	
-		while(1)
+	while(1)
+	{
+		if(millis()-new_time > 100)
 		{
-			if(millis()-new_time > 100)
+			new_time = millis();
+			//Denna ska va här ---- start
+			send_data("sensor_module\n");
+			//Denna ska va här ---- slut
+			if(received)
 			{
-				new_time = millis();
-				//Denna ska va här ---- start
-				send_data("sensor_module\n");
-				//Denna ska va här ---- slut
-				if(received)
+				cli();
+				received = false;
+				if(parse_handshake()) //ACK
 				{
-					cli();
-					received = false;
-					if(parse_handshake()) //ACK
-					{
-						sei();
-						break;
-					}
 					sei();
-					
+					break;
 				}
-				
+				sei();
+					
 			}
+				
 		}
+
+	}
+	PORTA |= (1 << LED2);
+	/*
 	send_data("After handshake\n");
+	*/
 	while(1)
 	{
 		new_time = millis();
@@ -208,37 +218,35 @@ int main(void)
 			echo_updated = false;
 		}
 		
-		cli();
-		localhallsensor = hall_left_updated;
-		sei();
-		if(localhallsensor)
-		{
-			unsigned long long diff = hall_left_latest - hall_left_old; // diff in ms for 5 ticks
-
-			unsigned long tmp = SPEED_FIVETICKS / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
-			
-			heltal = tmp / SPEED_PRECISION;
-			decimal = tmp % SPEED_PRECISION;
-
-			hall_left_updated = false;
-		}
-	
+		
 		cli();
 		localsend = sendbool;
 		sei();
-		if(localsend == true)
+		if(localsend)
 		{
-			if ((new_time - old_time) > 250)
-			{
-				//send_data_routine();
-				sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u\n", heltal, decimal, pulse_length );
-				send_data(speed_msg);
-				cli();
-				sendbool = false;
-				sei();
-			}
-		}
+			hall_left_old = local_hall_left_latest;
+			cli();
+			local_hall_counter = hall_left_counter;
+			local_hall_left_latest = hall_left_latest;
+			hall_left_counter = 0;
+			sei();
+			
+			unsigned long long diff = local_hall_left_latest - hall_left_old; // diff in ms for 5 ticks
 
+			unsigned long tmp = local_hall_counter * SPEED_CONSTANT / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
+			
+			heltal = tmp / SPEED_PRECISION;
+			decimal = tmp % SPEED_PRECISION;
+			
+			//send_data_routine();
+			sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
+			send_data(speed_msg);
+			cli();
+			sendbool = false;
+			sei();
+			
+		}
+		
 	}
 	return 0;
 }
@@ -281,14 +289,7 @@ ISR(INT0_vect)
 ISR(INT1_vect)
 {
 	hall_left_counter++;
-	if(hall_left_counter == 5)
-	{
-		hall_left_old = hall_left_latest;
-		hall_left_latest = millis();
-
-		hall_left_updated = true;
-		hall_left_counter = 0;
-	}
+	hall_left_latest = millis();
 }
 
 //ECHO_OUTPUT
@@ -306,13 +307,12 @@ ISR(INT2_vect)
 
 void portinit()
 {
+	PORTA = (1 << LED1) | (0 << LED2);
+	DDRA = (1 << LED1) | (1 << LED2);
+	
 	PORTD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (1 << UART_RX); // (0 << PD5) for testing
 	// output == 1 input == 0
 	DDRD = (0 << HALL_LEFT) | (0 << HALL_RIGHT) | (1 << UART_TX) | (0 << UART_RX); // (1 << DDD5)|(1 << DDD4) for testing
-		
-	// Flyttar echo_trigger från PA1 till PB3
-	//DDRA = (1 << DDA1); 
-	//PORTA = (0 << PA1);
 		
 	PORTD = (0 << ECHO_TRIGGER);
 	DDRB = (1 << ECHO_TRIGGER)|(0 << ECHO_OUTPUT);
@@ -343,13 +343,13 @@ ISR (USART0_RX_vect)
 	if((from_receive_buffer == '\0') || ((receive_buffer_index) == RECEIVE_BUFFER_SIZE-2) || (from_receive_buffer == '\n') || (from_receive_buffer == ';'))
 	{
 		receive_buffer[receive_buffer_index] = from_receive_buffer;
-		send_data("From UART: ");
+		/*send_data("From UART: ");
 		send_data(receive_buffer);
-		send_data("\n");
+		send_data("\n");*/
 		strlcpy(working_buffer,receive_buffer,receive_buffer_index);
-		send_data("I working buffer i ISR: ");
+		/*send_data("I working buffer i ISR: ");
 		send_data(working_buffer);
-		send_data("\n");
+		send_data("\n");*/
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
@@ -390,5 +390,5 @@ void ext_intr_init()
 	//Modes: 2 == falling edge // 3 == raising edge // 1 == any change
 	
 	EICRA = (2 << ISC20) | (3 << ISC10) | (3 << ISC00);
-	EIMSK = (1 << INT2) | (1 << INT1) | (1 << INT0);
+	EIMSK = (1 << INT2) | (1 << INT1) | (0 << INT0);
 }

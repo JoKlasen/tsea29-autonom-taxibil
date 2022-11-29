@@ -10,11 +10,11 @@
 
 void port_init()
 {
-	PORTA = (1 << DIR) | (0 << BRAKE); // Testa om DIR = 1 Eller 0 blir frammåt
-	DDRA = (1 << DIR) | (1 << BRAKE);
-
-	PORTB = (0 << SERVO);
-	DDRB = (1 << SERVO);
+	PORTA = (1 << LED1) | (0 << LED2);
+	DDRA = (1 << LED1) | (1 << LED2);
+	
+	PORTB = (1 << DIR) | (0 << BRAKE) | (0 << SERVO);
+	DDRB =	(1 << DIR) | (1 << BRAKE) | (1 << SERVO);
 
 	PORTD = (0 << PWM) | (1 << UART_TX) | (1 << UART_RX);
 	// output == 1 input == 0
@@ -53,6 +53,43 @@ ISR (USART0_RX_vect)
 
 	}
 }
+
+/*
+sätt USR0B |= (1 << TXCIE0)
+stäng av USR0B &= (0 << TXCIE0)
+ISR(USART0_TX_vect)
+{
+	
+}
+
+char send_buffer[RECEIVE_BUFFER_SIZE];
+volatile int send_buffer_counter = 0;
+void send_data(char * data)
+{
+	kolla om bool TXinterrupt == false;
+	sätt send_buffer = data;
+		starta interupten
+
+	
+}
+
+void send_data(char* data)
+{
+	int counter=0;
+	while(1)
+	{
+		while(!( UCSR0A & (1<<UDRE0)))
+		;
+		if (data[counter] == '\0')
+		{
+			break;
+		}
+		UDR0 = data[counter];
+
+		counter++;
+	}
+}
+*/
 
 void pwm_init()
 {
@@ -110,6 +147,16 @@ unsigned long long millis()
 	return temp;
 }
 
+void brake()
+{
+	SPEED_REGISTER = 0;
+	PORTB |= (1 << BRAKE);
+}
+
+void release_brake()
+{
+	PORTB &= !(1 << BRAKE);
+}
 
 
 void setup()
@@ -138,6 +185,8 @@ void send_data(char* data)
 		counter++;
 	}
 }
+
+
 
 
 

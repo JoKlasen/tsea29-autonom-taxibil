@@ -2,14 +2,16 @@
 #define DEFINITIONS_F
 
 //Port Definitions
-#define UART_RX PD0 // 14
-#define UART_TX PD1 // 15
+#define UART_RX PD0 // Ben 14
+#define UART_TX PD1 // Ben 15
 
+#define LED1 PA0 // Ben 40
+#define LED2 PA1 // Ben 39
 
-#define PWM PD5    // 19
-#define DIR PA0     // 40
-#define BRAKE PA1   // 39
-#define SERVO PB6  // 7
+#define PWM PD5    // Ben 19
+#define DIR PB0     // Ben 1
+#define BRAKE PB1   // Ben 2
+#define SERVO PB6  // Ben 7
 
 //Constants
 #define F_CPU 16000000UL
@@ -17,6 +19,7 @@
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
 #define MAX_SPEED 4000
+#define MAX_AUTO_SPEED 5000
 
 #define MAX_STEER_LEFT 2100
 #define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
@@ -63,5 +66,9 @@ void parse(char input[]);
 int PIDIteration(int Error);
 
 void PIDSetup(int InputP, int InputI, int InputD);
+
+void brake();
+
+void release_brake();
 
 #endif
