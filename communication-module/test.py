@@ -9,6 +9,16 @@ from io import BytesIO
 
 import camera
 	
+	
+# ----------------------------------------------------------------------
+#
+# This is an test file to test the functionality of the camera and
+# how to preview results. 
+#
+# It will/should not affect rest of modules in folder. 
+#
+# ----------------------------------------------------------------------
+	
 
 def test_calibrated_image():
 

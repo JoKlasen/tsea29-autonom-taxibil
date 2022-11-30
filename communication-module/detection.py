@@ -6,17 +6,21 @@ import calibrate
 import math
 import time as Time
 
+from camera import ImageMtx, BitmapMtx
+
 TESTFILE =  "CI_22.11.05.00.11.17.jpg"
 
+# ----- Parameters -----
+# Change as required
 #DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)] # 2000x1000
 #DEFAULT_ROI = [(0,180),(0,440),(640,440),(640,180)] # 640x480 180 was 130 changed offset of above part to 0
 DEFAULT_ROI = [(0,110),(0,256),(320,256),(320,110)] #320x256
 
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 # Display data on image
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 
-def preview_bitmap_on_image(bitmap, image, color=(0, 255, 0)):
+def preview_bitmap_on_image(bitmap: BitmapMtx, image: ImageMtx, color=(0, 255, 0)):
     """ Previews a bitmap overlayed on an image with the provided 
     color.
     """
@@ -99,9 +103,9 @@ def fill_between_polynomials(size, poly1, poly2, debug=False):
     return bitmap
 
 
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 # Calculate errors
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 
 
 def calc_adjust_turn(left_lane, right_lane, camera_pos, hit_height= 100): #hit height was 200
@@ -178,9 +182,9 @@ def calc_error(turn_hit, turn_align, turnconst=1, alignconst=1, debug=False):
 
     return error
 
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 # Line detection as a whole
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 
 def dl_clearify_edges(image:np.ndarray) -> np.ndarray: #just in case we need it
     """ Manipulates provided image to clearify edges. Returns an image 
@@ -490,9 +494,9 @@ def detect_lines(image:np.ndarray, preview_steps=False, preview_result=False, ge
 
     return turn_hit, turn_align, return_image
 
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 # Testing
-# ------------------------------------------------
+# ----------------------------------------------------------------------
 
 if __name__ == "__main__":
     image = cv2.imread(TESTFILE)    
