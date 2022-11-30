@@ -292,13 +292,13 @@ def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> ImageMtx:
     sobel_image = np.ones_like(sobel, dtype=image.dtype)
     sobel_image[threshold(sobel)] = 0
     
-    _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
-    _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
-    rs_binary = cv2.bitwise_and(s_binary, r_thresh)
-    rs_binary_like = np.ones_like(rs_binary, dtype=image.dtype)
-    rs_binary_like[threshold(rs_binary)] = 0 
+    # ~ _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
+    # ~ _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
+    # ~ rs_binary = cv2.bitwise_and(s_binary, r_thresh)
+    # ~ rs_binary_like = np.ones_like(rs_binary, dtype=image.dtype)
+    # ~ rs_binary_like[threshold(rs_binary)] = 0 
 
-    sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
+    # ~ sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
     
     print("finish: dl_mark_edges")
     debug_time = Time.time() - debug_time

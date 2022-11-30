@@ -89,7 +89,7 @@ def main():
 
 
 def test_folder():
-    images = glob.glob("./Lanetest_320x256" + "/*.jpg")
+    images = glob.glob("./Lanetest_320x256_temp" + "/*.jpg")
 
     if not len(images):
         print(f"No images in folder {folder}!")
@@ -108,6 +108,6 @@ def test_folder():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
     
-    #test_folder()
+    test_folder()
