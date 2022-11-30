@@ -116,7 +116,8 @@ class Graph:
             if self.nodelist[i].name == nodename:
                 return self.nodelist[i]
 
-    #This is the pathfining algorithm a DFS, DFS does NOT normaly give the shortest path, which is true but in this case we get ALL paths that reach the destination
+    #This is the pathfining algorithm a DFS, DFS does NOT normaly give the shortest path, which is true but 
+    #in this case we get ALL paths that reach the destination
     #So that we can get the shortest path
     def DFS(self,prevnode,current,destination,templist):
         templist.append(current)
@@ -304,11 +305,18 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("LA","LB","RD")
+    Graph_1.get_paths_DFS("LA","RB","RD")
 
 
     Graph_1.get_directions()
     Graph_1.print_paths_and_directions()
+    
+    #return Graph_1.pickup_path + Graph_1.dropoff_path, Graph_1.pickup_directions + Graph_1.dropoff_directions
+    return Graph_1.pickup_path , Graph_1.pickup_directions
+
+    
 
 
-main()
+list_1,list_2 = main()
+
+print(list_1,list_2)
