@@ -120,7 +120,7 @@ def test_pathing():
     intersection = False
     lost_intersection = False
     stop = False
-    node_list, direction_list = ['LA', 'Kors 1', 'RE', 'LF', 'Kors 2' 'RB'], ['FORWARD', 'RIGHT', 'FORWARD', 'FORWARD', 'RIGHT', 'STOP']
+    node_list, direction_list = ['LA', 'Kors 1', 'RE', 'LF', 'Kors 2' ,'RB'], ['FORWARD', 'RIGHT', 'FORWARD', 'FORWARD', 'RIGHT', 'STOP']
     drive_index = 0
     drive_right = False
     drive_left = False
@@ -129,35 +129,35 @@ def test_pathing():
     variables = drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
 
     # simulate a call to detection, finding a left stop
-    variables = finding_left_stop(variables)
+    variables = finding_left_stop(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_intersection(variables)
+    variables = finding_intersection(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_intersection(variables)
+    variables = finding_intersection(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_right_stop(variables)
+    variables = finding_right_stop(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_left_stop(variables)
+    variables = finding_left_stop(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_intersection(variables)
+    variables = finding_intersection(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_intersection(variables)
+    variables = finding_intersection(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_nothing(variables)
+    variables = finding_nothing(*variables)
     # simulate a call to detection, finding a left stop
-    variables = finding_right_stop(variables)
+    variables = finding_right_stop(*variables)
 
 
 def finding_intersection(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
@@ -190,14 +190,18 @@ def finding_nothing(drive_index,node_list,direction_list,left,right,intersection
 
 def drive_logically(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
     if intersection_driving is False:
-        drive_forward , drive_left, drive_right , drive_index, drive_intersection, stop = \
-            driving_logic.normal_driving(drive_index, node_list, direction_list, left, right, intersection)
+        result = driving_logic.normal_driving(drive_index, node_list, direction_list, left, right, intersection)
+        if result is not None:
+            drive_forward , drive_left, drive_right , drive_index, intersection_driving, stop = result
     else:
-        intersection_driving, lost_intersection, drive_forward, drive_right, drive_left = \
-            driving_logic.intersection_driving(intersection, lost_intersection, drive_forward, drive_right, drive_left)
+        result = driving_logic.intersection_driving(intersection, lost_intersection, drive_forward, drive_right, drive_left, direction_list, node_list, drive_index)
+        if result is not None:
+            intersection_driving, lost_intersection, drive_forward, drive_right, drive_left = result
     return drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
 
 if __name__ == "__main__":
     #main()
     
-    test_folder()
+    #test_folder()
+
+    test_pathing()
