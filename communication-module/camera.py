@@ -8,7 +8,8 @@ import time as Time
 import os
 from datetime import datetime
 
-from typing import Any, Sequence, Generator, String
+from typing import Any, Collection, Generator, Tuple
+from numbers import Number
 from numpy.typing import NDArray
 
 PREFERED_PREVIEW_SIZE = (50,50,1500,800)
@@ -16,9 +17,14 @@ PREFERED_PREVIEW_SIZE = (50,50,1500,800)
 
 # ----- Typing -----
 # To make clear relevant data types
+# 2D arrays:
 ImageMtx = NDArray[np.dtype[np.int8]]
 BitmapMtx = NDArray[np.dtype[np.int8]]
 TransformMtx = NDArray[np.dtype[np.float64]]
+# Simple data:
+Poly2d = Tuple[float, float, float]
+Vector2d = Tuple[Number, Number]
+Color = Collection[int]
 
 # ----------------------------------------------------------------------
 # Generic functions 
@@ -140,7 +146,7 @@ def preview_image(image:ImageMtx, title="¡YEAY!") -> None:
     cv2.destroyAllWindows()
 
 
-def preview_image_grid(img_grid:Sequence[Sequence[ImageMtx]]) -> None:
+def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:
     """ Uses a grid of images of same size and preview them in one 
     window. 
     """    
