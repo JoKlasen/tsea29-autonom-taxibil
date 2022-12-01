@@ -5,9 +5,15 @@ import camera
 import calibrate
 import math
 import time as Time
+import driving_logic
 
 from typing import Tuple
 from camera import ImageMtx, BitmapMtx, Poly2d, Vector2d, Color
+
+DRIVE_LEFT = False
+DRIVE_RIGHT = False
+DRIVE_FORWARD = False
+DRIVE_INTERSECTION = False
 
 TESTFILE =  "CI_22.11.05.00.11.17.jpg"
 
