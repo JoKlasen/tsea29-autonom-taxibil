@@ -1,42 +1,55 @@
-all_paths = []
 
 class Node:
+    #All apropriate members sucha as name, coordinates adjacencylist and a explored variable for the pathfinding algorithm
     def __init__(self,name,x,y):
         self.name = name
         self.x = x
         self.y = y
         self.neighbours = []
         self.explored = False
-        self.prev = None
 
+    #We add a node to the current nodes adjacencylist
     def add_Edge(self,destinationnode):
         self.neighbours.append(destinationnode)
 
+    #We check if the nextnode is not located on the same location as the previous node 
     def right_direction(self,prevnode,nextnode):
         if prevnode == None:
             return True
         return not((prevnode.x == nextnode.x) and (prevnode.y == nextnode.y))
     
+    #This function will be called when we want to print a list of nodes 
     def __repr__(self):
         return self.name
 
+    #This function will be called when we want to convert the node to a string 
+    def __str__(self):
+        return self.name
+
+    #This function calculates where the destination node is located relative to the taxicars current traveldirection
     def get_direction(self,prevnode,destination):
 
+        #If the destination == None then current is the last node which means that we should stop
         if destination == None:
             return "STOP"
         
+        #We only have to calculate the turns when we are in intersections since otherwise we just follow the road
         if (self.name != "Kors 1" and self.name != "Kors 2") or prevnode.x == destination.x:
             return "FORWARD"
         
 
+        #calculating the direction from the previous node to where we currently are
         dirx = self.x - prevnode.x
         diry = self.y - prevnode.y
-        #print("dirx,diry {0},{1}".format(dirx,diry))
+
 
         currentx = self.x
         currenty = self.y
         destx = destination.x
-        desty =destination.y
+        desty = destination.y
+        
+        #Inorder to get the correct relative direction we have to make the logic consistent nomather what previous direction we had
+        #Inorder to get consistent logic we have to rotate the coordinates depending on what direction we had prevously
         if dirx == 1 : ## If we go to the right
             ##counterclockwise rotation x,y -> -y,x
             currentx = -self.y
@@ -58,76 +71,76 @@ class Node:
             destx = -destx
             desty = -desty
         
-        dir2x = currentx - destx
-        dir2y = currenty - desty
-
-        #print("dirx2,diry2 {0},{1}".format(dir2x,dir2y))
+        #Calculate the new relative direction after we rotated the coordinates
+        dir2x = destx - currentx
+        dir2y = desty - currenty
         
-
-        if dir2x == 1 and dir2y == 0:
+        # direction (-1,0) is to the left
+        if dir2x == -1 and dir2y == 0:
             return "LEFT"
-        elif dir2x == -1 and dir2y == 0:
-            return "RIGHT"
-        else:##Kommer aldrig hamna här
+        # dirction (1,0) is to the right
+        elif dir2x == 1 and dir2y == 0:
+            return "RIGHT" 
+        else:##Will never get to here since all the other cases have been covered by above logic
             return "SAAAY WHATT??"
         #Continue with this
 
 
-
 class Graph:
+    #The constructor for the graph, initializing all variables such as nodelist,    
     def __init__(self):
         self.nodelist = []
-        self.size = 0
+        #All nodes we we will visit inorder to get to the pickup location will be in this list
         self.pickup_path = []
+        #The directions we will take will be in this list
         self.pickup_directions = []
+        #All nodes we we will visit inorder to get to the dropoff location will be in this list
         self.dropoff_path = []
+        #The directions we will take will be in this list
         self.dropoff_directions = []
+        #We will save all the paths in this list before we pick the shortest path, it is a somewhat of a bruteforce approach
+        self.all_paths = []
 
+    #Adding nodes to the graph
     def add_node(self,node):
         self.nodelist.append(node)
-        self.size += 1
 
+    #before we start exploring the graph we want to reset exploration
     def reset_exploration(self):
-        for i in range(self.size-1):
+        for i in range(len(self.nodelist)):
             self.nodelist[i].explored = False
-            self.nodelist[i].prev = None
 
-    def find_node(self,node):
-        for i in range(self.size-1):
-            if self.nodelist[i].name == node:
+    #finding a particular node with the name nodename
+    def find_node(self,nodename):
+        for i in range(len(self.nodelist)):
+            if self.nodelist[i].name == nodename:
                 return self.nodelist[i]
 
-    def print_a_path(self,path):
-        sizeof_pickup_path = len(path)
-        i = 0
-        stringtoprint = ""
-        while i < sizeof_pickup_path:
-            stringtoprint += path[i].name
-            if i < sizeof_pickup_path-1:
-                stringtoprint += " -->"
-            i+=1
-        print(stringtoprint)
-
+    #This is the pathfining algorithm a DFS, DFS does NOT normaly give the shortest path, which is true but in this case we get ALL paths that reach the destination
+    #So that we can get the shortest path
     def DFS(self,prevnode,current,destination,templist):
-        global all_paths 
         templist.append(current)
         current.explored = True
         if (current.name == destination.name):
-            all_paths.append(templist)
+            self.all_paths.append(templist)
             current.explored = False
             return True
         i = 0
         while i < len(current.neighbours):
+            #Check if the node adjacent node have been visited and make sure that is located in the right direction, 
+            #in this case it mean that it cannot be located behind the current node relative to the current diection
             if((current.neighbours[i].explored == False) and (current.right_direction(prevnode,current.neighbours[i]))):
+                #I want an explicit copy since i dont want to use a reference in this case which is why i provide
+                # a copy of templist to the next depth of the recursive call
                 if(self.DFS(current,current.neighbours[i],destination,templist.copy()) == False):
                     current.explored = False 
             i+=1
         current.explored = False
         return False
 
+    #Initializing the DFS algorithm and get the shortest path from it
     def DFS_start(self,start_node,dest_node):
-        global all_paths
-        all_paths = []
+        self.all_paths = []
         self.reset_exploration()
         startnode = self.find_node(start_node)
         startnode.explored = True
@@ -139,84 +152,73 @@ class Graph:
         length = 100000
         indexoflength = -1
         i=0
-        #print(all_paths)
-        while i < len(all_paths):
-            if(length > len(all_paths[i])):
-                length = len(all_paths[i])
+        while i < len(self.all_paths):
+        #Chosing the path with the least amount of nodes in it
+            if(length > len(self.all_paths[i])):
+                length = len(self.all_paths[i])
                 indexoflength = i
-                path = all_paths[i]
-            elif length == len(all_paths[i]):
-                testpath = all_paths[indexoflength]
+                path = self.all_paths[i]
+        #if there are two paths with the same amount of nodes in it we chose the path that goes through the middle of the map ie where "RF","LF","RE", "LE" are located 
+            elif length == len(self.all_paths[i]):
+                testpath = self.all_paths[indexoflength]
                 for nodes in testpath:
                     if ("RF" == nodes.name) or ("LF" == nodes.name) or ("RE" == nodes.name) or ("LE" == nodes.name):
                         path = testpath
-                for nodes in all_paths[i]:
+                for nodes in self.all_paths[i]:
                     if ("RF" == nodes.name) or ("LF" == nodes.name) or ("RE" == nodes.name) or ("LE" == nodes.name):
-                        path = all_paths[i]
-
+                        path = self.all_paths[i]
             i+=1
         return path
 
-
-    def print_path(self,container):
+    #This simply prints the path of a container with the path
+    def print_container(self,container):
         containersize = len(container)
         i = 0
         stringtoprint = ""
         while i < containersize:
-            stringtoprint += container[i].name
+            #Converting what is in the container to a string so it can be combined with stringtoprint, this is done by the __str__ operator 
+            stringtoprint += str(container[i])
             if i < containersize-1:
                 stringtoprint += " --> "
             i+=1
         print(stringtoprint+"\n")
 
-    def print_directions(self,container):
-        containersize = len(container)
-        i = 0
-        stringtoprint = ""
-        while i < containersize:
-            stringtoprint += container[i]
-            if i < containersize-1:
-                stringtoprint += " --> "
-            i+=1
-        print(stringtoprint+"\n")
-
+    #Printing all paths and all turndirections
     def print_paths_and_directions(self):
-        self.print_path(self.pickup_path)
-        self.print_directions(self.pickup_directions)
-        self.print_path(self.dropoff_path)
-        self.print_directions(self.dropoff_directions)
+        self.print_container(self.pickup_path)
+        self.print_container(self.pickup_directions)
+        self.print_container(self.dropoff_path)
+        self.print_container(self.dropoff_directions)
 
+    #Calling DFS_start so that we get tha shortest path for pickup path and dropoff path
     def get_paths_DFS(self,start_node1,start_node2,endnode2):
         self.pickup_path = self.DFS_start(start_node1,start_node2)
         self.dropoff_path = self.DFS_start(start_node2,endnode2)
 
+    #Getting all the turndirecitons for the 
     def get_directions(self):
         prevnode = None
+        #last = None which determines the stopcondition --> it will make the last element of the turndirections be "STOP"
         last = None
         self.pickup_path.append(last)
         i=0
         while i < len(self.pickup_path):
             if self.pickup_path[i] != None:
-                #print(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
                 self.pickup_directions.append(self.pickup_path[i].get_direction(prevnode,self.pickup_path[i+1]))
                 prevnode = self.pickup_path[i]
             i+=1
 
         self.pickup_path.pop()
-        #print("\n\n")
         prevnode = None
         last = None
         self.dropoff_path.append(last)
         i=0
         while i < len(self.dropoff_path):
             if self.dropoff_path[i] != None:
-                #print(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
                 self.dropoff_directions.append(self.dropoff_path[i].get_direction(prevnode,self.dropoff_path[i+1]))
                 prevnode = self.dropoff_path[i]
             i+=1
         self.dropoff_path.pop()
-        #print("\n\n")
-
 
 
 
@@ -226,7 +228,7 @@ class Graph:
 def main():
     Graph_1 = Graph()
 
-    #Creating all nodes
+    #Creating all nodes which is a representation of our current map
     RA = Node("RA",0,0)
     LA = Node("LA",0,0)
     
@@ -268,7 +270,7 @@ def main():
     Graph_1.add_node(Korsning_2)
     Graph_1.add_node(Fake_Korsning_2)
 
-    #Linking all nodes
+    #Linking all nodes correctly
 
     RA.add_Edge(LB)
     LA.add_Edge(Korsning_1)
@@ -302,7 +304,7 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("RF","LB","RA")
+    Graph_1.get_paths_DFS("LA","LB","RD")
 
 
     Graph_1.get_directions()
