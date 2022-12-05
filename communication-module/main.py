@@ -14,6 +14,9 @@ import picamera
 import Pathfinding
 import driving_logic
 
+from multiprocessing import Process, Lock, Value
+from multiprocessing.shared_memory import SharedMemory
+
 RESULTED_IMAGE_FOLDER = './Result_640x480'
 
 
@@ -22,12 +25,40 @@ async def send(msg, uri):
         await websocket.send(msg)
         #await websocket.recv()
 
+def cam1_process(buffer1:SharedMemory, camera:PiCamera, l_in:Lock, lock1:Lock, usingBuffer1:Value):
+    while(True):
+        if (not bool(usingBuffer1.value) and lock1.acquire() and l_in.acquire()):
+            buffer1.buf[:] = cam.camera_capture_image(camera)
+            lock1.release()
+            l_in.release()
+
+def cam2_process(buffer2:SharedMemory, camera:PiCamera, l_in:Lock, lock2:Lock, usingBuffer1:Value):
+    while(True):
+        if (bool(usingBuffer1.value) and lock2.acquire() and l_in.acquire()):
+            buffer2.buf[:2] = cam.camera_capture_image(camera)
+            lock2.release()
+            l_in.release()
 
 def main():
     #print("Step 1 Create a camera")
     #camera = cam.create_a_camera()
     camera = picamera.PiCamera()
     camera.resolution = (320,256)
+
+    usingBuffer1 = Value('i', 0)
+    
+    buffer1 = SharedMemory(create=True, size=2)
+    buffer2 = SharedMemory(create=True, size=2)
+
+    l_in = Lock()
+    lock1 = Lock()
+    lock2 = Lock()
+
+    cam1 = Process(target=cam1_process, args=(buffer1, l_in, lock1, usingBuffer1))
+    cam2 = Process(target=cam2_process, args=(buffer2, l_in, lock2, usingBuffer1))
+
+    cam1.start()
+    cam2.start()
 
     time.sleep(2)
     
@@ -59,8 +90,19 @@ def main():
         print("start: entire main loop")
         debug_time = Time.time()
 
+        if (not bool(usingBuffer1.value) and lock1.acquire()):
+            print("switching to 1")
+            image = buffer1.buf[:]
+            usingBuffer1.value = 1
+            lock1.release()
+        elif (bool(usingBuffer1.value) and lock2.acquire()):
+            print("switching to 2")
+            image = buffer2.buf[:]
+            usingBuffer1.value = 0
+            lock2.release()
+
         #print("Step 2 Capture image")
-        image = cam.camera_capture_image(camera)
+        #image = cam.camera_capture_image(camera)
         
         #print("Step 3 Detect_lines")
         
@@ -200,8 +242,6 @@ def drive_logically(drive_index,node_list,direction_list,left,right,intersection
     return drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
-
-    #test_pathing()
+    #test_folder()
