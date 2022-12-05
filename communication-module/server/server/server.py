@@ -6,6 +6,7 @@ import time
 import datetime
 import serial
 import sys
+import subprocess
 
 # take command line arguments
 serial_port = ' '.join(sys.argv[1:])
@@ -22,9 +23,15 @@ CLIENTS = []
 
 # Send message to client
 async def send(websocket, message):
+    message_type = message.split(':')[0]
+
+    if (message_type == 'restartserver'):
+        print('\n\n\n')
+        print("RESTARTING STARTTAXISERVER SERVICE")
+        status = subprocess.check_output('systemctl restart starttaxiserver.service', shell=True)
+        print(status)
+        print('\n\n\n')
     try:
-        message_type = message.split(':')[0]
-    #if (message_type == 'error'):
         await websocket.send(message) 
     except Exception as e:
         print("========== ERROR 1 ===========")
