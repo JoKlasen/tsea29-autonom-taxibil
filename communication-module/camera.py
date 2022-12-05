@@ -22,7 +22,7 @@ ImageMtx = NDArray[np.dtype[np.int8]]
 BitmapMtx = NDArray[np.dtype[np.int8]]
 TransformMtx = NDArray[np.dtype[np.float64]]
 # Simple data:
-Poly2d = Tuple[float, float, float]
+Pol2d = Tuple[float, float, float]
 Vector2d = Tuple[Number, Number]
 Color = Collection[int]
 

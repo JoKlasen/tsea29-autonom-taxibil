@@ -202,6 +202,6 @@ def drive_logically(drive_index,node_list,direction_list,left,right,intersection
 if __name__ == "__main__":
     #main()
     
-    #test_folder()
+    test_folder()
 
-    test_pathing()
+    #test_pathing()

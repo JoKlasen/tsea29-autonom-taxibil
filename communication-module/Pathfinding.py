@@ -317,6 +317,6 @@ def main():
     
 
 
-list_1,list_2 = main()
+# ~ list_1,list_2 = main()
 
-print(list_1,list_2)
+# ~ print(list_1,list_2)
