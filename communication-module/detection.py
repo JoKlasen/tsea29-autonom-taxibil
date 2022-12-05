@@ -597,7 +597,7 @@ def detect_lines(
     cv2.line(lanes_image, hit_point, align_point, (100, 255, 100), 5)
 
     if preview_steps:
-        calc_error(turn_hit, turn_align, debug=True)
+        calc_error(turn_hit, turn_align, debug=False)
         camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
         
     if preview_result:
