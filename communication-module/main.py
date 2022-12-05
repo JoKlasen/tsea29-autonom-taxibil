@@ -25,14 +25,14 @@ async def send(msg, uri):
         await websocket.send(msg)
         #await websocket.recv()
 
-def cam1_process(buffer1:SharedMemory, camera:PiCamera, l_in:Lock, lock1:Lock, usingBuffer1:Value):
+def cam1_process(buffer1:SharedMemory, camera, l_in:Lock, lock1:Lock, usingBuffer1:Value):
     while(True):
         if (not bool(usingBuffer1.value) and lock1.acquire() and l_in.acquire()):
             buffer1.buf[:] = cam.camera_capture_image(camera)
             lock1.release()
             l_in.release()
 
-def cam2_process(buffer2:SharedMemory, camera:PiCamera, l_in:Lock, lock2:Lock, usingBuffer1:Value):
+def cam2_process(buffer2:SharedMemory, camera, l_in:Lock, lock2:Lock, usingBuffer1:Value):
     while(True):
         if (bool(usingBuffer1.value) and lock2.acquire() and l_in.acquire()):
             buffer2.buf[:2] = cam.camera_capture_image(camera)
@@ -54,19 +54,19 @@ def main():
     lock1 = Lock()
     lock2 = Lock()
 
-    cam1 = Process(target=cam1_process, args=(buffer1, l_in, lock1, usingBuffer1))
-    cam2 = Process(target=cam2_process, args=(buffer2, l_in, lock2, usingBuffer1))
+    cam1 = Process(target=cam1_process, args=(buffer1, camera, l_in, lock1, usingBuffer1))
+    cam2 = Process(target=cam2_process, args=(buffer2, camera, l_in, lock2, usingBuffer1))
 
     cam1.start()
     cam2.start()
 
     time.sleep(2)
     
-    path = RESULTED_IMAGE_FOLDER + f'/Run_{cam.get_timestamp()}'    
-    os.mkdir(path)
+    #path = RESULTED_IMAGE_FOLDER + f'/Run_{cam.get_timestamp()}'    
+    #os.mkdir(path)
     index = 0
     
-    log = open(f'{path}/log.txt', 'x')
+    #log = open(f'{path}/log.txt', 'x')
 
     print("Start loop")
     left = False
