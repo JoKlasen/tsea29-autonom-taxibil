@@ -133,7 +133,8 @@ class Graph:
                 #I want an explicit copy since i dont want to use a reference in this case which is why i provide
                 # a copy of templist to the next depth of the recursive call
                 if(self.DFS(current,current.neighbours[i],destination,templist.copy()) == False):
-                    current.explored = False 
+                    #current.explored = False
+                    pass
             i+=1
         current.explored = False
         return False
