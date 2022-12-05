@@ -79,10 +79,10 @@ function sendKeys() {
     }
 
     sendMessage("keyspressed:" +
-        "forward=" + tempkeys["forward"].toString() +
-        ":left=" + tempkeys["left"].toString() +
-        ":back=" + tempkeys["back"].toString() +
-        ":right=" + tempkeys["right"].toString() + ":"
+        "f=" + tempkeys["forward"].toString() +
+        ":l=" + tempkeys["left"].toString() +
+        ":b=" + tempkeys["back"].toString() +
+        ":r=" + tempkeys["right"].toString() + ":"
     )
 }
 
