@@ -67,7 +67,7 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=True)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=False)
         #calc_time = time.time() - start_calc_time
         
         #print("Step 4 Create an error")
@@ -110,7 +110,7 @@ def test_folder():
     for filename in images:
         image = cv2.imread(filename)
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=True)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=False)
         
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
