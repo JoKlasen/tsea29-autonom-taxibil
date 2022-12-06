@@ -1,5 +1,6 @@
 
-import camera as cam
+from datetime import datetime
+import opencv_stream as cam
 import detection
 import asyncio
 from websockets import connect
@@ -26,13 +27,14 @@ async def send(msg, uri):
 def main():
     #print("Step 1 Create a camera")
     #camera = cam.create_a_camera()
-    camera = picamera.PiCamera()
-    camera.resolution = (320,256)
+    #camera = picamera.PiCamera()
+    #camera.resolution = (320,256)
+    #time.sleep(2)
 
-    time.sleep(2)
+    camera = cam.init()
     
-    path = RESULTED_IMAGE_FOLDER + f'/Run_{cam.get_timestamp()}'    
-    os.mkdir(path)
+    path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'    
+    os.makedirs(path, exist_ok=True)
     index = 0
     
     log = open(f'{path}/log.txt', 'x')
@@ -65,7 +67,7 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=True)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=False)
         #calc_time = time.time() - start_calc_time
         
         #print("Step 4 Create an error")
@@ -75,7 +77,7 @@ def main():
         message = f"error:e={int(error*100)}:"
         
         #print("Step 6 send to server")
-        #asyncio.run(send(message, "ws://localhost:8765"))
+        asyncio.run(send(message, "ws://localhost:8765"))
         print(message)
         
         #print("Step 7 done")
@@ -108,7 +110,7 @@ def test_folder():
     for filename in images:
         image = cv2.imread(filename)
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=True)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=False)
         
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
@@ -200,8 +202,8 @@ def drive_logically(drive_index,node_list,direction_list,left,right,intersection
     return drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
