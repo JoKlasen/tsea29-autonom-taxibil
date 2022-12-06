@@ -33,8 +33,8 @@ def main():
 
     camera = cam.init()
     
-    path = RESULTED_IMAGE_FOLDER + f'/Run_hardcoded5'    
-    os.makedirs(path)
+    path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'    
+    os.makedirs(path, exist_ok=True)
     index = 0
     
     log = open(f'{path}/log.txt', 'x')
