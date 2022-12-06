@@ -48,22 +48,22 @@ def sendToAVR(message):
     message_type = message.split(':')[0]
     #print("Message Type: " + message_type)
     
-    if (message_type == 'keyspressed'):
+    if (message_type == 'kp'):
         print("Got 'keyspressed' command, sending to Control Unit")
         message = message + "\0"
         print(message)
         ser.write(message.encode());
-    elif (message_type == 'error'):
+    elif (message_type == 'er'):
         print("Got 'error' command, sending to Control Unit")
         message = message + "\0"
         print(message)
         ser.write(message.encode());
-    elif (message_type == 'sendpid'):
+    elif (message_type == 'sp'):
         print("Got 'sendpid' command, sending to Control Unit")
         message = message + "\0"
         print(message)
         ser.write(message.encode());
-    elif (message_type == 'switchmode'):
+    elif (message_type == 'sm'):
         print("Got 'switchmode' command, sending to Control Unit")
         message = message + "\0"
         print(message)
