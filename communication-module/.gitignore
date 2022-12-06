@@ -2,3 +2,4 @@ Result_*
 *.mp4
 *.h264
 *.jpg
+__pycache__/

@@ -9,8 +9,14 @@ class driving_logic:
         self.drive_index = 0
         self.drive_right = False
         self.drive_left = False
-        self.drive_forward = False
+        self.drive_forward = True # False
         self.drive_intersection = False
+
+    def look_for_left_lane(self) -> bool:
+        return self.drive_left or self.drive_forward
+
+    def look_for_right_lane(self) -> bool:
+        return self.drive_right or self.drive_forward
 
     def normal_driving(self):
         if self.drive_index < len(self.node_list): #if we have not reached our end destination
@@ -118,6 +124,4 @@ class driving_logic:
         self.drive_intersection = False
         self.lost_intersection = False
         # ret drive_intersection, lost_intersection, drive_forward, drive_right, drive_left
-    
-if __name__ == "__main__":
-    logic_unit = driving_logic(['LA', 'Kors 1', 'RE', 'LF', 'Kors 2' ,'RB'], ['FORWARD', 'RIGHT', 'FORWARD', 'FORWARD', 'RIGHT', 'STOP'])
+

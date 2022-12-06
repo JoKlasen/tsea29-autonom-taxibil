@@ -4,8 +4,10 @@ from PIL import Image
 import camera
 import calibrate
 import math
-import time as Time
 import driving_logic
+import time as Time
+
+from execution_timer import exec_timer as timer
 
 from numbers import Number
 from typing import Tuple
@@ -41,68 +43,62 @@ def pol2d_over(pol2d:Pol2d, over:Number):
 # Display data on image
 # ----------------------------------------------------------------------
 
-def preview_bitmap_on_image(bitmap: BitmapMtx, image: ImageMtx, color:Color=(0, 255, 0)) -> None:
+def preview_bitmap_on_image(
+	bitmap: BitmapMtx, image: ImageMtx, 
+	color:Color=(0, 255, 0)
+) -> None:
     """ Previews a bitmap overlayed on an image with the provided 
     color.
     """
-
-    print("start: preview_bitmap_on_image")
-    debug_time = Time.time()
-
     image_to_show = add_bitmap_to_image(bitmap, image, color)
-    
     camera.preview_image(final)
-
-    print("finish: preview_bitmap_on_image")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
-    
 
 def add_bitmap_on_image(
 	bitmap:BitmapMtx, image:ImageMtx, 
 	color:Color=(0, 255, 0), weight=0.5
-	) -> ImageMtx:
+) -> ImageMtx:
     """ Add a bitmap onto the provided image and return the result. """
-
-    print("start: add_bitmap_on_image")
-    debug_time = Time.time()
+	
+	timer.start() 
     
     manipulated_image = image.copy()
-    
     manipulated_image[bitmap == 1] = np.array(color)
 
-    print("finish: add_bitmap_on_image")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
+    timer.end()
     
     return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
 
 
-def draw_polynomial_on_image(image:ImageMtx, polynomial:Pol2d, color:Color=(0,255,255)) -> None:
+def draw_polynomial_on_image(
+	image:ImageMtx, polynomial:Pol2d, 
+	color:Color=(0,255,255)
+) -> None:
 	""" Draws the provided second degree polynomial on the image. Image
 	will be changed, not returning anything.
 	"""
-	print("start: draw_polynomial_on_image")
-	debug_time = Time.time()
+	timer.start() 
+    
     
 	plot_over_y = np.linspace(0, image.shape[0]-1, image.shape[0])
 	resulting_x = pol2d_over(polynomial, plot_over_y)
 	for i in range(len(plot_over_y)):
 		cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, color, 2)
 
-	print("finish: draw_polynomial_on_image")
-	debug_time = Time.time() - debug_time
-	print("-   time: ", debug_time)
+
+	timer.end()
         
         
-def fill_between_polynomials(size:Vector2d, poly1:Pol2d, poly2:Pol2d, debug=False) -> BitmapMtx:
+def fill_between_polynomials(
+	size:Vector2d, poly1:Pol2d, poly2:Pol2d, 
+	debug=False
+) -> BitmapMtx:
     """ Creates a bitmap where the area inbetween the two provided 
     second degree polynomials are filled with ones.
     """
     
-    print("start: fill_between_polynomials")
-    debug_time = Time.time()
-
+    timer.start()
+    
+ 
     bitmap = np.empty(size)
     
     # A func that have value be inside of bitmap to avoid incorrect x
@@ -120,9 +116,8 @@ def fill_between_polynomials(size:Vector2d, poly1:Pol2d, poly2:Pol2d, debug=Fals
     if debug:
         camera.preview_image(bitmap*255)
         
-    print("finish: fill_between_polynomials")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
+        
+    timer.end()
 
     return bitmap
 
@@ -134,7 +129,8 @@ def fill_between_polynomials(size:Vector2d, poly1:Pol2d, poly2:Pol2d, debug=Fals
 
 def calc_adjust_turn(
 	left_lane:Pol2d, right_lane:Pol2d, 
-	camera_pos, hit_height= 100
+	camera_pos:Vector2d, drive_well:driving_logic, 
+	hit_height=100
 ) -> Tuple[Number, Number, Vector2d, Vector2d]:
 	""" Calculate the turn required to reach a point late on road.
      
@@ -146,8 +142,7 @@ def calc_adjust_turn(
 	camera_pos = (x,y) 
 	"""
     
-	print("start: calc_adjust_turn")
-	debug_time = Time.time()
+	timer.start() 
     
     
 	# ------NOTE:------
@@ -156,23 +151,33 @@ def calc_adjust_turn(
 	hit_x = hit_height
 	hit_y = 0
 	
+	# ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
+
 	# Calculate lane to follow
-	if left_lane is None and right_lane is None:
-		lane = np.asarray([0,0,camera_pos[1]]) # Straight line
-	elif right_lane is None:
+	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
+	use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
+
+	if use_left_lane and use_right_lane:
+		lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
+		hit_y += pol2d_over(lane, hit_x)
+	elif use_left_lane and not use_right_lane:
 		hit_y -= int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
 		lane = np.asarray(left_lane) 
-	elif left_lane is None:
+	elif not use_left_lane and use_right_lane:
 		hit_y -= int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
-		lane = np.asarray(right_lane) 
+		lane = np.asarray(right_lane)
 	else:
-		lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
-	
-	hit_y += pol2d_over(lane, hit_x)
+		lane = np.asarray([0,0,camera_pos[1]]) # Straight line
+		hit_y += pol2d_over(lane, hit_x)
+					
+	# ~ print(f"LANE({lane})")
 					
 	hit_vector = (hit_x - camera_pos[0], hit_y - camera_pos[1])
 	# Rotate so 0 is straight forward
 	hit_vector = (hit_vector[1], -hit_vector[0])
+	
+	# ~ print(f"new_HIT({hit_x}, {hit_y}) CAM({camera_pos})")
+	# ~ print(hit_vector, camera_pos)
 	
 	# Calculate angle from straight forward to turn_vector
 	turn_to_hit = math.atan2(hit_vector[0], hit_vector[1])
@@ -184,11 +189,15 @@ def calc_adjust_turn(
 
 	# Calculate angle from straight forward to alignment to road
 	turn_to_align = math.atan2(align_vector[0], align_vector[1])
-        
-        
-	print("finish: calc_adjust_turn")
-	debug_time = Time.time() - debug_time
-	print("-   time: ", debug_time)
+            
+	# ~ print(f"ALIGN({align_vector})")
+	
+	
+	timer.end()
+	
+	# ~ print("finish: calc_adjust_turn")
+	# ~ debug_time = Time.time() - debug_time
+	# ~ print("-   time: ", debug_time)
 	
 	return turn_to_hit, turn_to_align, (hit_x, hit_y), align_vector
 
@@ -201,8 +210,7 @@ def calc_error(
 ) -> Number:
     """ Calculate the error. Positive means turn right. """
         
-    print("start: calc_error")
-    debug_time = Time.time()
+    timer.start()
 
     error = turn_hit*turnconst + turn_align*alignconst 
 
@@ -218,9 +226,7 @@ def calc_error(
         Error:        {error}
         """)
 
-    print("finish: calc_error")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
+	timer.end()
 
     return error
 
@@ -233,8 +239,8 @@ def dl_clearify_edges(image:ImageMtx) -> ImageMtx: #just in case we need it
     with same characteristics.
     """
 
-    print("start: dl_clearify_edges")
-    debug_time = Time.time()
+	timer.start()
+    
     
     cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
 
@@ -242,9 +248,8 @@ def dl_clearify_edges(image:ImageMtx) -> ImageMtx: #just in case we need it
     
     blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
     
-    print("finish: dl_clearing_edges")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
+    
+    timer.end()
 
     return blur_image
 
@@ -259,8 +264,8 @@ def get_warp_perspective_funcs(
     target_roi. Returns an image with same characteristics.
     """
 
-    print("start: get_warp_perspective_funcs")
-    debug_time = Time.time()
+	debug.start()
+
 
     if roi == None:
         roi = DEFAULT_ROI
@@ -298,19 +303,18 @@ def get_warp_perspective_funcs(
         camera.preview_image_grid([[image_preview, warped_preview]])
     # --------------------------
 
-    print("finish: get_warp_perspective_funcs")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
+    
+    debug.end()
     
     return warp_func, warp_back_func
+
 
 def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> BitmapMtx:
     """ Returns an image of the provided one where the edges are
     marked.
     """
 
-    print("start: dl_mark_edges")
-    debug_time = Time.time()
+	debug.start()
     
     
     cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
@@ -337,10 +341,8 @@ def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> BitmapMtx
     # ~ sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
     
     
-    print("finish: dl_mark_edges")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
-
+	debug.end()
+	
     return sobel_image
 
 
@@ -351,6 +353,9 @@ def get_start_positions(
 	""" Returns the pixel distribution of image as an array with same
 	width. 
 	"""
+	
+	debug.start()
+	
 	
 	distrubution = np.sum(
 #       bitmap[:,:],     # Check whole image
@@ -387,6 +392,9 @@ def get_start_positions(
 		cv2.putText(graph, "RIGHT LANE PEEK: " + str(right_lane_start), (10,graph.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
     # --------------------------
 
+
+	debug.end()
+
 	return left_lane_start, right_lane_start, graph
 
 
@@ -406,6 +414,9 @@ def find_lane_with_sliding_window(
 	
 	If debug_image is provided it will be drawn upon.
 	"""
+	
+	debug.start()
+	
 	
 	window_height = int(bitmap.shape[0]/numb_windows)
 	current_x = start
@@ -457,27 +468,37 @@ def find_lane_with_sliding_window(
 		# Store bad value since no points found
 		polynomial = None
 
+	debug.end()
+
 	return polynomial
 
 
-def find_horizontal_lines(bitmap:BitmapMtx, debug_image=None, square_color:Color = (255,255,255)):
+def find_horizontal_lines(
+	bitmap:BitmapMtx, drive_well:driving_logic, 
+	debug_image=None, 
+	square_color:Color = (255,255,255)
+) -> None:
 	""" Find horizontal lines on image """
+	
+	debug.start()
 	
 	special_rect = bitmap[int(bitmap.shape[0]/2):int(bitmap.shape[0]/2 + bitmap.shape[0]/4) ,int(bitmap.shape[1]/4):int(bitmap.shape[1] - bitmap.shape[1]/4)]
 	special_distr = np.sum(special_rect)
-	intersection = False
-	right_stop = False
-	left_stop = False
+	drive_well.intersection = False
+	drive_well.right = False
+	drive_well.left = False
 	if special_distr > 200:
 		left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
 		right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
 		if left_side > 0 or right_side > 0:
 			if 3*right_side > 2*left_side > right_side: # 1.5 > left_side/right_side > 0.5
-				intersection = True
+				drive_well.intersection = True
+				if drive_well.drive_intersection is False:
+					drive_well.normal_driving()
 			elif left_side > right_side:
-				left_stop = True
+				drive_well.left = True
 			else:
-				right_stop = True
+				drive_well.right = True
 			
 
 	# ~ print("-----SPECIAL DIST----- \n" ,special_distr)
@@ -490,16 +511,16 @@ def find_horizontal_lines(bitmap:BitmapMtx, debug_image=None, square_color:Color
 
 	if debug_image is not None:
 		cv2.rectangle(debug_image,(int(bitmap.shape[1]/4),int(bitmap.shape[0]/2), int(bitmap.shape[1] - bitmap.shape[1]/2), int(bitmap.shape[0]-bitmap.shape[0]/1.5)), square_color, 2)
-         
+    
+    debug.end()
 
 def dl_detect_lanes(
-	bitmap:BitmapMtx,  
+	bitmap:BitmapMtx,drive_well,  
 	debug=False, get_pics=False
 ) -> Tuple[Pol2d, Pol2d, ImageMtx, ImageMtx]:
 	""" Takes an bitmap and returns lanes tracked on it """
      
-	print("start: dl_detect_lanes")
-	debug_time = Time.time()
+	debug.start()
 	
 	# Find where pixels are concentrated and mark them as startpositions	
 	graph = None
@@ -517,21 +538,19 @@ def dl_detect_lanes(
 	print(f" - [ left_lane:{left_lane}, right_lane:{right_lane} ]")
 	
 	# Find horizontal lines on image
-	find_horizontal_lines(bitmap, pre_image)
+	find_horizontal_lines(bitmap, drive_well, pre_image)
 					
                             
 	if debug:
 		camera.preview_image_grid([[pre_image], [graph]])
     
-	print("finish: dl_detect_lanes")
-	debug_time = Time.time() - debug_time
-	print("-   time: ", debug_time)
+    debug.end()
     
 	return left_lane, right_lane, graph, pre_image
 
 
 def detect_lines(
-	image:ImageMtx, 
+	image:ImageMtx,drive_well, 
 	preview_steps=False, preview_result=False, get_image_data=False
 ) -> Tuple[Number, Number, ImageMtx]:
     """ A line detection function that from an inputed image detect two
@@ -540,8 +559,10 @@ def detect_lines(
     
     # camera.preview_image(image)
     
-    print("start: detect_lines")
-    debug_time = Time.time()
+    debug.start()
+    
+
+    load_images = get_image_data or preview_result or preview_steps
 
     undistort = calibrate.get_undistort()
 
@@ -553,18 +574,23 @@ def detect_lines(
     # Does things to image but not warps it
     edges = dl_mark_edges(warped)
 
-    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges, debug=False, get_pics=get_image_data)
+    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
     
     # Calculate center offset
     camera_pos = (int(image.shape[1]/2), image.shape[0])
+    
+    if drive_well.drive_intersection is True:
+        drive_well.intersection_driving()
+    else:
+        drive_well.normal_driving()
 
     # Calculate turn error
-    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]))
+    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
 
     # _________________PREVIEW____________________
     # An image to preview result
     return_image = None
-    if preview_steps or preview_result or get_image_data:
+    if load_images:
         preview_image = undistort(image)    
 
         if lane_left is not None and lane_right is not None:        
@@ -609,12 +635,14 @@ def detect_lines(
         
     
     
-    print("finish: detect_lines")
-    debug_time = Time.time() - debug_time
-    print("-   time: ", debug_time)
-    pixels = np.sum(edges)
-    print("-   ones: ", pixels)
-    print(f"-   special: {debug_time/pixels if pixels != 0 else 'Error'}")
+    debug.end()
+    
+    # ~ print("finish: detect_lines")
+    # ~ debug_time = Time.time() - debug_time
+    # ~ print("-   time: ", debug_time)
+    # ~ pixels = np.sum(edges)
+    # ~ print("-   ones: ", pixels)
+    # ~ print(f"-   special: {debug_time/pixels if pixels != 0 else 'Error'}")
 
     return turn_hit, turn_align, return_image
 

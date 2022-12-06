@@ -106,104 +106,39 @@ def test_folder():
     if not len(images):
         print(f"No images in folder {folder}!")
         return None, None
+    node_list, direction_list = Pathfinding.main()
+    node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
+    drive_well = driving_logic.driving_logic(node_list, direction_list)
 
     for filename in images:
         image = cv2.imread(filename)
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=False)
-        
-        error = detection.calc_error(turn_to_hit, turn_to_align)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
+        if drive_well.stop is True:
+            print("stop")
+        else:
+            error = detection.calc_error(turn_to_hit, turn_to_align)
+            print(error)
         
         #cam.preview_image(preview_image)
 
 def test_pathing():
-    left = False
-    right = False
-    intersection = False
-    lost_intersection = False
-    stop = False
-    node_list, direction_list = ['LA', 'Kors 1', 'RE', 'LF', 'Kors 2' ,'RB'], ['FORWARD', 'RIGHT', 'FORWARD', 'FORWARD', 'RIGHT', 'STOP']
-    drive_index = 0
-    drive_right = False
-    drive_left = False
-    drive_forward = False
-    intersection_driving = False
-    variables = drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
-
-    # simulate a call to detection, finding a left stop
-    variables = finding_left_stop(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_intersection(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_intersection(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_right_stop(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_left_stop(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_intersection(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_intersection(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_nothing(*variables)
-    # simulate a call to detection, finding a left stop
-    variables = finding_right_stop(*variables)
-
-
-def finding_intersection(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
-    left = False
-    right = False
-    intersection = True
-
-    return drive_logically(drive_index, node_list, direction_list, left, right, intersection, intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop)
-
-def finding_right_stop(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
-    left = False
-    right = True
-    intersection = False
-
-    return drive_logically(drive_index, node_list, direction_list, left, right, intersection, intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop)
-
-def finding_left_stop(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
-    left = True
-    right = False
-    intersection = False
-
-    return drive_logically(drive_index, node_list, direction_list, left, right, intersection, intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop)
-
-def finding_nothing(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
-    left = False
-    right = False
-    intersection = False
-
-    return drive_logically(drive_index, node_list, direction_list, left, right, intersection, intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop)
-
-def drive_logically(drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop):
-    if intersection_driving is False:
-        result = driving_logic.normal_driving(drive_index, node_list, direction_list, left, right, intersection)
-        if result is not None:
-            drive_forward , drive_left, drive_right , drive_index, intersection_driving, stop = result
+    node_list, direction_list = Pathfinding.main()
+    node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
+    print(node_list)
+    drive_well = driving_logic.driving_logic(node_list, direction_list)
+    turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, drive_well, get_image_data=False)
+    if drive_well.stop is True:
+        #send msg with stop speed
+        pass
     else:
-        result = driving_logic.intersection_driving(intersection, lost_intersection, drive_forward, drive_right, drive_left, direction_list, node_list, drive_index)
-        if result is not None:
-            intersection_driving, lost_intersection, drive_forward, drive_right, drive_left = result
-    return drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
+        #send normal msg
+        pass
+    
 
 if __name__ == "__main__":
-    main()
+    #main()
     
-    #test_folder()
+    test_folder()
 
     #test_pathing()
