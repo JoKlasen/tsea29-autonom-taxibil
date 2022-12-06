@@ -37,8 +37,8 @@ function connectToServers() {
 
             updateTable()
 
-            addDataToGraph(status_table[1], status_table[2])
-            //addDataToGraph(status_table["speed"], 0)
+            //addDataToGraph(status_table[1], status_table[2])
+            addDataToGraph(status_table["speed"], 0)
         
         }
     }
