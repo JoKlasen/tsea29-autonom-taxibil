@@ -57,16 +57,16 @@ def add_bitmap_on_image(
 	bitmap:BitmapMtx, image:ImageMtx, 
 	color:Color=(0, 255, 0), weight=0.5
 ) -> ImageMtx:
-    """ Add a bitmap onto the provided image and return the result. """
+	""" Add a bitmap onto the provided image and return the result. """
 	
 	timer.start() 
     
-    manipulated_image = image.copy()
-    manipulated_image[bitmap == 1] = np.array(color)
+	manipulated_image = image.copy()
+	manipulated_image[bitmap == 1] = np.array(color)
 
-    timer.end()
+	timer.end()
     
-    return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
+	return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
 
 
 def draw_polynomial_on_image(
@@ -208,27 +208,27 @@ def calc_error(
 	ignore_less=0.05,
 	debug=False
 ) -> Number:
-    """ Calculate the error. Positive means turn right. """
+	""" Calculate the error. Positive means turn right. """
         
-    timer.start()
+	timer.start()
 
-    error = turn_hit*turnconst + turn_align*alignconst 
+	error = turn_hit*turnconst + turn_align*alignconst 
 
 	# Ignore small errors
-    if -ignore_less < error < ignore_less:
-        error = 0
+	if -ignore_less < error < ignore_less:
+		error = 0
 
-    if debug:
-        print(f"""
-        ___________________________
-        Turn to hit:  {turn_hit} (x{turnconst})
-        Turn to align {turn_align} (x{alignconst})
-        Error:        {error}
-        """)
+	if debug:
+		print(f"""
+		___________________________
+		Turn to hit:  {turn_hit} (x{turnconst})
+		Turn to align {turn_align} (x{alignconst})
+		Error:        {error}
+		""")
 
 	timer.end()
 
-    return error
+	return error
 
 # ----------------------------------------------------------------------
 # Line detection as a whole
@@ -239,7 +239,7 @@ def dl_clearify_edges(image:ImageMtx) -> ImageMtx: #just in case we need it
     with same characteristics.
     """
 
-	timer.start()
+    timer.start()
     
     
     cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
@@ -264,7 +264,7 @@ def get_warp_perspective_funcs(
     target_roi. Returns an image with same characteristics.
     """
 
-	debug.start()
+    timer.start()
 
 
     if roi == None:
@@ -304,7 +304,7 @@ def get_warp_perspective_funcs(
     # --------------------------
 
     
-    debug.end()
+    timer.end()
     
     return warp_func, warp_back_func
 
@@ -314,14 +314,25 @@ def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> BitmapMtx
     marked.
     """
 
-	debug.start()
+    timer.start()
     
+    
+    timer.start(".convert")
     
     cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
 
+    timer.end(".convert")
+    timer.start(".thresh")
+
     _, threshed = cv2.threshold(cvt_image[:,:,1], 60, 255, cv2.THRESH_BINARY_INV)
     
+    timer.end(".thresh")
+    timer.start(".blur")
+    
     blur_image = cv2.GaussianBlur(threshed, (7,7), 0)
+
+    timer.end(".blur")
+    timer.start(".sobel")
 
     sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, 7))
     sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, 7))
@@ -332,6 +343,9 @@ def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> BitmapMtx
     sobel_image = np.ones_like(sobel, dtype=image.dtype)
     sobel_image[threshold(sobel)] = 0
     
+    
+    timer.end(".sobel")
+    
     # ~ _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
     # ~ _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
     # ~ rs_binary = cv2.bitwise_and(s_binary, r_thresh)
@@ -341,7 +355,7 @@ def dl_mark_edges(image:ImageMtx, threshold=lambda pix: (pix < 30)) -> BitmapMtx
     # ~ sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
     
     
-	debug.end()
+    timer.end()
 	
     return sobel_image
 
@@ -354,7 +368,7 @@ def get_start_positions(
 	width. 
 	"""
 	
-	debug.start()
+	timer.start()
 	
 	
 	distrubution = np.sum(
@@ -393,7 +407,7 @@ def get_start_positions(
     # --------------------------
 
 
-	debug.end()
+	timer.end()
 
 	return left_lane_start, right_lane_start, graph
 
@@ -415,7 +429,7 @@ def find_lane_with_sliding_window(
 	If debug_image is provided it will be drawn upon.
 	"""
 	
-	debug.start()
+	timer.start()
 	
 	
 	window_height = int(bitmap.shape[0]/numb_windows)
@@ -468,7 +482,7 @@ def find_lane_with_sliding_window(
 		# Store bad value since no points found
 		polynomial = None
 
-	debug.end()
+	timer.end()
 
 	return polynomial
 
@@ -480,7 +494,7 @@ def find_horizontal_lines(
 ) -> None:
 	""" Find horizontal lines on image """
 	
-	debug.start()
+	timer.start()
 	
 	special_rect = bitmap[int(bitmap.shape[0]/2):int(bitmap.shape[0]/2 + bitmap.shape[0]/4) ,int(bitmap.shape[1]/4):int(bitmap.shape[1] - bitmap.shape[1]/4)]
 	special_distr = np.sum(special_rect)
@@ -512,7 +526,7 @@ def find_horizontal_lines(
 	if debug_image is not None:
 		cv2.rectangle(debug_image,(int(bitmap.shape[1]/4),int(bitmap.shape[0]/2), int(bitmap.shape[1] - bitmap.shape[1]/2), int(bitmap.shape[0]-bitmap.shape[0]/1.5)), square_color, 2)
     
-    debug.end()
+	timer.end()
 
 def dl_detect_lanes(
 	bitmap:BitmapMtx,drive_well,  
@@ -520,7 +534,7 @@ def dl_detect_lanes(
 ) -> Tuple[Pol2d, Pol2d, ImageMtx, ImageMtx]:
 	""" Takes an bitmap and returns lanes tracked on it """
      
-	debug.start()
+	timer.start()
 	
 	# Find where pixels are concentrated and mark them as startpositions	
 	graph = None
@@ -535,7 +549,7 @@ def dl_detect_lanes(
 	left_lane = find_lane_with_sliding_window(bitmap, left_lane_start, debug_image=pre_image, pixels_color = (0, 255 ,0))
 	right_lane = find_lane_with_sliding_window(bitmap, right_lane_start, debug_image=pre_image, pixels_color = (0, 0, 255))
 	
-	print(f" - [ left_lane:{left_lane}, right_lane:{right_lane} ]")
+	# ~ print(f" - [ left_lane:{left_lane}, right_lane:{right_lane} ]")
 	
 	# Find horizontal lines on image
 	find_horizontal_lines(bitmap, drive_well, pre_image)
@@ -544,7 +558,7 @@ def dl_detect_lanes(
 	if debug:
 		camera.preview_image_grid([[pre_image], [graph]])
     
-    debug.end()
+	timer.end()
     
 	return left_lane, right_lane, graph, pre_image
 
@@ -559,9 +573,8 @@ def detect_lines(
     
     # camera.preview_image(image)
     
-    debug.start()
+    timer.start()
     
-
     load_images = get_image_data or preview_result or preview_steps
 
     undistort = calibrate.get_undistort()
@@ -633,9 +646,7 @@ def detect_lines(
     # ____________________________________________
 
         
-    
-    
-    debug.end()
+    timer.end()
     
     # ~ print("finish: detect_lines")
     # ~ debug_time = Time.time() - debug_time

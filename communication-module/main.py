@@ -15,6 +15,8 @@ import picamera
 import Pathfinding
 import driving_logic
 
+from execution_timer import exec_timer
+
 RESULTED_IMAGE_FOLDER = './Result_640x480'
 
 
@@ -113,14 +115,21 @@ def test_folder():
     for filename in images:
         image = cv2.imread(filename)
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
+        exec_timer.start()
+
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=False)
         if drive_well.stop is True:
             print("stop")
         else:
             error = detection.calc_error(turn_to_hit, turn_to_align)
-            print(error)
+            # ~ print(error)
+        
+        exec_timer.end()
         
         #cam.preview_image(preview_image)
+        
+    exec_timer.print_memory()
+    
 
 def test_pathing():
     node_list, direction_list = Pathfinding.main()
