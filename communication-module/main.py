@@ -1,5 +1,6 @@
 
-import camera as cam
+from datetime import datetime
+import opencv_stream as cam
 import detection
 import asyncio
 from websockets import connect
@@ -26,13 +27,14 @@ async def send(msg, uri):
 def main():
     #print("Step 1 Create a camera")
     #camera = cam.create_a_camera()
-    camera = picamera.PiCamera()
-    camera.resolution = (320,256)
+    #camera = picamera.PiCamera()
+    #camera.resolution = (320,256)
+    #time.sleep(2)
 
-    time.sleep(2)
+    camera = cam.init()
     
-    path = RESULTED_IMAGE_FOLDER + f'/Run_{cam.get_timestamp()}'    
-    os.mkdir(path)
+    path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'    
+    os.makedirs(path, exist_ok=True)
     index = 0
     
     log = open(f'{path}/log.txt', 'x')
@@ -75,7 +77,7 @@ def main():
         message = f"error:e={int(error*100)}:"
         
         #print("Step 6 send to server")
-        #asyncio.run(send(message, "ws://localhost:8765"))
+        asyncio.run(send(message, "ws://localhost:8765"))
         print(message)
         
         #print("Step 7 done")

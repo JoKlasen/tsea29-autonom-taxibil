@@ -196,7 +196,7 @@ def calc_adjust_turn(
 def calc_error(
 	turn_hit:Number, turn_align:Number, 
 	turnconst=1, alignconst=1, 
-	ignore_less=0.13,
+	ignore_less=0.05,
 	debug=False
 ) -> Number:
     """ Calculate the error. Positive means turn right. """
