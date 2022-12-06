@@ -65,7 +65,7 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=True)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=False)
         #calc_time = time.time() - start_calc_time
         
         #print("Step 4 Create an error")
@@ -108,7 +108,7 @@ def test_folder():
     for filename in images:
         image = cv2.imread(filename)
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=True)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, preview_steps=False)
         
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
@@ -200,8 +200,8 @@ def drive_logically(drive_index,node_list,direction_list,left,right,intersection
     return drive_index,node_list,direction_list,left,right,intersection,intersection_driving,lost_intersection, drive_forward, drive_right, drive_left, stop
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
