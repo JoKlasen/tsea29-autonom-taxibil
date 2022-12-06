@@ -209,7 +209,7 @@ def calc_error(
     error = turn_hit*turnconst + turn_align*alignconst 
 
 	# Ignore small errors
-    if -0.13 < error < 0.13:
+    if -0.04 < error < 0.04:
         error = 0
 
     if debug:
