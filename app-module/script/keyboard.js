@@ -78,7 +78,7 @@ function sendKeys() {
         tempkeys["right"] == 0;
     }
 
-    sendMessage("keyspressed:" +
+    sendMessage("kp:" +
         "f=" + tempkeys["forward"].toString() +
         ":l=" + tempkeys["left"].toString() +
         ":b=" + tempkeys["back"].toString() +
