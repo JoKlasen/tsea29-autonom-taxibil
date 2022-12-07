@@ -43,7 +43,7 @@ volatile unsigned long long	echo_end = 0;
 volatile unsigned long long hall_left_latest = 0;
 volatile unsigned long long hall_left_old = 0;
 volatile unsigned long long hall_right_latest = 0;
-
+volatile unsigned long long new_time = 0;
 // ISR flags
 volatile bool echo_updated = false;
 volatile bool hall_left_updated = false;
@@ -146,6 +146,32 @@ bool parse_handshake()
 	return false;
 }
 
+void handshake()
+{
+	while(1)
+	{
+		if(millis()-new_time > 100)
+		{
+			old_millis = millis();
+			//Denna ska va här ---- start
+			send_data("sensor_module\n");
+			//Denna ska va här ---- slut
+			if(received)
+			{
+				cli();
+				received = false;
+				if(parse_handshake()) //ACK
+				{
+					sei();
+					return;
+				}
+				sei();	
+			}
+		}
+	}
+}
+
+
 int main(void)
 {
 	setup();
@@ -155,7 +181,7 @@ int main(void)
 	volatile bool localultrasound = false;
 	volatile bool localhallsensor = false;
 	volatile unsigned long long old_time = 0;
-	volatile unsigned long long new_time = 0;
+
 	char initial[50];
 	char * speed_msg = &initial[0]; 
 	
@@ -173,40 +199,13 @@ int main(void)
 	volatile bool has_full_string = false;
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
-	
-	while(1)
-	{
-		if(millis()-new_time > 100)
-		{
-			new_time = millis();
-			//Denna ska va här ---- start
-			send_data("sensor_module\n");
-			//Denna ska va här ---- slut
-			if(received)
-			{
-				cli();
-				received = false;
-				if(parse_handshake()) //ACK
-				{
-					sei();
-					break;
-				}
-				sei();
-					
-			}
-				
-		}
 
-	}
+
+	handshake();
 	PORTA |= (1 << LED2);
-	/*
-	send_data("After handshake\n");
-	*/
 	while(1)
 	{
 		new_time = millis();
-		
-		
 		cli();
 		localultrasound = echo_updated;
 		sei();
