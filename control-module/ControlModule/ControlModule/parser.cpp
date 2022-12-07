@@ -33,22 +33,22 @@ void parse(char input[])
 				strlcpy(&command[0], input, i+1);
 				label_end = i;
 
-				if (!strcmp(&command[0], "keyspressed"))
+				if (!strcmp(&command[0], "kp"))
 				{
 					keys = true;
 					findcommand = false;
 				}
-				else if (!strcmp(&command[0], "switchmode"))
+				else if (!strcmp(&command[0], "sm"))
 				{
 					switchmode = true;
 					findcommand = false;
 				}
-				else if (!strcmp(&command[0], "sendpid"))
+				else if (!strcmp(&command[0], "sp"))
 				{
 					pid = true;
 					findcommand = false;
 				}
-				else if (!strcmp(&command[0], "emergencystop"))
+				else if (!strcmp(&command[0], "es"))
 				{
 					SPEED_REGISTER = 0;
 					emergencystop = true;
@@ -57,7 +57,7 @@ void parse(char input[])
 				{
 					telemetry = true;
 					findcommand = false;
-				}else if (!strcmp(&command[0], "error"))
+				}else if (!strcmp(&command[0], "er"))
 				{
 					error_b = true;
 					findcommand = false;
@@ -78,19 +78,19 @@ void parse(char input[])
 				{
 					clear_buffer(&text_value[0], 10);
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
-					if (!strcmp(&value_name[0], "forward"))
+					if (!strcmp(&value_name[0], "f"))
 					{
 						man_forward = atoi(&text_value[0]);
 					}
-					else if (!strcmp(&value_name[0], "left"))
+					else if (!strcmp(&value_name[0], "l"))
 					{
 						man_left = atoi(&text_value[0]);
 					}
-					else if (!strcmp(&value_name[0], "back"))
+					else if (!strcmp(&value_name[0], "b"))
 					{
 						man_back = atoi(&text_value[0]);
 					}
-					else if (!strcmp(&value_name[0], "right"))
+					else if (!strcmp(&value_name[0], "r"))
 					{
 						man_right = atoi(&text_value[0]);
 					}
@@ -110,7 +110,7 @@ void parse(char input[])
 				{
 					clear_buffer(&text_value[0], 10);
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
-					if (!strcmp(&value_name[0], "mode"))
+					if (!strcmp(&value_name[0], "m"))
 					{
 						manual_mode = atoi(&text_value[0]);
 						if (manual_mode == 1)
@@ -145,7 +145,7 @@ void parse(char input[])
 						velocity = atoi(&text_value[0]);
 						velocity_received = true;
 					}
-					/*
+					
 					else if (!strcmp(&value_name[0], "steering"))
 					{
 						steering_from_pi = atoi(&text_value[0]);
@@ -154,7 +154,7 @@ void parse(char input[])
 					{
 						error = atoi(&text_value[0]);
 						turn_error_received = true;
-					}*/
+					}
 					else if (!strcmp(&value_name[0], "detection"))
 					{
 						detection = atoi(&text_value[0]);
