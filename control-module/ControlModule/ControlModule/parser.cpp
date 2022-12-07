@@ -142,15 +142,16 @@ void parse(char input[])
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "velocity"))
 					{
-						velocity = atoi(&text_value[0]);
+						velocity = atoi(&text_value[0]); // TODO: Velocity is NOT sent as an INT, in km/h as xx.xxx
+						//velocity = aito [xx.] * 1000 + aito [.xxx] // need to prase textvalue to separate the integer and decimal, separated with '.'
 						velocity_received = true;
 					}
 					
-					else if (!strcmp(&value_name[0], "steering"))
+					else if (!strcmp(&value_name[0], "steering")) // Q: What is this??
 					{
 						steering_from_pi = atoi(&text_value[0]);
 					}
-					else if (!strcmp(&value_name[0], "error"))
+					else if (!strcmp(&value_name[0], "error")) // TODO: Rename to steering error or something... add speed_error or expected_speed
 					{
 						error = atoi(&text_value[0]);
 						turn_error_received = true;

@@ -35,8 +35,8 @@ char working_buffer[RECEIVE_BUFFER_SIZE];
 volatile int receive_buffer_index = 0;
 
 volatile int velocity;
-volatile int steering_from_pi;
-volatile int error;
+volatile int steering_from_pi; // Q: Unused??
+volatile int error;	//TODO: change to steering_error and add speed_error/expected_speed
 volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
@@ -44,8 +44,13 @@ volatile bool velocity_received = false;
 
 volatile int ConstantP, ConstantI, ConstantD;
 volatile int PTerm, ITerm, DTerm;
-volatile int CurrentI, MaxI, MinI;
+volatile int CurrentI, MaxI, MinI = 0;
 volatile int dTemp = 0;
+
+volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
+volatile int spd_PTerm, spd_ITerm, spd_DTerm;
+volatile int spd_CurrentI, spd_MaxI, spd_MinI = 0;
+volatile int spd_dTemp = 0;
 
 void turn_percent(int correction)
 {
@@ -129,7 +134,7 @@ int main(void)
 			else//Automatic Mode
 			{
 				
-				//Bugg här nånstans
+				//Bugg hï¿½r nï¿½nstans
 				if(detection <= 3)
 				{
 					brake();
@@ -164,7 +169,7 @@ int main(void)
 				
 				//Buggen ovan
 				
-				// Hårdkodad sålänge
+				// Hï¿½rdkodad sï¿½lï¿½nge
 
 				//sprintf(debugdata,"Speed register = %d",SPEED_REGISTER);
 				//send_data(debugdata);
@@ -183,6 +188,10 @@ int main(void)
 				//PID LOOP/FUNCTION for speed
 				if(velocity_received)
 				{
+					// TODO: 
+					// error = expected_speed - velocity // Do proper range conversion
+					// int correction = spd_PIDiteration(error);
+					// SPEED_REGISTER = SPEED_REGISTER + correction; // With range check
 					// variabeln == "velocity"
 					//SPEED_REGISTER = 3500;
 					velocity_received = false;		

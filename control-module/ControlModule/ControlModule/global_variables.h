@@ -30,4 +30,9 @@ extern volatile int PTerm, ITerm, DTerm;
 extern volatile int CurrentI, MaxI, MinI;
 extern volatile int dTemp;
 
+extern volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
+extern volatile int spd_PTerm, spd_ITerm, spd_DTerm;
+extern volatile int spd_CurrentI, spd_MaxI, spd_MinI = 0;
+extern volatile int spd_dTemp = 0;
+
 #endif
