@@ -72,7 +72,7 @@ def sendToAVR(message):
         print("Got 'telemetry' command, sending to Control Unit")
         message = message + "\0"
         print(message)
-        ser.write(message.encode());
+        #ser.write(message.encode());
     elif (message_type == 'override'):
         print("Got 'override' command, sending to Control Unit")
         message = message + "\0"
