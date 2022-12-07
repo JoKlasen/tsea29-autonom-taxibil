@@ -10,7 +10,7 @@ class driving_logic:
         self.drive_index = 0
         self.drive_right = False
         self.drive_left = False
-        self.drive_forward = False
+        self.drive_forward = True # False
         self.drive_intersection = False
 
     def drive(self, debug = False):
