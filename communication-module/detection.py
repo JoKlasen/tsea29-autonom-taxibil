@@ -498,21 +498,21 @@ def find_horizontal_lines(
 	
 	special_rect = bitmap[int(bitmap.shape[0]/2):int(bitmap.shape[0]/2 + bitmap.shape[0]/4) ,int(bitmap.shape[1]/4):int(bitmap.shape[1] - bitmap.shape[1]/4)]
 	special_distr = np.sum(special_rect)
-	drive_well.intersection = False
-	drive_well.right = False
-	drive_well.left = False
+	drive_well.intersection_found = False
+	drive_well.right_stop_found = False
+	drive_well.left_stop_found = False
 	if special_distr > 200:
 		left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
 		right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
 		if left_side > 0 or right_side > 0:
 			if 3*right_side > 2*left_side > right_side: # 1.5 > left_side/right_side > 0.5
-				drive_well.intersection = True
+				drive_well.intersection_found = True
 				if drive_well.drive_intersection is False:
 					drive_well.normal_driving()
 			elif left_side > right_side:
-				drive_well.left = True
+				drive_well.left_stop_found = True
 			else:
-				drive_well.right = True
+				drive_well.right_stop_found = True
 			
 
 	# ~ print("-----SPECIAL DIST----- \n" ,special_distr)
@@ -592,10 +592,7 @@ def detect_lines(
     # Calculate center offset
     camera_pos = (int(image.shape[1]/2), image.shape[0])
     
-    if drive_well.drive_intersection is True:
-        drive_well.intersection_driving()
-    else:
-        drive_well.normal_driving()
+	drive_well.drive()
 
     # Calculate turn error
     turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
