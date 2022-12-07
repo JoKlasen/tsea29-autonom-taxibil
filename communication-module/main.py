@@ -48,7 +48,10 @@ def main():
     lost_intersection = False
     stop = False
     node_list, direction_list = Pathfinding.main() # List of nodes and directions to drive from pathfinding
+    node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
     drive_index = 0
+    drive_well = driving_logic.driving_logic(node_list, direction_list) 
+
 
     while True:
 
@@ -69,8 +72,13 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=False)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, drive_well, get_image_data=False)
         #calc_time = time.time() - start_calc_time
+        
+        if drive_well.stop is True:
+            print("----------> stop")
+        else:
+            error = detection.calc_error(turn_to_hit, turn_to_align)
         
         #print("Step 4 Create an error")
         error = detection.calc_error(turn_to_hit, turn_to_align)
@@ -80,7 +88,13 @@ def main():
         
         #print("Step 6 send to server")
         asyncio.run(send(message, "ws://localhost:8765"))
-        print(message)
+
+        if drive_well.stop:
+            message = f"es:"
+        
+            #print("Step 6 send to server")
+            asyncio.run(send(message, "ws://localhost:8765"))
+
         
         #print("Step 7 done")
         
@@ -110,7 +124,7 @@ def test_folder():
         return None, None
     node_list, direction_list = Pathfinding.main()
     node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
-    drive_well = driving_logic.driving_logic(node_list, direction_list)
+    drive_well = driving_logic.driving_logic(node_list, direction_list) 
 
     for filename in images:
         image = cv2.imread(filename)
@@ -119,7 +133,7 @@ def test_folder():
 
         turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=False)
         if drive_well.stop is True:
-            print("stop")
+            print("----------> stop")
         else:
             error = detection.calc_error(turn_to_hit, turn_to_align)
             # ~ print(error)
@@ -146,8 +160,8 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
