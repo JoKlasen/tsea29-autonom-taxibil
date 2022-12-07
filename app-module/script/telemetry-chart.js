@@ -31,7 +31,7 @@ function setupChart() {
 		    labels: 0,
 		    datasets: [
 			    {
-				    label: 'Error',
+				    label: 'SteeringError',
                     fill: false,
                     borderColor: "#AA0000",
                     pointBackgroundColor: "#FFFFFF",
@@ -50,6 +50,26 @@ function setupChart() {
                     pointHoverBorderColor: "#55bae7",
                     data: []
                 },
+			    {
+				    label: 'SpeedError',
+                    fill: false,
+                    borderColor: "#AA0000",
+                    pointBackgroundColor: "#FFFFFF",
+                    pointBorderColor: "#55bae7",
+                    pointHoverBackgroundColor: "#54bae7",
+                    pointHoverBorderColor: "#55bae7",
+                    data: []
+			    },
+                {
+                    label: 'Speed',
+                    fill: false,
+                    borderColor: "#00AA00",
+                    pointBackgroundColor: "#FFFFFF",
+                    pointBorderColor: "#55bae7",
+                    pointHoverBackgroundColor: "#54bae7",
+                    pointHoverBorderColor: "#55bae7",
+                    data: []
+                },
 		    ],
 	    },
     })
@@ -58,7 +78,7 @@ function setupChart() {
 var timer_started = false
 var initial_time = null
 var logging_paused = false
-function addDataToGraph(steering, error) {
+function addDataToGraph(steeringerror, steering, speederror, speed) {
     if (logging_paused) {
         return;
     }
@@ -81,11 +101,10 @@ function addDataToGraph(steering, error) {
 
     telemetryChart.data.labels.push(currentTime);
     telemetryChart.data.datasets[0].data.push(steering)
-    telemetryChart.data.datasets[1].data.push(error)
+    telemetryChart.data.datasets[1].data.push(steeringerror)
+    telemetryChart.data.datasets[2].data.push(speed)
+    telemetryChart.data.datasets[3].data.push(speederror)
     
-    //console.log("Labels: ")
-    //console.log(telemetryChart.data.labels)
-
     telemetryChart.update()
 }
 

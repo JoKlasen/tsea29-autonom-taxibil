@@ -1,139 +1,139 @@
-html, body {
+html,
+body {
+  font-size: 2vh;
 
-    font-size: 2vh;
-
-    margin: 0;
-    --border-color: gray;
-    --text-color: lightgray;
-    --background-color: #152238;
+  margin: 0;
+  --border-color: gray;
+  --text-color: lightgray;
+  --background-color: #152238;
 }
 
 #app-container {
-    width: 100vw;
-    height: 100vh;
+  width: 100vw;
+  height: 100vh;
 
-    background-color: var(--background-color);
-    color: var(--text-color);
+  background-color: var(--background-color);
+  color: var(--text-color);
 
-    display: flex;
+  display: flex;
 }
 
 .sub-containers {
-    width: 50vw;
-    height: 50vh;
+  width: 50vw;
+  height: 50vh;
 
-    border: 1px solid var(--border-color);
-    box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
 }
 
 #telemetry {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    align-items: center;
-    justify-content: space-around;
+  align-items: center;
+  justify-content: space-around;
 }
 
 #telemetry-table {
-    border: 1px solid black;
-    
-    width: 35vw;
+  border: 1px solid black;
 
-    border-collapse: collapse;
+  width: 35vw;
+
+  border-collapse: collapse;
 }
 #telemetry-table th {
-    text-align: left;
-    font-weight: 600;
+  text-align: left;
+  font-weight: 600;
 
-    border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
 }
 #telemetry-table td {
-    border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
 }
 
 #telemetry-chart {
-    border: 1px solid var(--border-color);
-    color: var(--border-color);
+  border: 1px solid var(--border-color);
+  color: var(--border-color);
 }
 
 #control {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    align-items: center;
-    justify-content: space-around;
+  align-items: center;
+  justify-content: space-around;
 }
 .control-extrabuttons {
-    height: 10vh;
-    width: 10vh;
+  height: 6vh;
+  width: 9vh;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 
-    border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
 }
 .control-extrabuttons:hover {
-    background-color: var(--text-color);
-    color: var(--background-color);
+  background-color: var(--text-color);
+  color: var(--background-color);
 
-    cursor: pointer;
+  cursor: pointer;
 }
 .control-buttons {
-    height: 15vh;
-    width: 15vh;
+  height: 15vh;
+  width: 15vh;
 
-    border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
 
-    font-size: 5vh;
+  font-size: 5vh;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
 }
 .control-buttons:hover {
-    background-color: var(--text-color);
-    color: var(--background-color);
+  background-color: var(--text-color);
+  color: var(--background-color);
 
-    cursor: pointer;
+  cursor: pointer;
 }
 .control-highlight {
-    background-color: var(--text-color);
-    color: var(--background-color);
+  background-color: var(--text-color);
+  color: var(--background-color);
 }
 .control-pid-input {
-    width: 5vh;
-    height: 5vh;
+  width: 5vh;
+  height: 2vh;
 }
 #control-pid-button {
-    background-color: var(--background-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 #control-pid-button:hover {
-    background-color: var(--text-color);
-    color: var(--background-color);
+  background-color: var(--text-color);
+  color: var(--background-color);
 
-    cursor: pointer;
+  cursor: pointer;
 }
 
 #camera {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
 }
 
 .buttons-standard {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    border-radius: 1vh;
-    width: 45%;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 1vh;
+  width: 45%;
 }
 .buttons-standard:hover {
-    cursor: pointer;
+  cursor: pointer;
 
-    color: var(--background-color);
-    background-color: var(--text-color);
+  color: var(--background-color);
+  background-color: var(--text-color);
 }
