@@ -152,17 +152,27 @@ def live_preview():
 
 def test_images():
     cam = init()
-    
+    title = "heh"
     ret, img = cam.read()
     if ret == False:
         print("Failed to take image 1")
-    img.save("./Capture_normal.png")
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(title, 1500, 800)
+    cv2.imshow(title, img)
+    # Wait on key then destroy
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     
     cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('m','j','p','g'))
     ret, img = cam.read()
     if ret == False:
         print("Failed to take image 2")
-    img.save("./Capture_mjpeg.png")
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(title, 1500, 800)
+    cv2.imshow(title, img)
+    # Wait on key then destroy
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     #cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('m','j','p','g'))
     #ret, img = cam.read()
