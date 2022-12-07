@@ -67,14 +67,14 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=False)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, get_image_data=True)
         #calc_time = time.time() - start_calc_time
         
         #print("Step 4 Create an error")
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
         #print("Step 5 Create a message")
-        message = f"error:e={int(error*100)}:"
+        message = f"er:e={int(error*100)}:"
         
         #print("Step 6 send to server")
         asyncio.run(send(message, "ws://localhost:8765"))
@@ -83,10 +83,10 @@ def main():
         #print("Step 7 done")
         
         # Store the image that was worked upon and the resulting image
-        #org_img = Image.fromarray(image)
-        #org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
-        #rslt_img = Image.fromarray(resulting_image)
-        #rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
+        org_img = Image.fromarray(image)
+        org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
+        rslt_img = Image.fromarray(resulting_image)
+        rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
         
         # Store data produced
         #log.write(f'\n_______{index}_________ \nLeft: {left} \nRight: {right} \nCenter: {offset} \nError: {error} \nTotalTime: {time.time() - start_time} \nCalcTime: {calc_time}')    
