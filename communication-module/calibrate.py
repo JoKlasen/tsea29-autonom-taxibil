@@ -6,7 +6,6 @@ import os
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
-import picamera
 import time
 
 from typing import Tuple, Callable, Any
@@ -55,21 +54,18 @@ def create_calibration_images() -> None:
 	path = CALIBRATOR_IMAGES_FOLDER
 	if not os.path.exists(path):
 		os.mkdir(path)
-			
-	camera.start_preview()
 
 	# Have user take image when pressing enter, end if first typed "end"
-	while "end" != input("").lower():
-		stream = BytesIO()
-		cam.capture(stream, format='jpeg')
-		
-		# Create image from data
-		stream.seek(0)		
-		img = Image.open(stream)
-		
-		# Store image
-		now = datetime.now()		
-		img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+	while ("end" != input("").lower()):
+        ret, image = camera.interrupted_preview(cam)
+		if ret:
+            img = Image.open(image)
+            
+            # Store image
+            now = datetime.now()		
+            img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+        else:
+            print("Calibrate: Failed to capture image")
 
 
 def create_and_save_calibration_params(debug = False) -> None:

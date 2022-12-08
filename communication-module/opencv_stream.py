@@ -56,19 +56,14 @@ def camera_capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
     
 	if debug:
 		print("start: camera_capture_image")
-		#camera.start_preview()
-		#camera.preview.window = (0,0,1000,800)
-		#camera.preview.fullscreen = False
-		#input("")		
 		debug_time = time.time()
-
+    
     # Take image
 	ret, img = camera.read()
    
 	if debug:
 		debug_time = time.time() - debug_time
 		print("finish: camera_capture_image")
-		#camera.stop_preview()        
 		print("time: ", debug_time)
 
 	return np.asarray(img)
@@ -87,19 +82,16 @@ def create_example_images(path:str = "./Example/"):
 	#cam.start_preview()
     
 	while True:
-		# Wait
-		time.sleep(5 - time.monotonic() % 1)
-
 		# Take image
-		ret, image = cam.read()
-
+		ret, image = interrupted_preview(cam, wait=5)
+        
         if (ret):      
             img = Image.open(image)
 
             # Store image
-            now = datetime.now()
-            img_name = f"{path}EI_{get_timestamp()}.jpg"
-            img.save(img_name)
+            # Store image
+            now = datetime.now()		
+            img.save("{}/EI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
 
             print("Image taken: {img_name}")
         else:
@@ -144,16 +136,24 @@ def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:
     return final
 
 
-def input_interrupted_preview(cam:cv2.VideoCapture, title='Preview') -> ImageMtx:
+def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0) -> ImageMtx:
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(title, 1500, 800)
-    while True:
-        ret_val, img = cam.read()
+    ret = False
+    img = None
+
+    # TODO: Implement Wait
+
+    keyPressed = False
+    while not keyPressed:
+        ret, img = cam.read()
         cv2.imshow(title, img)
         if (not cv2.waitKey(1) == 0): 
-            break
+            keyPressed = True
+
     cv2.destroyAllWindows()
 
+    return ret, img
 
 
 # ----------------------------------------------------------------------
@@ -261,13 +261,7 @@ def test_camera_attribute(gen:Generator[Any, None, None]):
 	for state in gen(camera):
 		print(f"* {state}", end="")
 		
-		camera.start_preview()
-		camera.preview.window = PREFERED_PREVIEW_SIZE
-		camera.preview.fullscreen = False
-		
-		input("")
-		
-		camera.stop_preview()
+		interrupted_preview(camera)
 
 # ----------------------------------------------------------------------
 # Main, when file is ran
@@ -282,4 +276,6 @@ if __name__ == "__main__":
 
 	# test_brightness()
 
-    test_codec()
+    # test_codec()
+
+    interrupted_preview(init())
