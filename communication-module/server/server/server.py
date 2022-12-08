@@ -48,6 +48,7 @@ def sendToAVR(message):
     message_type = message.split(':')[0]
     
     if (message_type in commands_control):
+        message = message + '\n';
         print("To Control-Module: ", message)
         ser.write(message.encode())
 
