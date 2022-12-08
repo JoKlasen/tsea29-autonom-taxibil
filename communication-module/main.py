@@ -18,44 +18,11 @@ import driving_logic
 from execution_timer import exec_timer
 
 RESULTED_IMAGE_FOLDER = './Result_640x480'
-CONFIG_FILE = './config.txt'
-
 
 async def send(msg, uri):
     async with connect(uri) as websocket:
         await websocket.send(msg)
         #await websocket.recv()
-
-
-def load_config():
-    
-    # Get paramters from file
-    config_file = open(CONFIG_FILE, 'r')
-    
-    config = eval(''.join(config_file.readlines()))
-    
-    detection.DEFAULT_ROI = config['default_roi']
-
-    detection.DFLT_HIT_HEIGHT = config['hit_height']
-
-    detection.MARK_EDGES_BLUR = config['mark_edges_blur']
-    detection.MARK_EDGES_SOBEL = config['mark_edges_sobel']
-    detection.MARK_EDGES_SOBEL_THRESHOLD = config['mark_edges_sobel_threshold']
-    detection.MARK_EDGES_THRESHOLD = config['mark_edges_threshold']
-
-    detection.DFLT_LANE_MARGIN = config['lane_margin']
-    detection.DFLT_MIN_TO_RECENTER_WINDOW = config['min_to_recenter_window']
-    detection.DFLT_NUMB_WINDOWS = config['numb_windows']
-
-    detection.DFLT_TURNCONST = config['turn_error_const']
-    detection.DFLT_ALIGNCONST = config['align_error_const']
-    detection.DFLT_IGNORE_LESS = config['ignore_less']
-
-    detection.DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
-    detection.DFLT_MID_OFFSET = config['mid_offset']
-    detection.DFLT_MID_WINDOW_HEIGHT = config['mid_window_height']
-    detection.DFLT_MID_WINDOW_WIDTH = config['mid_window_width']
-
 
 def main():
     #print("Step 1 Create a camera")
@@ -63,8 +30,6 @@ def main():
     #camera = picamera.PiCamera()
     #camera.resolution = (320,256)
     #time.sleep(2)
-
-    load_config()
 
     camera = cam.init()
     
@@ -151,8 +116,6 @@ def main():
 
 def test_folder():
 
-    load_config()
-
     images = glob.glob("./Lanetest_320x256_temp" + "/*.jpg")
 
     if not len(images):
@@ -167,7 +130,7 @@ def test_folder():
 
         exec_timer.start()
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=False)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
         if drive_well.stop is True:
             print("----------> stop")
         else:

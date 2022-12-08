@@ -13,6 +13,14 @@ class driving_logic:
         self.drive_forward = True # False
         self.drive_intersection = False
 
+
+    def look_for_left_lane(self):
+        return self.drive_left or self.drive_forward
+        
+    def look_for_right_lane(self):
+        return self.drive_right or self.drive_forward
+    
+
     def drive(self, debug = False):
         if self.drive_intersection is True:
             self.intersection_driving(self, debug)

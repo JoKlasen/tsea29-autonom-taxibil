@@ -6,6 +6,7 @@ import calibrate
 import math
 import driving_logic
 import time as Time
+import math
 
 from execution_timer import exec_timer as timer
 
@@ -13,18 +14,15 @@ from numbers import Number
 from typing import Tuple
 from camera import ImageMtx, BitmapMtx, Pol2d, Vector2d, Color
 
-DRIVE_LEFT = False
-DRIVE_RIGHT = False
-DRIVE_FORWARD = False
-DRIVE_INTERSECTION = False
 
+CONFIG_FILE = './config.txt'
 TESTFILE =	"Lanetest_320x256_LaneMissing/LeftMirrored.jpg"
 
 # ----- Parameters -----
 # Change as required
 #DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)] # 2000x1000
 #DEFAULT_ROI = [(0,180),(0,440),(640,440),(640,180)] # 640x480 180 was 130 changed offset of above part to 0
-DEFAULT_ROI = [(0,110),(0,256),(320,256),(320,110)] #320x256
+DEFAULT_ROI = [(0, .4297), (0, 1), (1, 1), (1, .4297)] #320x256
 
 DFLT_HIT_HEIGHT = 100
 
@@ -47,10 +45,57 @@ DFLT_MID_WINDOW_HEIGHT = 100
 DFLT_MID_WINDOW_WIDTH = 150
 
 
-
 # ----------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------
+
+def load_config():
+    
+    # Get paramters from file
+    config_file = open(CONFIG_FILE, 'r')
+    
+    config = eval(''.join(config_file.readlines()))
+    
+    global DEFAULT_ROI
+    DEFAULT_ROI = config['default_roi']
+
+    global DFLT_HIT_HEIGHT
+    DFLT_HIT_HEIGHT = config['hit_height']
+
+    global MARK_EDGES_BLUR
+    MARK_EDGES_BLUR = config['mark_edges_blur']
+    global MARK_EDGES_SOBEL
+    MARK_EDGES_SOBEL = config['mark_edges_sobel']
+    global MARK_EDGES_SOBEL_THRESHOLD
+    MARK_EDGES_SOBEL_THRESHOLD = config['mark_edges_sobel_threshold']
+    global MARK_EDGES_THRESHOLD
+    MARK_EDGES_THRESHOLD = config['mark_edges_threshold']
+
+    global DFLT_LANE_MARGIN
+    DFLT_LANE_MARGIN = config['lane_margin']
+    global DFLT_MIN_TO_RECENTER_WINDOW
+    DFLT_MIN_TO_RECENTER_WINDOW = config['min_to_recenter_window']
+    global DFLT_NUMB_WINDOWS
+    DFLT_NUMB_WINDOWS = config['numb_windows']
+
+    global DFLT_TURNCONST
+    DFLT_TURNCONST = config['turn_error_const']
+    global DFLT_ALIGNCONST
+    DFLT_ALIGNCONST = config['align_error_const']
+    global DFLT_IGNORE_LESS
+    DFLT_IGNORE_LESS = config['ignore_less']
+
+    global DFLT_MID_LINE_MIN_TO_CARE
+    DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
+    global DFLT_MID_OFFSET
+    DFLT_MID_OFFSET = config['mid_offset']
+    global DFLT_MID_WINDOW_HEIGHT
+    DFLT_MID_WINDOW_HEIGHT = config['mid_window_height']
+    global DFLT_MID_WINDOW_WIDTH
+    DFLT_MID_WINDOW_WIDTH = config['mid_window_width']
+
+load_config()
+
 
 # Nice to have to not see calculations all over the place
 def pol2d_over(pol2d:Pol2d, over:Number):
@@ -58,6 +103,8 @@ def pol2d_over(pol2d:Pol2d, over:Number):
 	provided value.
 	"""
 	return pol2d[0]*over**2 + pol2d[1]*over+pol2d[2]
+
+
 
 
 # ----------------------------------------------------------------------
@@ -267,7 +314,7 @@ def get_warp_perspective_funcs(
 
 
 	if roi == None:
-		roi = DEFAULT_ROI
+		roi = [(point[0]*image.shape[1], point[1]*image.shape[0]) for point in DEFAULT_ROI]
 	roi = np.float32(roi)
 
 	if target_roi == None:
@@ -433,7 +480,7 @@ def find_lane_with_sliding_window(
 	timer.start()
 	
 	
-	window_height = int(bitmap.shape[0]/numb_windows)
+	window_height = math.ceil(bitmap.shape[0]/numb_windows)
 	current_x = start
 	
 	lane_pixels = [
@@ -448,7 +495,7 @@ def find_lane_with_sliding_window(
 			min(bitmap.shape[1], current_x + lane_margin)
 		)
 		win_y = (
-			bitmap.shape[0] - (win_i + 1) * window_height,
+			max(bitmap.shape[0] - (win_i + 1) * window_height, 0),
 			bitmap.shape[0] - win_i * window_height
 		)
 					
