@@ -18,8 +18,8 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
-#define MAX_SPEED 4000
-#define MAX_AUTO_SPEED 5000
+#define MAX_SPEED 3000
+#define MAX_AUTO_SPEED 3000
 
 #define MAX_STEER_LEFT 2100
 #define STEER_NEUTRAL 3046 //Drar aningen �t v�nster (v�lidgt lite)

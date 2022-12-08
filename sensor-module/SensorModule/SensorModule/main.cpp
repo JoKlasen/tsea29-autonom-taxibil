@@ -237,7 +237,7 @@ int main(void)
 			decimal = tmp % SPEED_PRECISION;
 			
 			//send_data_routine();
-			sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
+			sprintf(speed_msg, "tm:s=%u.%03u:d=%u:\n", heltal, decimal, pulse_length );
 			send_data(speed_msg);
 			cli();
 			sendbool = false;
