@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import time
+import os
 
 from typing import Any, Collection, Generator, Tuple
 from numbers import Number
@@ -18,6 +19,10 @@ TransformMtx = NDArray[np.dtype[np.float64]]
 Pol2d = Tuple[float, float, float]
 Vector2d = Tuple[Number, Number]
 Color = Collection[int]
+
+# ----------------------------------------------------------------------
+# Initialisation
+# ----------------------------------------------------------------------
 
 def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
     """Initialises a new VideoCapture object with resolution resx, resy 
@@ -44,7 +49,7 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
 # Take images sessions
 # ----------------------------------------------------------------------
 
-def camera_capture_image(camera:cv2.VideoCapture, debug=False):# -> ImageMtx:
+def camera_capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
 	""" Have camera take an image. If debug is True then wait for
 	user pressing enter before taking image.
 	"""
@@ -74,30 +79,31 @@ def create_example_images(path:str = "./Example/"):
 	are taken using a new Picamera. 
 	"""
 	
-	cam = init(320,256,60)
+	cam = init()
 	
 	if not os.path.exists(path):
 		os.mkdir(path)
         
-	cam.start_preview()
+	#cam.start_preview()
     
 	while True:
 		# Wait
 		time.sleep(5 - time.monotonic() % 1)
 
 		# Take image
-		stream = BytesIO()
-		cam.capture(stream, format='jpeg')
-		stream.seek(0)
-        
-		img = Image.open(stream)
+		ret, image = cam.read()
 
-		# Store image
-		now = datetime.now()
-		img_name = f"{path}EI_{get_timestamp()}.jpg"
-		img.save(img_name)
+        if (ret):      
+            img = Image.open(image)
 
-		print("Image taken: {img_name}")
+            # Store image
+            now = datetime.now()
+            img_name = f"{path}EI_{get_timestamp()}.jpg"
+            img.save(img_name)
+
+            print("Image taken: {img_name}")
+        else:
+            print("Image could not be taken")
 
 # ----------------------------------------------------------------------
 # Preview images
@@ -137,20 +143,27 @@ def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:
     preview_image(final)
     return final
 
-def live_preview():
-    """ Uses opencv to preview an image """
 
-    # Show window
+def input_interrupted_preview(cam:cv2.VideoCapture, title='Preview') -> ImageMtx:
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(title, 1500, 800)
-    cv2.imshow(title, image)
-    print("TODO!!!!")
+    while True:
+        ret_val, img = cam.read()
+        cv2.imshow(title, img)
+        if (not cv2.waitKey(1) == 0): 
+            break
+    cv2.destroyAllWindows()
+
+
 
 # ----------------------------------------------------------------------
 # Tests of camera functionality
 # ----------------------------------------------------------------------
 
-def test_images():
+def test_codec():
+    """ Test the codec attribute of the camera by changing it 
+	and previewing the result to the user.
+	"""
     cam = init()
     title = "heh"
     ret, img = cam.read()
@@ -173,19 +186,88 @@ def test_images():
     # Wait on key then destroy
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-    #cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('m','j','p','g'))
-    #ret, img = cam.read()
-    #if ret == False:
-    #    print("Failed to take image 2")
-    #img.save("./Capture_mjpeg.png")
-
-    #cam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('m','j','p','g'))
-    #ret, img = cam.read()
-    #if ret == False:
-    #    print("Failed to take image 2")
-    #img.save("./Capture_mjpeg.png")
     
+
+def test_sharpness():
+	""" Test the sharpness attribute of the camera by changing it 
+	and previewing the result to the user.
+	"""
+	
+	# A generator that each step sets the sharpness of the camera and 
+	# yields its value
+	def step_set_sharpness(camera: cv2.VideoCapture):
+		for sharpness in range(-100, 101, 10):
+			camera.set(cv2.CAP_PROP_SHARPNESS, sharpness)
+			yield sharpness
+	
+	test_camera_attribute(step_set_sharpness)
+
+
+def test_saturation():
+	""" Test the saturation attribute of the camera by changing it 
+	and previewing the result to the user.
+	"""
+	
+	# A generator that each step sets the saturation of the camera and 
+	# yields its value
+	def step_set_saturation(camera: cv2.VideoCapture):
+		for saturation in range(-100, 101, 10):
+			camera.set(cv2.CAP_PROP_SATURATION, saturation)
+			yield saturation
+	
+	test_camera_attribute(step_set_saturation)
+
+
+def test_brightness():
+	""" Test the brightness attribute of the camera by changing it 
+	and previewing the result to the user.
+	"""
+	
+	# A generator that each step sets the brightness of the camera and 
+	# yields its value
+	def step_set_brightness(camera: cv2.VideoCapture):
+		for brightness in range(0, 101, 10):
+			camera.set(cv2.CAP_PROP_BRIGHTNESS, brightness)
+			yield brightness
+	
+	test_camera_attribute(step_set_brightness)
+
+
+def test_contrast():
+	""" Test the contrast attribute of the camera by changing it 
+	and previewing the result to the user.
+	"""
+
+	# A generator that each step sets the contrast of the camera and 
+	# yields its value
+	def step_set_contrast(camera: cv2.VideoCapture):
+		for contrast in range(-100, 101, 20):
+			camera.set(cv2.CAP_PROP_CONTRAST, contrast)
+			yield contrast
+	
+	test_camera_attribute(step_set_contrast)
+
+
+def test_camera_attribute(gen:Generator[Any, None, None]):
+	""" Test a attribute of the camera by using a generator that steps 
+	through camera settings
+	"""
+		
+	# Create camera and wait for it to wake
+	camera = init()
+	time.sleep(2)
+
+	# Iterate through changes and preview
+	for state in gen(camera):
+		print(f"* {state}", end="")
+		
+		camera.start_preview()
+		camera.preview.window = PREFERED_PREVIEW_SIZE
+		camera.preview.fullscreen = False
+		
+		input("")
+		
+		camera.stop_preview()
 
 # ----------------------------------------------------------------------
 # Main, when file is ran
@@ -195,11 +277,9 @@ if __name__ == "__main__":
     # test_sharpness()
 	
 	# test_saturation()
-	
-	# test_awb_mode()
 
 	# test_contrast()
 
 	# test_brightness()
 
-    test_images()
+    test_codec()

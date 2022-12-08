@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import glob
-import camera
+import opencv_stream as camera
 import os
 from PIL import Image
 from io import BytesIO
@@ -46,9 +46,7 @@ def create_calibration_images() -> None:
 	"""
 	
 	# Initialises camera
-	camera = picamera.PiCamera()
-	camera.resolution = (320,256)
-	camera.framerate = 24
+	cam = camera.init(320,256,24)
 
 	# Wait for camera to wake (or images will have bad lighting)
 	time.sleep(2)
@@ -63,7 +61,7 @@ def create_calibration_images() -> None:
 	# Have user take image when pressing enter, end if first typed "end"
 	while "end" != input("").lower():
 		stream = BytesIO()
-		camera.capture(stream, format='jpeg')
+		cam.capture(stream, format='jpeg')
 		
 		# Create image from data
 		stream.seek(0)		

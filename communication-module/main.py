@@ -11,7 +11,7 @@ import sys
 import cv2
 import os
 from PIL import Image
-import picamera
+#import picamera
 import Pathfinding
 import driving_logic
 

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from PIL import Image
-import camera
+import opencv_stream as camera
 import calibrate
 import math
 import driving_logic
@@ -43,16 +43,6 @@ def pol2d_over(pol2d:Pol2d, over:Number):
 # Display data on image
 # ----------------------------------------------------------------------
 
-def preview_bitmap_on_image(
-	bitmap: BitmapMtx, image: ImageMtx, 
-	color:Color=(0, 255, 0)
-) -> None:
-    """ Previews a bitmap overlayed on an image with the provided 
-    color.
-    """
-    image_to_show = add_bitmap_to_image(bitmap, image, color)
-    camera.preview_image(final)
-
 def add_bitmap_on_image(
 	bitmap:BitmapMtx, image:ImageMtx, 
 	color:Color=(0, 255, 0), weight=0.5
@@ -68,6 +58,15 @@ def add_bitmap_on_image(
     
 	return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
 
+def preview_bitmap_on_image(
+	bitmap: BitmapMtx, image: ImageMtx, 
+	color:Color=(0, 255, 0)
+) -> None:
+    """ Previews a bitmap overlayed on an image with the provided 
+    color.
+    """
+    image_to_show = add_bitmap_to_image(bitmap, image, color)
+    camera.preview_image(bitmap)
 
 def draw_polynomial_on_image(
 	image:ImageMtx, polynomial:Pol2d, 
@@ -77,13 +76,11 @@ def draw_polynomial_on_image(
 	will be changed, not returning anything.
 	"""
 	timer.start() 
-    
-    
+       
 	plot_over_y = np.linspace(0, image.shape[0]-1, image.shape[0])
 	resulting_x = pol2d_over(polynomial, plot_over_y)
 	for i in range(len(plot_over_y)):
 		cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, color, 2)
-
 
 	timer.end()
         
@@ -98,7 +95,6 @@ def fill_between_polynomials(
     
     timer.start()
     
- 
     bitmap = np.empty(size)
     
     # A func that have value be inside of bitmap to avoid incorrect x
@@ -151,7 +147,8 @@ def calc_adjust_turn(
 	hit_x = hit_height
 	hit_y = 0
 	
-	# ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
+	# ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, 
+    #           right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
 
 	# Calculate lane to follow
 	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
