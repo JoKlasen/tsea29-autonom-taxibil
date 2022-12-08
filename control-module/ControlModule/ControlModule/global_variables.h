@@ -19,15 +19,21 @@ extern char working_buffer[RECEIVE_BUFFER_SIZE];
 extern volatile int receive_buffer_index;
 
 extern volatile int velocity;
-extern volatile int steering_from_pi;
-extern volatile int error;
+extern volatile int steering_error;
+extern volatile int speed_error;
 extern volatile int detection;
 extern volatile bool turn_error_received;
+extern volatile bool speed_error_received;
 extern volatile bool velocity_received;
 
 extern volatile int ConstantP, ConstantI, ConstantD;
 extern volatile int PTerm, ITerm, DTerm;
 extern volatile int CurrentI, MaxI, MinI;
 extern volatile int dTemp;
+
+extern volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
+extern volatile int spd_PTerm, spd_ITerm, spd_DTerm;
+extern volatile int spd_CurrentI, spd_MaxI, spd_MinI;
+extern volatile int spd_dTemp;
 
 #endif
