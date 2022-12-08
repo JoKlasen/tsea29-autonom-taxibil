@@ -33,7 +33,9 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
     camera.set(cv2.CAP_PROP_FRAME_WIDTH,resx)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT,resy)
     camera.set(cv2.CAP_PROP_FPS,fps)
-
+    camera.set(cv2.CAP_PROP_BUFFERSIZE,1)
+    camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+ 
     print("Initialising camera...")
     time.sleep(2)
 
@@ -45,52 +47,58 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
 
     return camera
 
+def read(cam:cv2.VideoCapture):
+    for i in range(3):
+        ret = cam.grab()
+    return cam.retrieve()
+
+
 # ----------------------------------------------------------------------
 # Take images sessions
 # ----------------------------------------------------------------------
 
 def camera_capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
-	""" Have camera take an image. If debug is True then wait for
-	user pressing enter before taking image.
-	"""
+    """ Have camera take an image. If debug is True then wait for
+    user pressing enter before taking image.
+    """
     
-	if debug:
-		print("start: camera_capture_image")
-		debug_time = time.time()
+    if debug:
+        print("start: camera_capture_image")
+        debug_time = time.time()
     
     # Take image
-	ret, img = camera.read()
+    ret, img = camera.read()
    
-	if debug:
-		debug_time = time.time() - debug_time
-		print("finish: camera_capture_image")
-		print("time: ", debug_time)
+    if debug:
+        debug_time = time.time() - debug_time
+        print("finish: camera_capture_image")
+        print("time: ", debug_time)
 
-	return np.asarray(img)
+    return np.asarray(img)
 
 
 def create_example_images(path:str = "./Example/"):
-	""" Runs a session that will keep loading a folder with images that
-	are taken using a new Picamera. 
-	"""
-	
-	cam = init()
-	
-	if not os.path.exists(path):
-		os.mkdir(path)
-        
-	#cam.start_preview()
+    """ Runs a session that will keep loading a folder with images that
+    are taken using a new Picamera. 
+    """
     
-	while True:
-		# Take image
-		ret, image = interrupted_preview(cam, wait=5)
+    cam = init()
+    
+    if not os.path.exists(path):
+        os.mkdir(path)
+        
+    #cam.start_preview()
+    
+    while True:
+        # Take image
+        ret, image = interrupted_preview(cam, wait=5)
         
         if (ret):      
             img = Image.open(image)
 
             # Store image
             # Store image
-            now = datetime.now()		
+            now = datetime.now()        
             img.save("{}/EI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
 
             print("Image taken: {img_name}")
@@ -128,7 +136,7 @@ def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:
                 img_row[i] = np.concatenate((img_row[i],)*3, axis=2)
                         
         rows.append(np.concatenate(img_row, axis=1))
-		
+        
     final = np.concatenate(rows)
     
     # Preview them all
@@ -136,22 +144,21 @@ def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:
     return final
 
 
-def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0) -> ImageMtx:
+def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0):
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(title, 1500, 800)
     ret = False
     img = None
-
-    # TODO: Implement Wait
-
+        # TODO: Implement Wait
+    print("Interrupted preview")
     keyPressed = False
-    while not keyPressed:
-        ret, img = cam.read()
-        cv2.imshow(title, img)
-        if (not cv2.waitKey(1) == 0): 
-            keyPressed = True
+    while (not keyPressed):
+        ret, img = read(cam)
 
-    cv2.destroyAllWindows()
+        print(ret, "outside")
+        cv2.imshow(title, img)
+        cv2.waitKey(0)
+        #cv2.destroyAllWindows()
 
     return ret, img
 
@@ -162,8 +169,8 @@ def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0) -> Im
 
 def test_codec():
     """ Test the codec attribute of the camera by changing it 
-	and previewing the result to the user.
-	"""
+    and previewing the result to the user.
+    """
     cam = init()
     title = "heh"
     ret, img = cam.read()
@@ -189,79 +196,79 @@ def test_codec():
     
 
 def test_sharpness():
-	""" Test the sharpness attribute of the camera by changing it 
-	and previewing the result to the user.
-	"""
-	
-	# A generator that each step sets the sharpness of the camera and 
-	# yields its value
-	def step_set_sharpness(camera: cv2.VideoCapture):
-		for sharpness in range(-100, 101, 10):
-			camera.set(cv2.CAP_PROP_SHARPNESS, sharpness)
-			yield sharpness
-	
-	test_camera_attribute(step_set_sharpness)
+    """ Test the sharpness attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
+    
+    # A generator that each step sets the sharpness of the camera and 
+    # yields its value
+    def step_set_sharpness(camera: cv2.VideoCapture):
+        for sharpness in range(-100, 101, 10):
+            camera.set(cv2.CAP_PROP_SHARPNESS, sharpness)
+            yield sharpness
+    
+    test_camera_attribute(step_set_sharpness)
 
 
 def test_saturation():
-	""" Test the saturation attribute of the camera by changing it 
-	and previewing the result to the user.
-	"""
-	
-	# A generator that each step sets the saturation of the camera and 
-	# yields its value
-	def step_set_saturation(camera: cv2.VideoCapture):
-		for saturation in range(-100, 101, 10):
-			camera.set(cv2.CAP_PROP_SATURATION, saturation)
-			yield saturation
-	
-	test_camera_attribute(step_set_saturation)
+    """ Test the saturation attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
+    
+    # A generator that each step sets the saturation of the camera and 
+    # yields its value
+    def step_set_saturation(camera: cv2.VideoCapture):
+        for saturation in range(-100, 101, 10):
+            camera.set(cv2.CAP_PROP_SATURATION, saturation)
+            yield saturation
+    
+    test_camera_attribute(step_set_saturation)
 
 
 def test_brightness():
-	""" Test the brightness attribute of the camera by changing it 
-	and previewing the result to the user.
-	"""
-	
-	# A generator that each step sets the brightness of the camera and 
-	# yields its value
-	def step_set_brightness(camera: cv2.VideoCapture):
-		for brightness in range(0, 101, 10):
-			camera.set(cv2.CAP_PROP_BRIGHTNESS, brightness)
-			yield brightness
-	
-	test_camera_attribute(step_set_brightness)
+    """ Test the brightness attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
+    
+    # A generator that each step sets the brightness of the camera and 
+    # yields its value
+    def step_set_brightness(camera: cv2.VideoCapture):
+        for brightness in range(0, 101, 10):
+            camera.set(cv2.CAP_PROP_BRIGHTNESS, brightness)
+            yield brightness
+    
+    test_camera_attribute(step_set_brightness)
 
 
 def test_contrast():
-	""" Test the contrast attribute of the camera by changing it 
-	and previewing the result to the user.
-	"""
+    """ Test the contrast attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
 
-	# A generator that each step sets the contrast of the camera and 
-	# yields its value
-	def step_set_contrast(camera: cv2.VideoCapture):
-		for contrast in range(-100, 101, 20):
-			camera.set(cv2.CAP_PROP_CONTRAST, contrast)
-			yield contrast
-	
-	test_camera_attribute(step_set_contrast)
+    # A generator that each step sets the contrast of the camera and 
+    # yields its value
+    def step_set_contrast(camera: cv2.VideoCapture):
+        for contrast in range(-100, 101, 20):
+            camera.set(cv2.CAP_PROP_CONTRAST, contrast)
+            yield contrast
+    
+    test_camera_attribute(step_set_contrast)
 
 
 def test_camera_attribute(gen:Generator[Any, None, None]):
-	""" Test a attribute of the camera by using a generator that steps 
-	through camera settings
-	"""
-		
-	# Create camera and wait for it to wake
-	camera = init()
-	time.sleep(2)
+    """ Test a attribute of the camera by using a generator that steps 
+    through camera settings
+    """
+        
+    # Create camera and wait for it to wake
+    camera = init()
+    time.sleep(2)
 
-	# Iterate through changes and preview
-	for state in gen(camera):
-		print(f"* {state}", end="")
-		
-		interrupted_preview(camera)
+    # Iterate through changes and preview
+    for state in gen(camera):
+        print(f"* {state}", end="")
+        
+        interrupted_preview(camera)
 
 # ----------------------------------------------------------------------
 # Main, when file is ran
@@ -269,13 +276,13 @@ def test_camera_attribute(gen:Generator[Any, None, None]):
 
 if __name__ == "__main__":
     # test_sharpness()
-	
-	# test_saturation()
+    
+    # test_saturation()
 
-	# test_contrast()
+    # test_contrast()
 
-	# test_brightness()
+    # test_brightness()
 
     # test_codec()
 
-    interrupted_preview(init())
+    interrupted_preview(init(fps=30))
