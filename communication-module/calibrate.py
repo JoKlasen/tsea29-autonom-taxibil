@@ -57,15 +57,15 @@ def create_calibration_images() -> None:
 
 	# Have user take image when pressing enter, end if first typed "end"
 	while ("end" != input("").lower()):
-        ret, image = camera.interrupted_preview(cam)
+		ret, image = camera.interrupted_preview(cam)
 		if ret:
-            img = Image.open(image)
+			img = Image.open(image)
             
             # Store image
-            now = datetime.now()		
-            img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
-        else:
-            print("Calibrate: Failed to capture image")
+			now = datetime.now()		
+			img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+		else:
+			print("Calibrate: Failed to capture image")
 
 
 def create_and_save_calibration_params(debug = False) -> None:

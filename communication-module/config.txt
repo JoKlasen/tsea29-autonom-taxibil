@@ -1,0 +1,41 @@
+{
+'message_to_the_universe': 
+	'¡Hola Mundo!'
+,
+
+'roi': 
+	((0, .4297), (0, 1), (1, 1), (1, .4297))
+,	
+'error_must_be_larger': 
+	(200,200)
+,
+'road_lightness_under_threshold': 
+	60
+,
+'hit_height': 
+	.4
+,
+
+'turn_error_const': 
+	1
+,
+'align_error_const': 
+	1
+,
+
+'number_of_windows': 
+	16
+,
+'window_width': 
+	50
+,
+'min_to_recenter_window': 
+	50
+,
+'horizontal_line_size': 
+	(100, 80) 				# (width, height) 
+,
+'horizontal_line_bottom_distance': 
+	80 
+,
+}

@@ -18,12 +18,20 @@ import driving_logic
 from execution_timer import exec_timer
 
 RESULTED_IMAGE_FOLDER = './Result_640x480'
+CONFIG_FILE = './config.txt'
 
 
 async def send(msg, uri):
     async with connect(uri) as websocket:
         await websocket.send(msg)
         #await websocket.recv()
+
+
+def get_config():
+    
+    # Get paramters from file
+	config_file = open(CONFIG_FILE, 'r')
+	return eval(''.join(config_file.readlines()))
 
 
 def main():
@@ -160,8 +168,10 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    main()
+    #main()
     
     #test_folder()
 
     #test_pathing()
+
+    print(get_config())
