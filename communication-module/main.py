@@ -27,11 +27,34 @@ async def send(msg, uri):
         #await websocket.recv()
 
 
-def get_config():
+def load_config():
     
     # Get paramters from file
-	config_file = open(CONFIG_FILE, 'r')
-	return eval(''.join(config_file.readlines()))
+    config_file = open(CONFIG_FILE, 'r')
+    
+    config = eval(''.join(config_file.readlines()))
+    
+    detection.DEFAULT_ROI = config['default_roi']
+
+    detection.DFLT_HIT_HEIGHT = config['hit_height']
+
+    detection.MARK_EDGES_BLUR = config['mark_edges_blur']
+    detection.MARK_EDGES_SOBEL = config['mark_edges_sobel']
+    detection.MARK_EDGES_SOBEL_THRESHOLD = config['mark_edges_sobel_threshold']
+    detection.MARK_EDGES_THRESHOLD = config['mark_edges_threshold']
+
+    detection.DFLT_LANE_MARGIN = config['lane_margin']
+    detection.DFLT_MIN_TO_RECENTER_WINDOW = config['min_to_recenter_window']
+    detection.DFLT_NUMB_WINDOWS = config['numb_windows']
+
+    detection.DFLT_TURNCONST = config['turn_error_const']
+    detection.DFLT_ALIGNCONST = config['align_error_const']
+    detection.DFLT_IGNORE_LESS = config['ignore_less']
+
+    detection.DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
+    detection.DFLT_MID_OFFSET = config['mid_offset']
+    detection.DFLT_MID_WINDOW_HEIGHT = config['mid_window_height']
+    detection.DFLT_MID_WINDOW_WIDTH = config['mid_window_width']
 
 
 def main():
@@ -40,6 +63,8 @@ def main():
     #camera = picamera.PiCamera()
     #camera.resolution = (320,256)
     #time.sleep(2)
+
+    load_config()
 
     camera = cam.init()
     
@@ -125,10 +150,13 @@ def main():
 
 
 def test_folder():
+
+    load_config()
+
     images = glob.glob("./Lanetest_320x256_temp" + "/*.jpg")
 
     if not len(images):
-        print(f"No images in folder {folder}!")
+        print(f"No images in folder {images}!")
         return None, None
     node_list, direction_list = Pathfinding.main()
     node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
@@ -170,8 +198,8 @@ def test_pathing():
 if __name__ == "__main__":
     #main()
     
-    #test_folder()
+    test_folder()
 
     #test_pathing()
-
-    print(get_config())
+    
+    

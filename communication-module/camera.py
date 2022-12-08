@@ -1,4 +1,4 @@
-from picamera import PiCamera
+#from picamera import PiCamera
 from PIL import Image
 from io import BytesIO
 import numpy as np
@@ -30,7 +30,7 @@ Color = Collection[int]
 # Generic functions 
 # ----------------------------------------------------------------------
 
-def create_a_camera() -> PiCamera:
+def create_a_camera() -> 'PiCamera':
 	""" Creates a PiCamera object with predefined seetings. 
 	
 	Note, that most uses of a PiCamera should call this to get it and
@@ -97,7 +97,7 @@ def create_example_images(path:str = "./Example/"):
 		print("Image taken: {img_name}")
 
 
-def camera_capture_image(camera:PiCamera, debug=False) -> ImageMtx:
+def camera_capture_image(camera:'PiCamera', debug=False) -> ImageMtx:
 	""" Have camera take an image. If debug is True then wait for
 	user pressing enter before taking image.
 	"""
@@ -181,7 +181,7 @@ def test_sharpness():
 	
 	# A generator that each step sets the sharpness of the camera and 
 	# yields its value
-	def step_set_sharpness(camera: PiCamera):
+	def step_set_sharpness(camera: 'PiCamera'):
 		for sharpness in range(-100, 101, 10):
 			camera.sharpness = sharpness
 			yield sharpness
@@ -196,7 +196,7 @@ def test_saturation():
 	
 	# A generator that each step sets the saturation of the camera and 
 	# yields its value
-	def step_set_saturation(camera: PiCamera):
+	def step_set_saturation(camera: 'PiCamera'):
 		for saturation in range(-100, 101, 10):
 			camera.saturation = saturation
 			yield saturation
@@ -211,7 +211,7 @@ def test_brightness():
 	
 	# A generator that each step sets the brightness of the camera and 
 	# yields its value
-	def step_set_brightness(camera: PiCamera):
+	def step_set_brightness(camera: 'PiCamera'):
 		for brightness in range(0, 101, 10):
 			camera.brightness = brightness
 			yield brightness
@@ -226,7 +226,7 @@ def test_contrast():
 
 	# A generator that each step sets the contrast of the camera and 
 	# yields its value
-	def step_set_contrast(camera: PiCamera):
+	def step_set_contrast(camera: 'PiCamera'):
 		for contrast in range(-100, 101, 20):
 			camera.contrast = contrast
 			yield contrast
@@ -241,7 +241,7 @@ def test_awb_mode():
 
 	# A generator that each step sets the awb_mode of the camera and 
 	# yields its value
-	def step_set_awb(camera: PiCamera):
+	def step_set_awb(camera: 'PiCamera'):
 		for mode in ['off','sunlight', 'sunlight', 'cloudy', 'shade', 'tungsten', 'fluorescent', 'incandescent', 'flash', 'horizon']:
 			camera.awb_mode = mode
 			yield mode

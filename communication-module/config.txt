@@ -3,18 +3,40 @@
 	'¡Hola Mundo!'
 ,
 
-'roi': 
+'default_roi': 
 	((0, .4297), (0, 1), (1, 1), (1, .4297))
 ,	
-'error_must_be_larger': 
-	(200,200)
+
+
+'hit_height': 
+	100
 ,
-'road_lightness_under_threshold': 
+
+
+'mark_edges_blur':
+	7
+,
+'mark_edges_sobel':
+	7
+,
+'mark_edges_sobel_threshold':
+	30
+,
+'mark_edges_threshold':
 	60
 ,
-'hit_height': 
-	.4
+
+
+'lane_margin':
+	50
 ,
+'min_to_recenter_window':
+	10
+,
+'numb_windows':
+	20
+,
+
 
 'turn_error_const': 
 	1
@@ -22,20 +44,21 @@
 'align_error_const': 
 	1
 ,
+'ignore_less': 
+	200
+,
 
-'number_of_windows': 
-	16
+
+'mid_line_min_to_care': 
+	200
 ,
-'window_width': 
-	50
+'mid_offset': 
+	40
 ,
-'min_to_recenter_window': 
-	50
+'mid_window_height': 
+	100
 ,
-'horizontal_line_size': 
-	(100, 80) 				# (width, height) 
-,
-'horizontal_line_bottom_distance': 
-	80 
+'mid_window_width': 
+	150
 ,
 }
