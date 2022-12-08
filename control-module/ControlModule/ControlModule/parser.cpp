@@ -152,12 +152,15 @@ void parse(char input[])
 								decimal_separator = j;
 							}
 						}
-						char heltal_array[4];
-						char decimal_array[4];
-						clear_buffer(&heltal_array[0],4);
-						clear_buffer(&decimal_array[0],4);
+						char heltal_array[5];
+						char decimal_array[5];
+						clear_buffer(&heltal_array[0],5);
+						clear_buffer(&decimal_array[0],5);
 						strlcpy(&heltal_array[0], &text_value[0],decimal_separator+1);
-						strlcpy(&decimal_array[0], &text_value[decimal_separator+1], (j-decimal_separator));				
+						strlcpy(&decimal_array[0], &text_value[decimal_separator+1], (j-decimal_separator));	
+						//send_data(heltal_array);
+						//send_data("\n\n");
+						//send_data(decimal_array);			
 						velocity = (atoi(&heltal_array[0]) * 1000) + atoi(&decimal_array[0]);
 						velocity_received = true;
 					}
@@ -273,7 +276,7 @@ void parse(char input[])
 	}
 	else if(telemetry)
 	{
-		sprintf(&value_msg[0], "Received speed:%d detection:%d\n", velocity,detection );
+		sprintf(&value_msg[0], "sspeed:s=%d:d=%d:\n", velocity,detection );
 
 	}
 	else if(emergencystop)
@@ -286,9 +289,8 @@ void parse(char input[])
 	}
 	else
 	{
-		sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
+		sprintf(&value_msg[0],"eerrr:e=1:\n");
 	}
 	send_data(&value_msg[0]);
-	
 	*/
 }
