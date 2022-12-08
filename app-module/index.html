@@ -104,37 +104,16 @@
                         </div>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-evenly;">    
+                    <div style="display: flex; justify-content: center;">    
                         <div class="control-extrabuttons" onclick="emergencyStop()">
                             <p id="control-emergency">STOP</p>
                         </div>
                         <div id="control-manual-switch" class="control-extrabuttons" onclick="switchMode()">
                             <p id="control-mode">Manual</p>
                         </div>
-
-                        <div style="text-align: center;">
-                            <p style="margin: 0;">STP</p>
-                            <textarea id="control-pid-p" class="control-pid-input"></textarea>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="margin: 0;">STI</p>
-                            <textarea id="control-pid-i" class="control-pid-input"></textarea>
-                        </div>
-                        <div style="text-align: center;">
-                            <p style="margin: 0;">STD</p>
-                            <textarea id="control-pid-d" class="control-pid-input"></textarea>
-                        </div>
-
                         <button id="control-pid-button" class="control-extrabuttons" onclick="sendPID()">Send PID</button>
                     </div>
                     <div style="display: flex; justify-content: space-evenly;">    
-                        <div class="control-extrabuttons" onclick="emergencyStop()">
-                            <p id="control-emergency">STOP</p>
-                        </div>
-                        <div id="control-manual-switch" class="control-extrabuttons" onclick="switchMode()">
-                            <p id="control-mode">Manual</p>
-                        </div>
-
                         <div style="text-align: center;">
                             <p style="margin: 0;">SPP</p>
                             <textarea id="control-pid-ps" class="control-pid-input"></textarea>
@@ -147,8 +126,18 @@
                             <p style="margin: 0;">SPD</p>
                             <textarea id="control-pid-ds" class="control-pid-input"></textarea>
                         </div>
-
-                        <button id="control-pid-button" class="control-extrabuttons" onclick="sendPID()">Send PID</button>
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">STP</p>
+                            <textarea id="control-pid-p" class="control-pid-input"></textarea>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">STI</p>
+                            <textarea id="control-pid-i" class="control-pid-input"></textarea>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="margin: 0;">STD</p>
+                            <textarea id="control-pid-d" class="control-pid-input"></textarea>
+                        </div>
                     </div>
                 </div>
                 </div>
