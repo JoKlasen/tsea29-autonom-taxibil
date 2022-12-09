@@ -117,13 +117,13 @@ def main():
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
         #print("Step 5 Create a message")
-        message = f"er:e={int(error*100)}:"
+        message = f"er:st={int(error*100)}:sp=1:"
         
         #print("Step 6 send to server")
         asyncio.run(send(message, "ws://localhost:8765"))
 
         if drive_well.stop:
-            message = f"es:"
+            #message = f"es:"
         
             #print("Step 6 send to server")
             asyncio.run(send(message, "ws://localhost:8765"))
