@@ -118,7 +118,7 @@ def main():
 
 def test_folder():
 
-    images = glob.glob("./Lanetest_320x256_temp" + "/*.jpg")
+    images = glob.glob("./Lanetest_320x256_Visionen" + "/*.jpg")
 
     if not len(images):
         print(f"No images in folder {images}!")
@@ -130,16 +130,21 @@ def test_folder():
     for filename in images:
         image = cv2.imread(filename)
 
+        print(f"<<< {filename} >>> - Start")
+
         exec_timer.start()
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=False, preview_result=True)
         if drive_well.stop is True:
             print("----------> stop")
         else:
             error = detection.calc_error(turn_to_hit, turn_to_align)
             # ~ print(error)
         
-        exec_timer.end()
+        measured_time = exec_timer.end()
+
+        print(f"<<< {filename} >>> - End (time: {measured_time})")
+
         
         #cam.preview_image(preview_image)
         

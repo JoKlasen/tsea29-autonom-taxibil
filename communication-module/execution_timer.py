@@ -79,6 +79,8 @@ class ExecTimer:
 		if self.PRINT_DURING_EXECUTION:
 			print(len(self.stack)*"|  " + f"{caller}.end\t\t\texec_time:{execution_time}\tnot_children:{execution_time-children_execution_time}")
 		
+		return execution_time
+		
 
 	def print_memory(self):
 		
@@ -88,5 +90,6 @@ class ExecTimer:
 			print("|\n>___" + f"{name}".ljust(76, "_"))
 			print(f"|     avrg_exec_time: {obj.average_exec_time():.8f}")
 			print(f"|  avrg_time_in_func: {obj.average_exec_time(False):.8f}")
+
 
 exec_timer = ExecTimer()
