@@ -59,7 +59,7 @@ def create_calibration_images() -> None:
 	while ("end" != input("").lower()):
 		ret, image = camera.interrupted_preview(cam)
 		if ret:
-			img = Image.open(image)
+			img = Image.fromarray(image)
             
             # Store image
 			now = datetime.now()		

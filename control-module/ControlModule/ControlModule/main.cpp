@@ -34,9 +34,9 @@ char receive_buffer[RECEIVE_BUFFER_SIZE];
 char working_buffer[RECEIVE_BUFFER_SIZE];
 volatile int receive_buffer_index = 0;
 
-volatile int velocity;
-volatile int steering_from_pi;
-volatile int error;
+volatile int velocity = 0;
+volatile int steering_error = 0;
+volatile int speed_error = 0;
 volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
@@ -44,8 +44,13 @@ volatile bool velocity_received = false;
 
 volatile int ConstantP, ConstantI, ConstantD;
 volatile int PTerm, ITerm, DTerm;
-volatile int CurrentI, MaxI, MinI;
+volatile int CurrentI, MaxI, MinI = 0;
 volatile int dTemp = 0;
+
+volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
+volatile int spd_PTerm, spd_ITerm, spd_DTerm;
+volatile int spd_CurrentI, spd_MaxI, spd_MinI = 0;
+volatile int spd_dTemp = 0;
 
 void turn_percent(int correction)
 {
@@ -88,12 +93,13 @@ int main(void)
 	while (1)
 	{
 
-		//"keyspressed:forward=0:left=1:back=0:right=0:";
-		//"emergencystop:"
-		//"switchmode:mode=1:" == manual "switchmode:mode=0:" == autonomous
-		//"telemetry:velocity=2:steering=2:error=800:detection=2:"
-		//"sendpid:p=1:i=0:d=0:"
-		//error:e=-500:
+		//"kp:f=1:l=1:b=0:r=0:";
+		//"es:"
+		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
+		//"tm:s=12.345:d=2:"
+		//"spp:p=1:i=2:d=3:"
+		//"stp:p=1:i=2:d=3:"
+		//"er:st=-500:sp=1:"
 		if(received)
 		{
 			received = false;
@@ -129,8 +135,8 @@ int main(void)
 			else//Automatic Mode
 			{
 				
-				//Bugg här nånstans
-				if(detection <= 3)
+				//Bugg hï¿½r nï¿½nstans
+				if(detection <= 2)
 				{
 					brake();
 				}
@@ -164,7 +170,7 @@ int main(void)
 				
 				//Buggen ovan
 				
-				// Hårdkodad sålänge
+				// Hï¿½rdkodad sï¿½lï¿½nge
 
 				//sprintf(debugdata,"Speed register = %d",SPEED_REGISTER);
 				//send_data(debugdata);
@@ -173,7 +179,7 @@ int main(void)
 				//PID LOOP/FUNCTION for sterring
 				if(turn_error_received)
 				{
-					int correction = PIDIteration(error);
+					int correction = PIDIteration(steering_error);
 					sprintf(debugdata,"Correction = %d\n",correction);
 					send_data(debugdata);
 					memset(debugdata,0,50);
@@ -181,11 +187,16 @@ int main(void)
 					turn_error_received = false;
 				}
 				//PID LOOP/FUNCTION for speed
-				if(velocity_received)
+				if(speed_error_received)
 				{
+					// TODO: 
+					// error = expected_speed - velocity // Do proper range conversion
+					// int correction = spd_PIDiteration(error);
+					// SPEED_REGISTER = SPEED_REGISTER + correction; // With range check
 					// variabeln == "velocity"
 					//SPEED_REGISTER = 3500;
-					velocity_received = false;		
+					//velocity_received = false;		
+					speed_error_received = false;
 				}
 				old_millis = millis();
 				

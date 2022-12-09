@@ -15,12 +15,20 @@ function switchMode() {
 }
 
 function sendPID() {
-    let pidvalues = "sp" +
+    let pidvalues = "stp" +
         ":p=" + document.getElementById("control-pid-p").value +
         ":i=" + document.getElementById("control-pid-i").value +
         ":d=" + document.getElementById("control-pid-d").value + ':'
 
     sendMessage(pidvalues)
+
+    pidvalues = "spp" +
+        ":p=" + document.getElementById("control-pid-ps").value +
+        ":i=" + document.getElementById("control-pid-is").value +
+        ":d=" + document.getElementById("control-pid-ds").value + ':'
+
+    sendMessage(pidvalues)
+
 }
 
 function sendMission() {

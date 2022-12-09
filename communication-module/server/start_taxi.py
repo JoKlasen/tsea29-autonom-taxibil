@@ -57,7 +57,7 @@ subprocess.Popen(python_path + server_val + "/uart/receiveData.py /dev/ttyUSB1",
 #subprocess.Popen(python_path + server_val + "/camera/webserver.py", shell=True, close_fds=True);
 # Then let start script exit.
 
-subprocess.Popen(python_path +" /home/g13/git/communication-module/main.py", shell=True, close_fds=True)
+#subprocess.Popen(python_path +" /home/g13/git/communication-module/main.py", shell=True, close_fds=True)
 
 
 time.sleep(30)

@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import time
 import os
+from PIL import Image
+from datetime import datetime
 
 from typing import Any, Collection, Generator, Tuple
 from numbers import Number
@@ -35,6 +37,7 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
     camera.set(cv2.CAP_PROP_FPS,fps)
     camera.set(cv2.CAP_PROP_BUFFERSIZE,1)
     camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+    camera.set(cv2.CAP_PROP_AUTO_WB, 0)
  
     print("Initialising camera...")
     time.sleep(2)
@@ -47,31 +50,32 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
 
     return camera
 
+# ----------------------------------------------------------------------
+# Take images sessions
+# ----------------------------------------------------------------------
+
 def read(cam:cv2.VideoCapture):
     for i in range(3):
         ret = cam.grab()
     return cam.retrieve()
 
-
-# ----------------------------------------------------------------------
-# Take images sessions
-# ----------------------------------------------------------------------
-
-def camera_capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
+def capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
     """ Have camera take an image. If debug is True then wait for
     user pressing enter before taking image.
     """
     
     if debug:
-        print("start: camera_capture_image")
+        print("start: capture_image")
         debug_time = time.time()
     
     # Take image
-    ret, img = camera.read()
-   
+    ret, img = read(camera)
+    if(not ret):
+        print ("Unable to take picture")
+
     if debug:
         debug_time = time.time() - debug_time
-        print("finish: camera_capture_image")
+        print("finish: capture_image")
         print("time: ", debug_time)
 
     return np.asarray(img)
@@ -79,7 +83,7 @@ def camera_capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
 
 def create_example_images(path:str = "./Example/"):
     """ Runs a session that will keep loading a folder with images that
-    are taken using a new Picamera. 
+    are taken using a new VideoCapture. 
     """
     
     cam = init()
@@ -94,7 +98,7 @@ def create_example_images(path:str = "./Example/"):
         ret, image = interrupted_preview(cam, wait=5)
         
         if (ret):      
-            img = Image.open(image)
+            img = Image.fromarray(image)
 
             # Store image
             # Store image
@@ -149,16 +153,16 @@ def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0):
     cv2.resizeWindow(title, 1500, 800)
     ret = False
     img = None
-        # TODO: Implement Wait
-    print("Interrupted preview")
+        
+    # TODO: Implement Wait
     keyPressed = False
     while (not keyPressed):
-        ret, img = read(cam)
-
-        print(ret, "outside")
+        img = capture_image(cam)
         cv2.imshow(title, img)
-        cv2.waitKey(0)
-        #cv2.destroyAllWindows()
+        if not cv2.waitKey(40) == -1:
+            keyPressed = True
+    
+    cv2.destroyAllWindows()
 
     return ret, img
 
@@ -260,9 +264,8 @@ def test_camera_attribute(gen:Generator[Any, None, None]):
     through camera settings
     """
         
-    # Create camera and wait for it to wake
+    # Create camera
     camera = init()
-    time.sleep(2)
 
     # Iterate through changes and preview
     for state in gen(camera):
