@@ -31,6 +31,8 @@ def main():
     #camera.resolution = (320,256)
     #time.sleep(2)
 
+    #load_config()
+
     camera = cam.init()
     
     path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'    
@@ -65,7 +67,7 @@ def main():
         debug_time = Time.time()
 
         #print("Step 2 Capture image")
-        image = cam.camera_capture_image(camera)
+        image = cam.capture_image(camera)
         
         #print("Step 3 Detect_lines")
         
@@ -82,13 +84,13 @@ def main():
         error = detection.calc_error(turn_to_hit, turn_to_align)
         
         #print("Step 5 Create a message")
-        message = f"er:e={int(error*100)}:"
+        message = f"er:st={int(error*100)}:sp=1:"
         
         #print("Step 6 send to server")
         asyncio.run(send(message, "ws://localhost:8765"))
 
         if drive_well.stop:
-            message = f"es:"
+            #message = f"es:"
         
             #print("Step 6 send to server")
             asyncio.run(send(message, "ws://localhost:8765"))
@@ -97,10 +99,10 @@ def main():
         #print("Step 7 done")
         
         # Store the image that was worked upon and the resulting image
-        org_img = Image.fromarray(image)
-        org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
-        rslt_img = Image.fromarray(resulting_image)
-        rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
+        #org_img = Image.fromarray(image)
+        #org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
+        #rslt_img = Image.fromarray(resulting_image)
+        #rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
         
         # Store data produced
         #log.write(f'\n_______{index}_________ \nLeft: {left} \nRight: {right} \nCenter: {offset} \nError: {error} \nTotalTime: {time.time() - start_time} \nCalcTime: {calc_time}')    
@@ -159,9 +161,9 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
     
