@@ -196,6 +196,7 @@ def calc_adjust_turn(
 	camera_pos:Vector2d, drive_well:driving_logic, 
 	hit_height=DFLT_HIT_HEIGHT
 ) -> Tuple[Number, Number, Vector2d, Vector2d]:
+<<<<<<< Updated upstream
 	""" Calculate the turn required to reach a point late on road.
 	 
 	This point is called hit point and the turns are firstly to hit
@@ -265,6 +266,77 @@ def calc_adjust_turn(
 	# ~ print("-   time: ", debug_time)
 	
 	return turn_to_hit, turn_to_align, (hit_x, hit_y), align_vector
+=======
+    """ Calculate the turn required to reach a point late on road.
+     
+    This point is called hit point and the turns are firstly to hit
+    it and than to align to it. Note that these will not bring the car
+    to the position at the angle but shows how 'far away' the car is.
+     
+    left_lane and right_lane is a 2nd degree polynomial. 
+    camera_pos = (x,y) 
+    """
+    
+    timer.start() 
+    
+    
+    # ------NOTE:------
+    # Flip x, y axises since they are considered over the y-axis
+    # -----------------
+    hit_x = camera_pos[0] - hit_height
+    hit_y = 0
+    
+    # ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, 
+    #           right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
+
+    # Calculate lane to follow
+    use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
+    use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
+
+    if use_left_lane and use_right_lane:
+        lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
+    elif use_left_lane and not use_right_lane:
+        lane = left_lane
+        lane[2] -= int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
+        lane = np.asarray(left_lane)
+    elif not use_left_lane and use_right_lane:
+        lane = right_lane
+        lane[2] -= int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
+        lane = np.asarray(right_lane)
+    else:
+        lane = np.asarray([0,0,camera_pos[1]]) # Straight line
+    
+    hit_y += pol2d_over(lane, hit_x)
+
+                                        
+    hit_vector = (hit_x - camera_pos[0], hit_y - camera_pos[1])
+    # Rotate so 0 is straight forward
+    hit_vector = (hit_vector[1], -hit_vector[0])
+    
+    # ~ print(f"new_HIT({hit_x}, {hit_y}) CAM({camera_pos})")
+    # ~ print(hit_vector, camera_pos)
+    
+    # Calculate angle from straight forward to turn_vector
+    turn_to_hit = math.atan2(hit_vector[0], hit_vector[1])
+    
+    align_slope = 2*lane[0]*hit_x + lane[1]
+    align_vector = (1, align_slope)
+    # Rotate so 0 is straight forward
+    align_vector = (-align_vector[1], align_vector[0])
+
+    # Calculate angle from straight forward to alignment to road
+    turn_to_align = math.atan2(align_vector[0], align_vector[1])
+            
+    # ~ print(f"ALIGN({align_vector})")
+        
+    timer.end()
+    
+    # ~ print("finish: calc_adjust_turn")
+    # ~ debug_time = Time.time() - debug_time
+    # ~ print("-   time: ", debug_time)
+    
+    return turn_to_hit, turn_to_align, (hit_x, hit_y), align_vector
+>>>>>>> Stashed changes
 
 
 def calc_error(
@@ -329,7 +401,7 @@ def get_warp_perspective_funcs(
 	transform_matrix = cv2.getPerspectiveTransform(roi, target_roi)
 	inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
 	
-	warp_func = lambda img: cv2.warpPerspective(img, transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
+	warp_func = lambda img: cv2.warpPerspective(img, transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1], borderValue=(255,255,255)) # [1:]) <- Needed for some types of images?!
 	warp_back_func = lambda img: cv2.warpPerspective(img, inv_transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
 	
 	# ----------DEBUG-----------
@@ -701,6 +773,7 @@ def detect_lines(
 		return_image = lanes_image
 	# ____________________________________________
 
+<<<<<<< Updated upstream
 		
 	timer.end()
 	
@@ -710,6 +783,75 @@ def detect_lines(
 	# ~ pixels = np.sum(edges)
 	# ~ print("-   ones: ", pixels)
 	# ~ print(f"-	special: {debug_time/pixels if pixels != 0 else 'Error'}")
+=======
+    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
+    
+    # Calculate center offset
+    camera_pos = (int(image.shape[1]/2), image.shape[0])
+    
+    drive_well.drive()
+
+    # Calculate turn error
+    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
+
+    # _________________PREVIEW____________________
+    # An image to preview result
+    return_image = None
+    if load_images:
+        preview_image = undistort(image)    
+
+        if lane_left is not None and lane_right is not None:        
+            # Add colored road
+            color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
+            preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
+
+            # Draw a line inbetween lanes 
+            for y in range(lanes_image.shape[1]):
+                x = int((
+                    (lane_left[0] + lane_right[0]) * y**2 + 
+                    (lane_left[1] + lane_right[1]) * y +
+                    (lane_left[2] + lane_right[2])
+                ) / 2)
+                cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
+
+
+        # Add line to describe dumb path
+        cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
+
+        # Add line to mark hit vector to turn towards
+        hit_point = np.flip(np.asarray(hit_point, int))
+        cv2.line(lanes_image, camera_pos, hit_point, [0,255,255], 3)
+
+        
+        # Add align vector on hit_point 
+        align_vector = np.asarray((align_vector[0], -align_vector[1]))
+        align_vector = (50*align_vector/np.linalg.norm(align_vector)).astype(int)
+        align_point = hit_point + align_vector
+        cv2.line(lanes_image, hit_point, align_point, (100, 255, 100), 3)
+        
+        cv2.circle(lanes_image, hit_point, 0, (0, 0, 0), 3)
+        
+
+        if preview_steps:
+            calc_error(turn_hit, turn_align, debug=True)
+            camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
+            
+        if preview_result:            
+            camera.preview_image_grid([[image], [lanes_image]])
+                        
+        return_image = lanes_image
+    # ____________________________________________
+
+        
+    timer.end()
+    
+    # ~ print("finish: detect_lines")
+    # ~ debug_time = Time.time() - debug_time
+    # ~ print("-   time: ", debug_time)
+    # ~ pixels = np.sum(edges)
+    # ~ print("-   ones: ", pixels)
+    # ~ print(f"-   special: {debug_time/pixels if pixels != 0 else 'Error'}")
+>>>>>>> Stashed changes
 
 	return turn_hit, turn_align, return_image
 
