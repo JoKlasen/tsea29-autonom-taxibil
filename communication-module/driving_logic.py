@@ -21,13 +21,14 @@ class driving_logic:
         return self.drive_right or self.drive_forward
 
 
-    def drive(self, debug = False):
+    def drive(self, debug=False):
         if self.drive_intersection is True:
-            self.intersection_driving(self, debug)
+            self.intersection_driving(debug)
         else:
-            self.normal_driving(self, debug)
+            self.normal_driving(debug)
 
     def normal_driving(self, debug=False):
+        print("entered normal")
         if self.drive_index < len(self.node_list): #if we have not reached our end destination
             direction_to_drive = str(self.direction_list[self.drive_index])[0]
             stop_to_look_for = str(self.node_list[self.drive_index])[0]
