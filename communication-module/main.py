@@ -134,7 +134,7 @@ def test_folder():
 
         exec_timer.start()
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=False, preview_result=True)
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
         if drive_well.stop is True:
             print("----------> stop")
         else:
@@ -166,9 +166,9 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    main()
+    #main()
     
-    #test_folder()
+    test_folder()
 
     #test_pathing()
     
