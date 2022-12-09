@@ -100,7 +100,7 @@ def main():
         debug_time = Time.time()
 
         #print("Step 2 Capture image")
-        image = cam.camera_capture_image(camera)
+        image = cam.capture_image(camera)
         
         #print("Step 3 Detect_lines")
         
@@ -132,10 +132,10 @@ def main():
         #print("Step 7 done")
         
         # Store the image that was worked upon and the resulting image
-        org_img = Image.fromarray(image)
-        org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
-        rslt_img = Image.fromarray(resulting_image)
-        rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
+        #org_img = Image.fromarray(image)
+        #org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
+        #rslt_img = Image.fromarray(resulting_image)
+        #rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
         
         # Store data produced
         #log.write(f'\n_______{index}_________ \nLeft: {left} \nRight: {right} \nCenter: {offset} \nError: {error} \nTotalTime: {time.time() - start_time} \nCalcTime: {calc_time}')    
@@ -196,9 +196,9 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
     

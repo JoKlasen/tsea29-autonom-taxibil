@@ -69,7 +69,7 @@ def capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
         debug_time = time.time()
     
     # Take image
-    ret, img = read()
+    ret, img = read(camera)
     if(not ret):
         print ("Unable to take picture")
 
@@ -157,7 +157,7 @@ def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0):
     # TODO: Implement Wait
     keyPressed = False
     while (not keyPressed):
-        ret, img = capture_image(cam)
+        img = capture_image(cam)
         cv2.imshow(title, img)
         if not cv2.waitKey(40) == -1:
             keyPressed = True
