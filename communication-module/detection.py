@@ -6,6 +6,7 @@ import calibrate
 import math
 import driving_logic
 import time as Time
+import math
 
 from execution_timer import exec_timer as timer
 
@@ -13,18 +14,15 @@ from numbers import Number
 from typing import Tuple
 from camera import ImageMtx, BitmapMtx, Pol2d, Vector2d, Color
 
-DRIVE_LEFT = False
-DRIVE_RIGHT = False
-DRIVE_FORWARD = False
-DRIVE_INTERSECTION = False
 
-TESTFILE =  "Lanetest_320x256_LaneMissing/LeftMirrored.jpg"
+CONFIG_FILE = './config.txt'
+TESTFILE =	"Lanetest_320x256_LaneMissing/LeftMirrored.jpg"
 
 # ----- Parameters -----
 # Change as required
 #DEFAULT_ROI = [(700,0),(0,1000),(2000,1000),(1600,0)] # 2000x1000
 #DEFAULT_ROI = [(0,180),(0,440),(640,440),(640,180)] # 640x480 180 was 130 changed offset of above part to 0
-DEFAULT_ROI = [(0,110),(0,256),(320,256),(320,110)] #320x256
+DEFAULT_ROI = [(0, .4297), (0, 1), (1, 1), (1, .4297)] #320x256
 
 DFLT_HIT_HEIGHT = 100
 
@@ -47,10 +45,57 @@ DFLT_MID_WINDOW_HEIGHT = 100
 DFLT_MID_WINDOW_WIDTH = 150
 
 
-
 # ----------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------
+
+def load_config():
+    
+    # Get paramters from file
+    config_file = open(CONFIG_FILE, 'r')
+    
+    config = eval(''.join(config_file.readlines()))
+    
+    global DEFAULT_ROI
+    DEFAULT_ROI = config['default_roi']
+
+    global DFLT_HIT_HEIGHT
+    DFLT_HIT_HEIGHT = config['hit_height']
+
+    global MARK_EDGES_BLUR
+    MARK_EDGES_BLUR = config['mark_edges_blur']
+    global MARK_EDGES_SOBEL
+    MARK_EDGES_SOBEL = config['mark_edges_sobel']
+    global MARK_EDGES_SOBEL_THRESHOLD
+    MARK_EDGES_SOBEL_THRESHOLD = config['mark_edges_sobel_threshold']
+    global MARK_EDGES_THRESHOLD
+    MARK_EDGES_THRESHOLD = config['mark_edges_threshold']
+
+    global DFLT_LANE_MARGIN
+    DFLT_LANE_MARGIN = config['lane_margin']
+    global DFLT_MIN_TO_RECENTER_WINDOW
+    DFLT_MIN_TO_RECENTER_WINDOW = config['min_to_recenter_window']
+    global DFLT_NUMB_WINDOWS
+    DFLT_NUMB_WINDOWS = config['numb_windows']
+
+    global DFLT_TURNCONST
+    DFLT_TURNCONST = config['turn_error_const']
+    global DFLT_ALIGNCONST
+    DFLT_ALIGNCONST = config['align_error_const']
+    global DFLT_IGNORE_LESS
+    DFLT_IGNORE_LESS = config['ignore_less']
+
+    global DFLT_MID_LINE_MIN_TO_CARE
+    DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
+    global DFLT_MID_OFFSET
+    DFLT_MID_OFFSET = config['mid_offset']
+    global DFLT_MID_WINDOW_HEIGHT
+    DFLT_MID_WINDOW_HEIGHT = config['mid_window_height']
+    global DFLT_MID_WINDOW_WIDTH
+    DFLT_MID_WINDOW_WIDTH = config['mid_window_width']
+
+load_config()
+
 
 # Nice to have to not see calculations all over the place
 def pol2d_over(pol2d:Pol2d, over:Number):
@@ -58,6 +103,8 @@ def pol2d_over(pol2d:Pol2d, over:Number):
     provided value.
     """
     return pol2d[0]*over**2 + pol2d[1]*over+pol2d[2]
+
+
 
 
 # ----------------------------------------------------------------------
@@ -258,54 +305,54 @@ def get_warp_perspective_funcs(
     roi=None, target_roi=None, 
     debug=False
 ) -> ImageMtx:
-    """ generates a method to warps perspective of an image so that 
-    region of interest, roi, covers the target area defined by 
-    target_roi. Returns an image with same characteristics.
-    """
+	""" generates a method to warps perspective of an image so that 
+	region of interest, roi, covers the target area defined by 
+	target_roi. Returns an image with same characteristics.
+	"""
 
-    timer.start()
+	timer.start()
 
 
-    if roi == None:
-        roi = DEFAULT_ROI
-    roi = np.float32(roi)
+	if roi == None:
+		roi = [(point[0]*image.shape[1], point[1]*image.shape[0]) for point in DEFAULT_ROI]
+	roi = np.float32(roi)
 
-    if target_roi == None:
-        target_roi = [
-            (0,                 0),                 # Top-left
-            (0,                 image.shape[0]),    # Bottom-left
-            (image.shape[1],    image.shape[0]),    # Bottom-right
-            (image.shape[1],    0)                  # Top-right
-        ]
-    target_roi = np.float32(target_roi)
+	if target_roi == None:
+		target_roi = [
+			(0,					0),					# Top-left
+			(0,					image.shape[0]),	# Bottom-left
+			(image.shape[1],	image.shape[0]),	# Bottom-right
+			(image.shape[1],	0)					# Top-right
+		]
+	target_roi = np.float32(target_roi)
 
-    transform_matrix = cv2.getPerspectiveTransform(roi, target_roi)
-    inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
-    
-    warp_func = lambda img: cv2.warpPerspective(img, transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
-    warp_back_func = lambda img: cv2.warpPerspective(img, inv_transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
-    
-    # ----------DEBUG-----------
-    if debug:
-        warped = warp_func(image)
-        
-        warped_preview = warped.copy()
-        for point in np.int32(target_roi):
-            cv2.circle(warped_preview, point, 10, (0,0,255), cv2.FILLED)
+	transform_matrix = cv2.getPerspectiveTransform(roi, target_roi)
+	inv_transform_matrix = cv2.getPerspectiveTransform(target_roi, roi) # Will need for preview
+	
+	warp_func = lambda img: cv2.warpPerspective(img, transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
+	warp_back_func = lambda img: cv2.warpPerspective(img, inv_transform_matrix, image.shape[::-1][1:] if image.ndim > 2 else image.shape[::-1]) # [1:]) <- Needed for some types of images?!
+	
+	# ----------DEBUG-----------
+	if debug:
+		warped = warp_func(image)
+		
+		warped_preview = warped.copy()
+		for point in np.int32(target_roi):
+			cv2.circle(warped_preview, point, 10, (0,0,255), cv2.FILLED)
 
-        image_preview = image.copy()
-        for point in np.int32(roi):
-            cv2.circle(image_preview, point, 10, (255,0,0), cv2.FILLED)
+		image_preview = image.copy()
+		for point in np.int32(roi):
+			cv2.circle(image_preview, point, 10, (255,0,0), cv2.FILLED)
 
-        cv2.polylines(image_preview, np.int32([roi]), True, (255,0,0), 2)
-        
-        camera.preview_image_grid([[image_preview, warped_preview]])
-    # --------------------------
+		cv2.polylines(image_preview, np.int32([roi]), True, (255,0,0), 2)
+		
+		camera.preview_image_grid([[image_preview, warped_preview]])
+	# --------------------------
 
-    
-    timer.end()
-    
-    return warp_func, warp_back_func
+	
+	timer.end()
+	
+	return warp_func, warp_back_func
 
 
 def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
@@ -421,71 +468,71 @@ def find_lane_with_sliding_window(
     pol_color: Color = (0, 255, 255),
     pixels_color: Color = (255, 255, 255)
 ) -> Tuple[Pol2d, ImageMtx]:
-    """ Finds and creats a second degree polynomial that fits to 1s in
-    the provided bitmap. 
-    
-    Will track lane through windows that slides after the position of 
-    found 1s. start is where on screen the first window will be placed.
-    
-    If debug_image is provided it will be drawn upon.
-    """
-    
-    timer.start()
-    
-    
-    window_height = int(bitmap.shape[0]/numb_windows)
-    current_x = start
-    
-    lane_pixels = [
-        np.empty(0),
-        np.empty(0)
-    ]
-    
-    for win_i in range(numb_windows):
-    
-        win_x = (
-            max(0, current_x - lane_margin),
-            min(bitmap.shape[1], current_x + lane_margin)
-        )
-        win_y = (
-            bitmap.shape[0] - (win_i + 1) * window_height,
-            bitmap.shape[0] - win_i * window_height
-        )
-                    
-        # Find pixels in window 
-        pixels_in_window = (bitmap[win_y[0]:win_y[1], win_x[0]:win_x[1]]).nonzero()
-                                    
-        # Remember pixels for the lane
-        lane_pixels[0] = np.append(lane_pixels[0], pixels_in_window[1] + win_x[0])
-        lane_pixels[1] = np.append(lane_pixels[1], pixels_in_window[0] + win_y[0])
-        
-        if len(pixels_in_window[0]) > min_to_recenter_window:
-            # Recenter around found pixels
-            current_x = int(np.mean(pixels_in_window[1])) + win_x[0]
+	""" Finds and creats a second degree polynomial that fits to 1s in
+	the provided bitmap. 
+	
+	Will track lane through windows that slides after the position of 
+	found 1s. start is where on screen the first window will be placed.
+	
+	If debug_image is provided it will be drawn upon.
+	"""
+	
+	timer.start()
+	
+	
+	window_height = math.ceil(bitmap.shape[0]/numb_windows)
+	current_x = start
+	
+	lane_pixels = [
+		np.empty(0),
+		np.empty(0)
+	]
+	
+	for win_i in range(numb_windows):
+	
+		win_x = (
+			max(0, current_x - lane_margin),
+			min(bitmap.shape[1], current_x + lane_margin)
+		)
+		win_y = (
+			max(bitmap.shape[0] - (win_i + 1) * window_height, 0),
+			bitmap.shape[0] - win_i * window_height
+		)
+					
+		# Find pixels in window 
+		pixels_in_window = (bitmap[win_y[0]:win_y[1], win_x[0]:win_x[1]]).nonzero()
+									
+		# Remember pixels for the lane
+		lane_pixels[0] = np.append(lane_pixels[0], pixels_in_window[1] + win_x[0])
+		lane_pixels[1] = np.append(lane_pixels[1], pixels_in_window[0] + win_y[0])
+		
+		if len(pixels_in_window[0]) > min_to_recenter_window:
+			# Recenter around found pixels
+			current_x = int(np.mean(pixels_in_window[1])) + win_x[0]
 
-        if debug_image is not None:
-            # Displays where the window were when finding the pixels
-            cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
+		if debug_image is not None:
+			# Displays where the window were when finding the pixels
+			cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
 
 
-    if len(lane_pixels[1]) > 0:
-        # Calculate parameters      
-        polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
-                
-        if debug_image is not None:
-            # Fill pixels used to calculate line
-            debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
+	if len(lane_pixels[1]) > 0:
+		# Calculate parameters		
+		polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
+				
+		if debug_image is not None:
+			# Fill pixels used to calculate line
+			debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
 
-            # Draw calculated line on image
-            draw_polynomial_on_image(debug_image, polynomial, pol_color)
+			# Draw calculated line on image
+			draw_polynomial_on_image(debug_image, polynomial, pol_color)
 
-    else:
-        # Store bad value since no points found
-        polynomial = None
+	else:
+		# Store bad value since no points found
+		polynomial = None
 
-    timer.end()
+	timer.end()
 
-    return polynomial
+	return polynomial
 
 
 def find_horizontal_lines(
