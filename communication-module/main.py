@@ -64,7 +64,7 @@ def main():
     #camera.resolution = (320,256)
     #time.sleep(2)
 
-    load_config()
+    #load_config()
 
     camera = cam.init()
     
