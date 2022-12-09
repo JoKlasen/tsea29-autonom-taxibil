@@ -11,6 +11,11 @@ import subprocess
 # take command line arguments
 serial_port = ' '.join(sys.argv[1:])
 
+# Define which commands should be sent where.
+commands_app = ["db", "tm"]
+commands_cv = ["mi"]
+commands_control = ["kp", "es", "sm", "spp", "stp", "er", "tm"]
+
 # Get timestamp
 def timestamp():
 	timestamp = time.time()
@@ -25,80 +30,55 @@ CLIENTS = []
 async def send(websocket, message):
     message_type = message.split(':')[0]
 
-    if (message_type == 'restartserver'):
-        print('\n\n\n')
-        print("RESTARTING STARTTAXISERVER SERVICE")
-        status = subprocess.check_output('systemctl restart starttaxiserver.service', shell=True)
-        print(status)
-        print('\n\n\n')
     try:
-        await websocket.send(message) 
+        if (message_type in commands_app):
+            print("To App-Module: ", message)
+            await websocket.send(message) 
+    
     except Exception as e:
-        print("========== ERROR 1 ===========")
-        print("Connection lost.")
-        print("Sending brake signal to Control Unit.")
-        sendToAVR("keyspressed:forward=0:left=0:back=1:right=0:")
-        print("Sent brake signal.")
-        #exit()
-
+        print("=========== ERROR ============")
+        print(e)
+        print("Connection lost. Sending Break Signal to Control Unit.")
+        sendToAVR("kp:f=0:l=0:b=1:r=0:")
+        print("==============================")
 
 # Start serial connection
 ser = serial.Serial (serial_port, 57600)
 def sendToAVR(message):
     message_type = message.split(':')[0]
-    #print("Message Type: " + message_type)
     
-    if (message_type == 'kp'):
-        print("Got 'keyspressed' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        ser.write(message.encode());
-    elif (message_type == 'er'):
-        print("Got 'error' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        ser.write(message.encode());
-    elif (message_type == 'sp'):
-        print("Got 'sendpid' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        ser.write(message.encode());
-    elif (message_type == 'sm'):
-        print("Got 'switchmode' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        ser.write(message.encode());
-    elif (message_type == 'telemetry'):
-        print("Got 'telemetry' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        #ser.write(message.encode());
-    elif (message_type == 'override'):
-        print("Got 'override' command, sending to Control Unit")
-        message = message + "\0"
-        print(message)
-        ser.write(message.encode());
-    
+    if (message_type in commands_control):
+        message = message + '\n';
+        print("To Control-Module: ", message)
+        ser.write(message.encode())
+
+# TODO IMPLEMENT SENDING TO CV MODULE
+def sendToCV(message):
+    print("To CV-Module: ", message)
+
 # Send message to all connected clients§
 async def sendAll(websocket):
     async for message in websocket:
         print(timestamp() + " " + message)
+        
         sendToAVR(message)
+
+        sendToCV(message)
+
         if websocket not in CLIENTS:
             if "[webapp]" in message:
                 CLIENTS.clear()
                 CLIENTS.append(websocket)
+        
         try:
             for socket in CLIENTS:
                 await send(socket, message)
         except Exception as e:
-            print("========== ERROR 2 ===========")
-            print("Connection lost.")
-            print("Sending brake signal to Control Unit.")
-            sendToAVR("keyspressed:forward=0:left=0:back=1:right=0:")
-            print("Sent brake signal.")
-            #print("Exiting program...")
-            #exit()
+            print("=========== ERROR ============")
+            print(e)
+            print("Connection lost. Sending Break Signal to Control Unit.")
+            sendToAVR("kp:f=0:l=0:b=1:r=0:")
+            print("==============================")
 
 # Start server
 async def main():

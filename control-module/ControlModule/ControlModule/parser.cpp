@@ -15,12 +15,13 @@ void parse(char input[])
 	char text_value[10];
 	
 	bool findcommand = true;
-	bool pid = false;
+	bool steering_pid = false;
+	bool speed_pid = false;
 	bool switchmode = false;
 	bool keys = false;
 	bool telemetry = false;
 	bool emergencystop = false;
-	bool error_b = false;
+	bool error_boolean = false;
 	int label_end = 0;
 	int value_separator = 0;
 	
@@ -43,9 +44,14 @@ void parse(char input[])
 					switchmode = true;
 					findcommand = false;
 				}
-				else if (!strcmp(&command[0], "sp"))
+				else if (!strcmp(&command[0], "stp"))
 				{
-					pid = true;
+					steering_pid = true;
+					findcommand = false;
+				}
+				else if (!strcmp(&command[0], "spp"))
+				{
+					speed_pid = true;
 					findcommand = false;
 				}
 				else if (!strcmp(&command[0], "es"))
@@ -53,13 +59,13 @@ void parse(char input[])
 					SPEED_REGISTER = 0;
 					emergencystop = true;
 				}
-				else if (!strcmp(&command[0], "telemetry"))
+				else if (!strcmp(&command[0], "tm"))
 				{
 					telemetry = true;
 					findcommand = false;
 				}else if (!strcmp(&command[0], "er"))
 				{
-					error_b = true;
+					error_boolean = true;
 					findcommand = false;
 				}
 			}
@@ -115,12 +121,7 @@ void parse(char input[])
 						manual_mode = atoi(&text_value[0]);
 						if (manual_mode == 1)
 						{
-							send_data("Switched to manual mode\n");
 							release_brake();
-						}
-						else if (manual_mode == 0)
-						{
-							send_data("Switched to autonomous mode\n");
 						}
 					}
 					label_end = i;
@@ -140,29 +141,37 @@ void parse(char input[])
 				{
 					clear_buffer(&text_value[0], 10);
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
-					if (!strcmp(&value_name[0], "velocity"))
+					if (!strcmp(&value_name[0], "s"))
 					{
-						velocity = atoi(&text_value[0]);
+						int decimal_separator = 0;
+						int j = 0;
+						for (; text_value[j] != '\0' ; j++)
+						{
+							if (text_value[j] == '.')
+							{
+								decimal_separator = j;
+							}
+						}
+						char heltal_array[5];
+						char decimal_array[5];
+						clear_buffer(&heltal_array[0],5);
+						clear_buffer(&decimal_array[0],5);
+						strlcpy(&heltal_array[0], &text_value[0],decimal_separator+1);
+						strlcpy(&decimal_array[0], &text_value[decimal_separator+1], (j-decimal_separator));	
+						//send_data(heltal_array);
+						//send_data("\n\n");
+						//send_data(decimal_array);			
+						velocity = (atoi(&heltal_array[0]) * 1000) + atoi(&decimal_array[0]);
 						velocity_received = true;
 					}
-					
-					else if (!strcmp(&value_name[0], "steering"))
-					{
-						steering_from_pi = atoi(&text_value[0]);
-					}
-					else if (!strcmp(&value_name[0], "error"))
-					{
-						error = atoi(&text_value[0]);
-						turn_error_received = true;
-					}
-					else if (!strcmp(&value_name[0], "detection"))
+					else if (!strcmp(&value_name[0], "d"))
 					{
 						detection = atoi(&text_value[0]);
 					}
 					label_end = i;
 				}
 			}
-			else if (pid)
+			else if (steering_pid)
 			{
 				if (input[i] == '=')
 				{
@@ -184,12 +193,12 @@ void parse(char input[])
 					}
 					else if (!strcmp(&value_name[0], "d"))
 					{
-						ConstantI = atoi(&text_value[0]);
+						ConstantD = atoi(&text_value[0]);
 					}
 					label_end = i;
 				}
 			}
-			else if (error_b)
+			else if (speed_pid)
 			{
 				if (input[i] == '=')
 				{
@@ -201,20 +210,51 @@ void parse(char input[])
 				{
 					clear_buffer(&text_value[0], 10);
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
-					if (!strcmp(&value_name[0], "e"))
+					if (!strcmp(&value_name[0], "p"))
 					{
-						error = atoi(&text_value[0]);
+						spd_ConstantP = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "i"))
+					{
+						spd_ConstantI = atoi(&text_value[0]);
+					}
+					else if (!strcmp(&value_name[0], "d"))
+					{
+						spd_ConstantD = atoi(&text_value[0]);
+					}
+					label_end = i;
+				}
+			}
+			else if (error_boolean)
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "st"))
+					{
+						steering_error = atoi(&text_value[0]);
 						turn_error_received = true;
+					}
+					else if (!strcmp(&value_name[0], "sp"))
+					{
+						speed_error = atoi(&text_value[0]);
+						speed_error_received = true;
 					}
 
 					label_end = i;
 				}
 			}
-			
-			
-			
+		
 		}
 	}
+	
 	/*
 	char value_msg[50];
 	
@@ -226,30 +266,31 @@ void parse(char input[])
 	{
 		sprintf(&value_msg[0], "Received mode:%d\n", manual_mode );
 	}
-	else if(pid)
+	else if(steering_pid)
 	{
-		sprintf(&value_msg[0], "Received p:%d i:%d d:%d\n", ConstantP,ConstantI,ConstantD );
+		sprintf(&value_msg[0], "Received steering pid p:%d i:%d d:%d\n", ConstantP,ConstantI,ConstantD );
+	}
+	else if(speed_pid)
+	{
+		sprintf(&value_msg[0], "Received speed pid p:%d i:%d d:%d\n", spd_ConstantP,spd_ConstantI,spd_ConstantD );
 	}
 	else if(telemetry)
 	{
-		//sprintf(&value_msg[0], "Received speed:%d steering:%d error:%d detection:%d\n", velocity,steering_from_pi,error,detection );
-		sprintf(&value_msg[0], "Received speed:%d detection:%d\n", velocity,detection );
+		sprintf(&value_msg[0], "sspeed:s=%d:d=%d:\n", velocity,detection );
 
 	}
 	else if(emergencystop)
 	{
 		sprintf(&value_msg[0], "Received EMERGENCYSTOP\n");
 	}
-	else if (error_b)
+	else if (error_boolean)
 	{
-		sprintf(&value_msg[0],"Received turnerror e=%d\n",error);
+		sprintf(&value_msg[0],"Received errors st=%d sp=%d\n",steering_error, speed_error);
 	}
 	else
 	{
-		sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
+		sprintf(&value_msg[0],"eerrr:e=1:\n");
 	}
 	send_data(&value_msg[0]);
 	*/
-	
-	
 }

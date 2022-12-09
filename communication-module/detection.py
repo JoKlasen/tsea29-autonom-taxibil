@@ -507,21 +507,21 @@ def find_horizontal_lines(
 	special_rect = bitmap[top_y:bottom_y, top_x:bottom_x]
 
 	special_distr = np.sum(special_rect)
-	drive_well.intersection = False
-	drive_well.right = False
-	drive_well.left = False
-	if special_distr > DFLT_MID_LINE_MIN_TO_CARE:
+	drive_well.intersection_found = False
+	drive_well.right_stop_found = False
+	drive_well.left_stop_found = False
+	if special_distr > 200:
 		left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
 		right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
 		if left_side > 0 or right_side > 0:
 			if 3*right_side > 2*left_side > right_side: # 1.5 > left_side/right_side > 0.5
-				drive_well.intersection = True
+				drive_well.intersection_found = True
 				if drive_well.drive_intersection is False:
 					drive_well.normal_driving()
 			elif left_side > right_side:
-				drive_well.left = True
+				drive_well.left_stop_found = True
 			else:
-				drive_well.right = True
+				drive_well.right_stop_found = True
 			
 
 	# ~ print("-----SPECIAL DIST----- \n" ,special_distr)
@@ -576,66 +576,64 @@ def detect_lines(
 	image:ImageMtx,drive_well, 
 	preview_steps=False, preview_result=False, get_image_data=False
 ) -> Tuple[Number, Number, ImageMtx]:
-	""" A line detection function that from an inputed image detect two
-	seperate lines and return them as 2nd degree polynomials.
-	"""
-	
-	# camera.preview_image(image)
-	
-	timer.start()
-	
-	load_images = get_image_data or preview_result or preview_steps
 
-	undistort = calibrate.get_undistort()
+    """ A line detection function that from an inputed image detect two
+    seperate lines and return them as 2nd degree polynomials.
+    """
+    
+    # camera.preview_image(image)
+    
+    timer.start()
+    
+    load_images = get_image_data or preview_result or preview_steps
 
-	fisheye_removed = undistort(image)
+    undistort = calibrate.get_undistort()
 
-	warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
-	warped = warp_func(fisheye_removed)
-				
-	# Does things to image but not warps it
-	edges = dl_mark_edges(warped)
+    fisheye_removed = undistort(image)
 
-	lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
-	
-	# Calculate center offset
-	camera_pos = (int(image.shape[1]/2), image.shape[0])
-	
-	if drive_well.drive_intersection is True:
-		drive_well.intersection_driving()
-	else:
-		drive_well.normal_driving()
+    warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
+    warped = warp_func(fisheye_removed)
+                
+    # Does things to image but not warps it
+    edges = dl_mark_edges(warped)
 
-	# Calculate turn error
-	turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
+    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
+    
+    # Calculate center offset
+    camera_pos = (int(image.shape[1]/2), image.shape[0])
+    
+	drive_well.drive()
 
-	# _________________PREVIEW____________________
-	# An image to preview result
-	return_image = None
-	if load_images:
-		preview_image = undistort(image)	
+    # Calculate turn error
+    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
 
-		if lane_left is not None and lane_right is not None:		
-			# Add colored road
-			color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
-			preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
+    # _________________PREVIEW____________________
+    # An image to preview result
+    return_image = None
+    if load_images:
+        preview_image = undistort(image)    
 
-			# Draw a line inbetween lanes 
-			for y in range(lanes_image.shape[1]):
-				x = int((
-					(lane_left[0] + lane_right[0]) * y**2 + 
-					(lane_left[1] + lane_right[1]) * y +
-					(lane_left[2] + lane_right[2])
-				) / 2)
-				cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
+        if lane_left is not None and lane_right is not None:        
+            # Add colored road
+            color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
+            preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
+
+            # Draw a line inbetween lanes 
+            for y in range(lanes_image.shape[1]):
+                x = int((
+                    (lane_left[0] + lane_right[0]) * y**2 + 
+                    (lane_left[1] + lane_right[1]) * y +
+                    (lane_left[2] + lane_right[2])
+                ) / 2)
+                cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
 
 
-		# Add line to mark hit vector to turn towards
-		hit_point = np.flip(np.asarray(hit_point, int))
-		cv2.line(lanes_image, camera_pos, hit_point, [0,255,255], 5)
+        # Add line to mark hit vector to turn towards
+        hit_point = np.flip(np.asarray(hit_point, int))
+        cv2.line(lanes_image, camera_pos, hit_point, [0,255,255], 5)
 
-		# Add line to describe dumb path
-		cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
+        # Add line to describe dumb path
+        cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
 		
 		# Add align vector on hit_point 
 		align_vector = np.asarray((align_vector[0], -align_vector[1]))
