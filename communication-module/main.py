@@ -58,10 +58,10 @@ def main():
         #print(f"Iteration {index} start")
         #start_time = time.time()
         
-        print("=============================================")
-        print("=============================================")
-        print("=============================================")
-        print("=============================================")
+        #print("=============================================")
+        #print("=============================================")
+        #print("=============================================")
+        #print("=============================================")
 
         print("start: entire main loop")
         debug_time = Time.time()
@@ -72,16 +72,16 @@ def main():
         #print("Step 3 Detect_lines")
         
         #start_calc_time = time.time()
-        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, drive_well, get_image_data=False)
+        turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, drive_well, get_image_data= True, preview_steps=False)
         #calc_time = time.time() - start_calc_time
         
         if drive_well.stop is True:
             print("----------> stop")
         else:
-            error = detection.calc_error(turn_to_hit, turn_to_align)
+            error = detection.calc_error(turn_to_hit, turn_to_align, drive_well)
         
         #print("Step 4 Create an error")
-        error = detection.calc_error(turn_to_hit, turn_to_align)
+        error = detection.calc_error(turn_to_hit, turn_to_align, drive_well)
         
         #print("Step 5 Create a message")
         message = f"er:st={int(error*100)}:sp=1:"
@@ -93,25 +93,28 @@ def main():
             #message = f"es:"
         
             #print("Step 6 send to server")
-            asyncio.run(send(message, "ws://localhost:8765"))
+            #asyncio.run(send(message, "ws://localhost:8765"))
+            pass
 
         
         #print("Step 7 done")
         
         # Store the image that was worked upon and the resulting image
-        #org_img = Image.fromarray(image)
-        #org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
-        #rslt_img = Image.fromarray(resulting_image)
-        #rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
+        if True:
+            org_img = Image.fromarray(image)
+            org_img.save("{}/RSLT_{}_From.jpg".format(path, index))
+            rslt_img = Image.fromarray(resulting_image)
+            rslt_img.save("{}/RSLT_{}_To.jpg".format(path, index))
         
-        # Store data produced
-        #log.write(f'\n_______{index}_________ \nLeft: {left} \nRight: {right} \nCenter: {offset} \nError: {error} \nTotalTime: {time.time() - start_time} \nCalcTime: {calc_time}')    
-        
-        index += 1      
 
         print("finish: entire main loop")
         debug_time = Time.time() - debug_time
         print("time: ", debug_time)
+        
+        # Store data produced
+        log.write(f'\n_______{index}_________ \nError: {error} \TurnToAlign: {turn_to_align} \nTurnToHit: {turn_to_hit} \nCalcTime: {debug_time}')    
+        
+        index += 1      
         
     print("Done")
 
@@ -166,10 +169,11 @@ def test_pathing():
     
 
 if __name__ == "__main__":
-    #main()
+    main()
     
-    test_folder()
+    #test_folder()
 
     #test_pathing()
+    
     
     

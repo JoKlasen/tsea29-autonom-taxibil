@@ -21,14 +21,14 @@ class driving_logic:
         return self.drive_right or self.drive_forward
     
 
-    def drive(self, debug = False):
+    def drive(self, debug = True): # Should be 'False'
         if self.drive_intersection is True:
             self.intersection_driving(debug)
         else:
             self.normal_driving(debug)
 
     def normal_driving(self, debug=False):
-        print("entered normal")
+        #print("entered normal")
         if self.drive_index < len(self.node_list): #if we have not reached our end destination
             direction_to_drive = str(self.direction_list[self.drive_index])[0]
             stop_to_look_for = str(self.node_list[self.drive_index])[0]
@@ -42,7 +42,7 @@ class driving_logic:
                     self.drive_forwards()
                     self.drive_index += 1
                     self.stop = False
-                if debug:
+                elif debug:
                     print("Found nothing now driving: " + self.direction_list[self.drive_index] + "\n looking for: " + self.node_list[
                         self.drive_index] + f"\n with index: {self.drive_index}"
                          + "\n --- \n")
@@ -58,7 +58,7 @@ class driving_logic:
                     self.drive_index += 1
                     self.stop = False
 
-                if debug:
+                elif debug:
                     print("Found nothing now driving: " + self.direction_list[self.drive_index] + "\n looking for: " + self.node_list[
                         self.drive_index] + f"\n with index: {self.drive_index}"
                           + "\n --- \n")
@@ -81,7 +81,7 @@ class driving_logic:
                             print("Found intersection, going to be driving driving: " + self.direction_list[self.drive_index] + "\n just found: " +
                                   self.node_list[self.drive_index] + f"\n Index before update: {self.drive_index}"
                                   + "\n --- \n")
-                        self.drive_to_right()
+                        self.drive_to_left()
                         self.drive_index += 1
                         self.drive_intersection = True
                         self.stop = False
@@ -96,7 +96,7 @@ class driving_logic:
                         self.drive_intersection = True
                         self.stop = False
                         # return drive_forward , drive_left, drive_right , drive_index, drive_intersection, stop
-                if debug:
+                elif debug:
                     print("Found nothing now driving: " + self.direction_list[self.drive_index - 1] + "\n looking for: " + self.node_list[self.drive_index] + f"\n with index: {self.drive_index}"
                           + "\n --- \n")
         else:
@@ -129,7 +129,7 @@ class driving_logic:
             self.lost_intersection = True
         else:
             if debug:
-                print("we are still looking at the first intersection line, going to be driving: " + self.direction_list[self.drive_index - 1] + "\n node after intersection: " + self.drive_index[
+                print("we are still looking at the first intersection line, going to be driving: " + self.direction_list[self.drive_index - 1] + "\n node after intersection: " + self.node_list[
                     self.drive_index] + f"\n with index: {self.drive_index}"
                       + "\n --- \n")
             pass

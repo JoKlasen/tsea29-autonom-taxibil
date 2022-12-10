@@ -305,7 +305,7 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("LA","RB","RD")
+    Graph_1.get_paths_DFS("LC","RD","RD")
 
 
     Graph_1.get_directions()
