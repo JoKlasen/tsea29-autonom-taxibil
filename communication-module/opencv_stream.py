@@ -154,14 +154,15 @@ def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0):
     ret = False
     img = None
         
-    # TODO: Implement Wait
     keyPressed = False
+    start = time.time()
     while (not keyPressed):
         img = capture_image(cam)
         cv2.imshow(title, img)
         if not cv2.waitKey(40) == -1:
             keyPressed = True
-    
+        if wait and time.time() - start > wait:
+            break
     cv2.destroyAllWindows()
 
     return ret, img
@@ -197,36 +198,6 @@ def test_codec():
     # Wait on key then destroy
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    
-
-def test_sharpness():
-    """ Test the sharpness attribute of the camera by changing it 
-    and previewing the result to the user.
-    """
-    
-    # A generator that each step sets the sharpness of the camera and 
-    # yields its value
-    def step_set_sharpness(camera: cv2.VideoCapture):
-        for sharpness in range(-100, 101, 10):
-            camera.set(cv2.CAP_PROP_SHARPNESS, sharpness)
-            yield sharpness
-    
-    test_camera_attribute(step_set_sharpness)
-
-
-def test_saturation():
-    """ Test the saturation attribute of the camera by changing it 
-    and previewing the result to the user.
-    """
-    
-    # A generator that each step sets the saturation of the camera and 
-    # yields its value
-    def step_set_saturation(camera: cv2.VideoCapture):
-        for saturation in range(-100, 101, 10):
-            camera.set(cv2.CAP_PROP_SATURATION, saturation)
-            yield saturation
-    
-    test_camera_attribute(step_set_saturation)
 
 
 def test_brightness():
@@ -252,11 +223,41 @@ def test_contrast():
     # A generator that each step sets the contrast of the camera and 
     # yields its value
     def step_set_contrast(camera: cv2.VideoCapture):
-        for contrast in range(-100, 101, 20):
+        for contrast in range(-100, 101, 10):
             camera.set(cv2.CAP_PROP_CONTRAST, contrast)
             yield contrast
     
     test_camera_attribute(step_set_contrast)
+
+
+def test_saturation():
+    """ Test the saturation attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
+    
+    # A generator that each step sets the saturation of the camera and 
+    # yields its value
+    def step_set_saturation(camera: cv2.VideoCapture):
+        for saturation in range(-100, 101, 10):
+            camera.set(cv2.CAP_PROP_SATURATION, saturation)
+            yield saturation
+    
+    test_camera_attribute(step_set_saturation)
+
+
+def test_sharpness():
+    """ Test the sharpness attribute of the camera by changing it 
+    and previewing the result to the user.
+    """
+    
+    # A generator that each step sets the sharpness of the camera and 
+    # yields its value
+    def step_set_sharpness(camera: cv2.VideoCapture):
+        for sharpness in range(-100, 101, 10):
+            camera.set(cv2.CAP_PROP_SHARPNESS, sharpness)
+            yield sharpness
+    
+    test_camera_attribute(step_set_sharpness)
 
 
 def test_camera_attribute(gen:Generator[Any, None, None]):
@@ -278,14 +279,14 @@ def test_camera_attribute(gen:Generator[Any, None, None]):
 # ----------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # test_sharpness()
-    
-    # test_saturation()
-
-    # test_contrast()
+    # test_codec()
 
     # test_brightness()
 
-    # test_codec()
+    # test_contrast()
+
+    # test_saturation()
+
+    # test_sharpness()
 
     interrupted_preview(init(fps=30))

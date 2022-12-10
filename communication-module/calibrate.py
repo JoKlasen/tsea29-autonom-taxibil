@@ -57,7 +57,7 @@ def create_calibration_images() -> None:
 
 	# Have user take image when pressing enter, end if first typed "end"
 	while ("end" != input("").lower()):
-		ret, image = camera.interrupted_preview(cam)
+		ret, image = camera.interrupted_preview(cam, wait=5)
 		if ret:
 			img = Image.fromarray(image)
             
