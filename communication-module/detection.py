@@ -659,6 +659,19 @@ def dl_detect_lanes(
     return left_lane, right_lane, graph, pre_image
 
 
+def convert_image(image:ImageMtx) -> BitmapMtx:
+    undistort = calibrate.get_undistort()
+    fisheye_removed = undistort(image)
+
+    warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
+    warped = warp_func(fisheye_removed)
+
+    # Does things to image but not warps it
+    edges = dl_mark_edges(warped)
+    
+    return edges
+
+
 def detect_lines(
         image:ImageMtx,drive_well:driving_logic, 
     preview_steps=False, preview_result=False, get_image_data=False
@@ -683,6 +696,7 @@ def detect_lines(
 
     # Does things to image but not warps it
     edges = dl_mark_edges(warped)
+    
 
     lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
     
