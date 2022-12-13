@@ -36,4 +36,9 @@ extern volatile int spd_PTerm, spd_ITerm, spd_DTerm;
 extern volatile int spd_CurrentI, spd_MaxI, spd_MinI;
 extern volatile int spd_dTemp;
 
+extern volatile int Latest_SPerror;
+extern volatile int Latest_SP;
+extern volatile int Latest_STerror;
+extern volatile int Latest_ST;
+
 #endif

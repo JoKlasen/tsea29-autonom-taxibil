@@ -41,9 +41,12 @@ volatile unsigned long long milliseconds = 0;
 volatile unsigned long long echo_start = 0;
 volatile unsigned long long	echo_end = 0;
 volatile unsigned long long hall_left_latest = 0;
+volatile unsigned long long hall_left_previous = 0;
 volatile unsigned long long hall_left_old = 0;
 volatile unsigned long long hall_right_latest = 0;
 volatile unsigned long long new_time = 0;
+volatile unsigned long long timeout_counter = 0;
+volatile int speed = 0;
 // ISR flags
 volatile bool echo_updated = false;
 volatile bool hall_left_updated = false;
@@ -222,22 +225,7 @@ int main(void)
 		sei();
 		if(localsend)
 		{
-			hall_left_old = local_hall_left_latest;
-			cli();
-			local_hall_counter = hall_left_counter;
-			local_hall_left_latest = hall_left_latest;
-			hall_left_counter = 0;
-			sei();
-			
-			unsigned long long diff = local_hall_left_latest - hall_left_old; // diff in ms for 5 ticks
-
-			unsigned long tmp = local_hall_counter * SPEED_CONSTANT / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
-			
-			heltal = tmp / SPEED_PRECISION;
-			decimal = tmp % SPEED_PRECISION;
-			
-			//send_data_routine();
-			sprintf(speed_msg, "tm:s=%u.%03u:d=%u:\n", heltal, decimal, pulse_length );
+			sprintf(speed_msg,"tm:s=%u:d=%u:\n",speed,pulse_length);
 			send_data(speed_msg);
 			cli();
 			sendbool = false;
@@ -267,13 +255,18 @@ ISR(TIMER1_COMPA_vect)
 {
 	milliseconds++;
 	interval_counter++;
-	if(interval_counter == 175)
+	timeout_counter++;
+	if(timeout_counter == 1000)
+	{
+		speed = 0;
+	}
+	if(interval_counter == 100)
 	{
 		sendbool = true;
 		interval_counter = 0;
-		
 		start_echo_pulse();
 	}
+
 }
 
 //HALL_RIGHT
@@ -286,8 +279,12 @@ ISR(INT0_vect)
 //HALL_LEFT
 ISR(INT1_vect)
 {
-	hall_left_counter++;
+	//hall_left_counter++;
+	hall_left_previous = hall_left_latest;
 	hall_left_latest = millis();
+	speed = (((float)1)/ ((float)(hall_left_latest - hall_left_previous))) * 100000.0;
+	timeout_counter = 0;
+
 }
 
 //ECHO_OUTPUT

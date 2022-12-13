@@ -51,6 +51,10 @@ volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
 volatile int spd_PTerm, spd_ITerm, spd_DTerm;
 volatile int spd_CurrentI, spd_MaxI, spd_MinI = 0;
 volatile int spd_dTemp = 0;
+volatile int Latest_SPerror=0;
+volatile int Latest_SP =0;
+volatile int Latest_STerror = 0;
+volatile int Latest_ST =0;
 
 void turn_percent(int correction)
 {
@@ -75,6 +79,7 @@ void turn_percent(int correction)
 		steering = STEER_NEUTRAL;
 	}
 	STEER_REGISTER = steering;
+	Latest_ST = steering;
 }
 
 void drive(int correction)
@@ -89,6 +94,14 @@ void drive(int correction)
 	}
 }
 
+void send_debug()
+{
+	char debugsend[40];
+	sprintf(debugsend,"db:esp=%d:sp=%d:est=%d:st=%d:",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST);
+	send_data(debugsend);
+	clear_buffer(debugsend,40);
+	
+}
 
 
 int main(void)
@@ -107,11 +120,11 @@ int main(void)
 
 		//"kp:f=1:l=1:b=1:r=1:";
 		//"es:"
-		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
-		//"tm:s=0.000:d=2:"
+		//"sm:m=1:" == manual "switchmode:mode=0:" == autonomous
+		//"tm:s=2000:d=2:"
 		//"spp:p=1:i=2:d=3:"
 		//"stp:p=1:i=2:d=3:"
-		//"er:st=-500:sp=1:"
+		//"er:st=-500:sp=3000:"
 		if(received)
 		{
 			received = false;
@@ -133,6 +146,7 @@ int main(void)
 					steering = STEER_NEUTRAL;
 				}
 				STEER_REGISTER = steering;
+				Latest_ST = steering;
 				if (man_forward)
 				{
 					SPEED_REGISTER = MAX_SPEED;
@@ -199,18 +213,10 @@ int main(void)
 				{
 					//int speed = 10000 
 					int speederror = (target_speed) - velocity; 
+					Latest_SPerror = speederror;
 					int speedcorrection = spd_PIDIteration(speederror);
-					sprintf(debugdata,"DEBUG:Speed Correction = %d SPEEDerror=%d\n",speedcorrection,speederror);
-					send_data(debugdata);
-					memset(debugdata,0,50);
-					drive(speedcorrection);
-					// TODO: 
-					// error = expected_speed - velocity // Do proper range conversion
-					// int correction = spd_PIDiteration(error);
-					// SPEED_REGISTER = SPEED_REGISTER + correction; // With range check
-					// variabeln == "velocity"
-					//SPEED_REGISTER = 3500;
-					//velocity_received = false;		
+					send_debug();
+					drive(speedcorrection);	
 					speed_error_received = false;
 				}
 				old_millis = millis();
