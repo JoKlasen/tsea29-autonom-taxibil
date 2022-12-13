@@ -12,6 +12,9 @@ class driving_logic:
         self.drive_left = False
         self.drive_forward = True # False
         self.drive_intersection = False
+        self.lanes_seen = 2
+        self.seeing_right_lane = True
+        self.seeing_left_lane = True
 
 
     def look_for_left_lane(self):

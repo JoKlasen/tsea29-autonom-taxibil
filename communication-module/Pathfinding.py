@@ -226,7 +226,7 @@ class Graph:
 
         
 
-def main():
+def main(start_node,pickup_node,dropoff_node):
     Graph_1 = Graph()
 
     #Creating all nodes which is a representation of our current map
@@ -305,14 +305,13 @@ def main():
     Fake_Korsning_2.add_Edge(LC)
     Fake_Korsning_2.add_Edge(RB)
     
-    Graph_1.get_paths_DFS("LC","RD","RD")
+    Graph_1.get_paths_DFS(start_node,pickup_node,dropoff_node)
 
 
     Graph_1.get_directions()
     Graph_1.print_paths_and_directions()
     
-    #return Graph_1.pickup_path + Graph_1.dropoff_path, Graph_1.pickup_directions + Graph_1.dropoff_directions
-    return Graph_1.pickup_path , Graph_1.pickup_directions
+    return Graph_1.pickup_path, Graph_1.pickup_directions,Graph_1.dropoff_path,Graph_1.dropoff_directions
 
     
 

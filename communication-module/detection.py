@@ -221,6 +221,22 @@ def calc_adjust_turn(
 	# Calculate lane to follow
 	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
 	use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
+    if left_lane is not None and right_lane is not None:
+        drive_well.lanes_seen = 2
+        drive_well.seeing_left_lane = True
+        drive_well.seeing_right_lane = True
+    elif left_lane is not None:
+        drive_well.lanes_seen = 1
+        drive_well.seeing_left_lane = True
+        drive_well.seeing_right_lane = False
+    elif right_lane is not None:
+        drive_well.seeing_right_lane = True
+        drive_well.seeing_left_lane = False
+        drive_well.lanes_seen = 1
+    else:
+        drive_well.lanes_seen = 0
+        drive_well.seeing_left_lane = False
+        drive_well.seeing_right_lane = False
 
 	if use_left_lane and use_right_lane:
 		lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
@@ -299,12 +315,12 @@ def calc_error(
 	if -ignore_less < error < ignore_less:
 		error = 0
 	if drive_well.drive_intersection:
-		if drive_well.drive_right and error < 0.05:
-			print("Hello?")
+		if drive_well.drive_right and error < 0.05 and not drive_well.seeing_right_lane:
 			error = 0.1
-		elif drive_well.drive_left and -0.05 < error:
-			print("????????????????????????????????????")
-			error = -0.8
+		elif drive_well.drive_left and -0.05 < error and not drive_well.seeing_left_lane:
+			error = -0.1
+        elif drive_well.drive_forward and drive_well.lanes_seen == 2:
+            error = 0
 
 	if debug:
 		print(f"""
