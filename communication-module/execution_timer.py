@@ -1,6 +1,7 @@
 
 import inspect
 import time
+import threading
 
 from typing import Dict, List, Tuple, Optional, Union
 
@@ -43,19 +44,34 @@ class ExecTimer:
 		self.stack = []
 		self.memory = {}
 	
+
+	def get_caller(self, suffix):
+		
+		caller_frame = inspect.stack()[2][0]
+
+		ret = caller_frame.f_code.co_name + suffix
+		
+		if "self" in caller_frame.f_locals: 
+			class_name = caller_frame.f_locals["self"].__class__.__name__
+			ret = class_name + '.' + ret
+			
+		return ret
+		
 	
 	def start(self, suffix=""):
-		caller = inspect.stack()[1].function + suffix
+		thread = threading.get_ident()
+		caller = self.get_caller(suffix)
+		
 		
 		if self.PRINT_DURING_EXECUTION:
-			print(len(self.stack)*"|  " + f"{caller}.start")
+			print(len(self.stack)*"|  " + f"{caller}.start")		
 		
 		self.stack.append([caller, time.time(), 0])
 		
 		
 	def end(self, suffix=""):
 		now = time.time()
-		caller = inspect.stack()[1].function + suffix
+		caller = self.get_caller(suffix)
 		
 		while self.stack:
 			top = self.stack.pop(-1)
@@ -81,9 +97,21 @@ class ExecTimer:
 		
 		return execution_time
 		
+	def print_time(self, suffix=""):
+		caller = self.get_caller(suffix)
+		
+		if caller in self.memory:
+			obj = self.memory[caller]
+			
+			print(f"____TIME:_{caller}____")
+			print(f"|     avrg_exec_time: {obj.average_exec_time():.8f}")
+			print(f"|  avrg_time_in_func: {obj.average_exec_time(False):.8f}")		
+
+		else:
+			print(f"No time measured")
+
 
 	def print_memory(self):
-		
 		print("___EXECUTION_MEMORY___")
 		
 		for name, obj in sorted(self.memory.items(), key=lambda x: -x[1].average_exec_time(False)):			
