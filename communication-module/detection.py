@@ -218,6 +218,23 @@ def calc_adjust_turn(
 	# ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, 
 	#			right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
 
+    if left_lane is not None and right_lane is not None:
+        drive_well.lanes_seen = 2
+        drive_well.seeing_left_lane = True
+        drive_well.seeing_right_lane = True
+    elif left_lane is not None:
+        drive_well.lanes_seen = 1
+        drive_well.seeing_left_lane = True
+        drive_well.seeing_right_lane = False
+    elif right_lane is not None:
+        drive_well.seeing_right_lane = True
+        drive_well.seeing_left_lane = False
+        drive_well.lanes_seen = 1
+    else:
+        drive_well.lanes_seen = 0
+        drive_well.seeing_left_lane = False
+        drive_well.seeing_right_lane = False
+        
 	# Calculate lane to follow
 	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
 	use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
@@ -226,11 +243,25 @@ def calc_adjust_turn(
 		lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
 	elif use_left_lane and not use_right_lane:
 		lane = left_lane
-		lane[2] -= int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
+		
+		offset = int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
+		
+		lane[2] = left_lane[2] + left_lane[0]*offset*offset - left_lane[1]*offset
+		lane[1] = left_lane[1] - 2 * left_lane[0] * offset
+		lane[0] = left_lane[0]
+		
+		lane[2] -= offset
 		lane = np.asarray(left_lane)
 	elif not use_left_lane and use_right_lane:
 		lane = right_lane
-		lane[2] -= int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
+		
+		offset = int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
+		
+		lane[2] = right_lane[2] + right_lane[0]*offset*offset - right_lane[1]*offset
+		lane[1] = right_lane[1] - 2 * right_lane[0] * offset
+		lane[0] = right_lane[0]
+		
+		lane[2] -= offset
 		lane = np.asarray(right_lane)
 	else:
 		lane = np.asarray([0,0,camera_pos[1]]) # Straight line					
@@ -268,7 +299,7 @@ def calc_adjust_turn(
 
 
 def calc_error(
-	turn_hit:Number, turn_align:Number, 
+	turn_hit:Number, turn_align:Number,drive_well, 
 	turnconst=DFLT_TURNCONST, alignconst=DFLT_ALIGNCONST, 
 	ignore_less=DFLT_IGNORE_LESS,
 	debug=False
@@ -276,12 +307,21 @@ def calc_error(
 	""" Calculate the error. Positive means turn right. """
 		
 	timer.start()
+	
+
 
 	error = turn_hit*turnconst + turn_align*alignconst 
 
 	# Ignore small errors
 	if -ignore_less < error < ignore_less:
 		error = 0
+	if drive_well.drive_intersection:
+		if drive_well.drive_right and error < 0.05 and not drive_well.seeing_right_lane:
+			error = 0.1
+		elif drive_well.drive_left and -0.05 < error and not drive_well.seeing_left_lane:
+			error = -0.1
+        elif drive_well.drive_forward and drive_well.lanes_seen == 2:
+            error = 0
 
 	if debug:
 		print(f"""
@@ -515,7 +555,7 @@ def find_lane_with_sliding_window(
 			cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
 
 
-	if len(lane_pixels[1]) > 0:
+	if len(lane_pixels[1]) > 400:
 		# Calculate parameters		
 		polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
 				
