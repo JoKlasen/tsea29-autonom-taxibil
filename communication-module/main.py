@@ -37,12 +37,12 @@ async def send(msg, uri):
 class CameraThread(threading.Thread):
     
     # Debug
-    MEASURE_TIME = True
+    MEASURE_TIME = False
     PRINT_INFO = True
     
     def __init__(self):
         threading.Thread.__init__(self)
-        self.running = True
+        self.running = False
 
         self.loaded_image = None
         self.wait_cond = threading.Condition()
@@ -58,19 +58,21 @@ class CameraThread(threading.Thread):
         
     # Main loop of thread
     def run(self):
-        # ~ if self.MEASURE_TIME:
-            # ~ exec_timer.start(".Run")
+        self.running = True
+    
+        camera = cam.init()
+    
+        if self.MEASURE_TIME:
+            exec_timer.start(".Run")
         
         if self.PRINT_INFO:
             print("CameraThread - Start")
-        
-        camera = cam.init()
-        
-        while self.running:
-            # ~ if self.MEASURE_TIME:
-                # ~ exec_timer.start(".Loop")
                 
-            debug_time = time.time()
+        while self.running:
+            if self.MEASURE_TIME:
+                exec_timer.start(".Loop")
+                
+            # ~ debug_time = time.time()
             
             image = cam.capture_image(camera)
             
@@ -79,23 +81,94 @@ class CameraThread(threading.Thread):
                 self.loaded_image = image
                 self.wait_cond.notify()        
 
-            print("TIME: " + str(- debug_time + time.time()))
+            if self.MEASURE_TIME:
+                exec_timer.end(".Loop")
+                
+            # ~ print(f"CameraThread: {- debug_time + time.time()}")
 
-            # ~ if self.MEASURE_TIME:
-                # ~ exec_timer.end(".Loop")
 
+        if self.PRINT_INFO:
+            print("CameraThread - Stop")
 
         if self.MEASURE_TIME:
             exec_timer.end(".Run")
 
     
     def stop(self):
-        if self.PRINT_INFO:
-            print("CameraThread - Stop")
         self.running = False
 
         with self.wait_cond:
             self.wait_cond.notify_all()
+    
+    
+class ConverterThread(threading.Thread):
+    
+    MEASURE_TIME = False
+    PRINT_INFO = True
+    
+    
+    def __init__(self, camera_thread):
+        threading.Thread.__init__(self)
+        self.camera_thread = camera_thread
+        self.running = False
+        
+        self.loaded_image = None
+        self.wait_cond = threading.Condition()
+
+    # Will halt thread to wait for image to be produced
+    def wait_for_image(self):
+        with self.wait_cond:
+            while self.loaded_image is None and self.running:
+                self.wait_cond.wait()
+            image = self.loaded_image
+            self.loaded_image = None
+        return image
+        
+    def run(self):
+        
+        self.running = True
+        
+        if self.MEASURE_TIME:
+            exec_timer.start(".Run")
+        
+        if self.PRINT_INFO:
+            print("CameraThread - Start")
+                        
+        while self.running:
+            if self.MEASURE_TIME:
+                exec_timer.start(".Loop")
+            
+            # ~ debug_time = time.time()
+            
+            # Get image
+            image = self.camera_thread.wait_for_image()           
+            
+            # Converted image
+            image = detection.convert_image(image)
+            
+            
+            # ~ print(f"ConvertThread: {- debug_time + time.time()}")
+            
+            # Store image and notify threads who waits on it
+            with self.wait_cond:
+                self.loaded_image = image
+                self.wait_cond.notify()        
+
+            if self.MEASURE_TIME:
+                exec_timer.end(".Loop")
+
+        if self.PRINT_INFO:
+            print("ConversionThread - Stop")
+
+        if self.MEASURE_TIME:
+            exec_timer.end(".Run")
+            
+            
+
+                    
+    def stop(self):
+        self.running = False
+    
     
 
 class CalcThread(threading.Thread):
@@ -109,19 +182,18 @@ class CalcThread(threading.Thread):
     LOG_ERRORS = False
     
     # Key functions
-    SEND_TO_SERVER = True
+    SEND_TO_SERVER = False
         
-    def __init__(self, camera_thread):
+    def __init__(self, converter_thread):
         threading.Thread.__init__(self)
         self.running = True
-        
-        self.image_producer = camera_thread
-        
+                
         self.log = None
         self.path = None
         
         self.drive_well = None
         
+        self.image_producer = converter_thread
 
 
     def send_data(self, error):
@@ -196,6 +268,8 @@ class CalcThread(threading.Thread):
             if self.MEASURE_TIME:
                 exec_timer.start(".Loop")
             
+            # ~ debug_time = time.time()
+            
             # Get image or wait on it
             image = self.image_producer.wait_for_image()
             
@@ -208,27 +282,28 @@ class CalcThread(threading.Thread):
             messege = "" 
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
             
-            if self.drive_well.stop is True:
-                print("----------> stop")
-                self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
-                message = f"er:st={0}:sp=0:"
-                asyncio.run(send(message, "ws://localhost:8765"))
-                time.sleep(5)
-                if self.drive_well.direction_list == dropoff_list:
-                    print("True end reached")
-                    message = f"er:st={0}:sp=0:"
-                    asyncio.run(send(message, "ws://localhost:8765"))
-                    break
-                else:
+            if self.SEND_TO_SERVER:
+                if self.drive_well.stop is True:
                     print("----------> stop")
                     self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
                     message = f"er:st={0}:sp=0:"
                     asyncio.run(send(message, "ws://localhost:8765"))
                     time.sleep(5)
-            else:
-                error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
-                message = f"er:st={int(error*100)}:sp=1:"
-                asyncio.run(send(message, "ws://localhost:8765"))
+                    if self.drive_well.direction_list == dropoff_list:
+                        print("True end reached")
+                        message = f"er:st={0}:sp=0:"
+                        asyncio.run(send(message, "ws://localhost:8765"))
+                        break
+                    else:
+                        print("----------> stop")
+                        self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
+                        message = f"er:st={0}:sp=0:"
+                        asyncio.run(send(message, "ws://localhost:8765"))
+                        time.sleep(5)
+                else:
+                    error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
+                    message = f"er:st={int(error*100)}:sp=1:"
+                    asyncio.run(send(message, "ws://localhost:8765"))
 
             # Get turn_errors from data
             
@@ -247,6 +322,8 @@ class CalcThread(threading.Thread):
             
             index += 1
   
+            # ~ print(f"CalcThread: {-debug_time + time.time()}")
+            
             if self.MEASURE_TIME:
                 exec_timer.end(".Loop")
 
@@ -266,14 +343,17 @@ class CalcThread(threading.Thread):
 def main():
     
     camera_thread = CameraThread()
-    calc_thread = CalcThread(camera_thread)
+    conversion_thread = ConverterThread(camera_thread)
+    calc_thread = CalcThread(conversion_thread)
     
     camera_thread.start()
+    conversion_thread.start()
     calc_thread.start()
     
     input("")
     
     camera_thread.stop()
+    conversion_thread.stop()
     calc_thread.stop()
 
 # ----------------------------------------------------------------------
@@ -331,6 +411,7 @@ def test_pathing():
     
 
 if __name__ == "__main__":
+
     main()
     
     #test_folder()

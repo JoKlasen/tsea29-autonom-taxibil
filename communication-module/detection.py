@@ -117,12 +117,12 @@ def add_bitmap_on_image(
 ) -> ImageMtx:
     """ Add a bitmap onto the provided image and return the result. """
     
-    timer.start() 
+    # ~ timer.start() 
     
     manipulated_image = image.copy()
     manipulated_image[bitmap == 1] = np.array(color)
 
-    timer.end()
+    # ~ timer.end()
     
     return cv2.addWeighted(manipulated_image, weight, image, 1, 0)
 
@@ -143,14 +143,14 @@ def draw_polynomial_on_image(
     """ Draws the provided second degree polynomial on the image. Image
     will be changed, not returning anything.
     """
-    timer.start() 
+    # ~ timer.start() 
        
     plot_over_y = np.linspace(0, image.shape[0]-1, image.shape[0])
     resulting_x = pol2d_over(polynomial, plot_over_y)
     for i in range(len(plot_over_y)):
         cv2.circle(image, (int(resulting_x[i]), int(plot_over_y[i])), 2, color, 2)
 
-    timer.end()
+    # ~ timer.end()
         
         
 def fill_between_polynomials(
@@ -161,7 +161,7 @@ def fill_between_polynomials(
     second degree polynomials are filled with ones.
     """
     
-    timer.start()
+    # ~ timer.start()
     
     bitmap = np.empty(size)
     
@@ -181,7 +181,7 @@ def fill_between_polynomials(
         camera.preview_image(bitmap*255)
         
         
-    timer.end()
+    # ~ timer.end()
 
     return bitmap
 
@@ -206,7 +206,7 @@ def calc_adjust_turn(
     camera_pos = (x,y) 
     """
     
-    timer.start() 
+    # ~ timer.start() 
     
     
     # ------NOTE:------
@@ -289,7 +289,7 @@ def calc_adjust_turn(
     # ~ print(f"ALIGN({align_vector})")
     
     
-    timer.end()
+    # ~ timer.end()
     
     # ~ print("finish: calc_adjust_turn")
     # ~ debug_time = Time.time() - debug_time
@@ -306,7 +306,7 @@ def calc_error(
 ) -> Number:
     """ Calculate the error. Positive means turn right. """
         
-    timer.start()
+    # ~ timer.start()
     
 
 
@@ -331,7 +331,7 @@ def calc_error(
         Error:      {error}
         """)
 
-    timer.end()
+    # ~ timer.end()
 
     return error
 
@@ -350,7 +350,7 @@ def get_warp_perspective_funcs(
     target_roi. Returns an image with same characteristics.
     """
 
-    timer.start()
+    # ~ timer.start()
 
 
     if roi == None:
@@ -390,7 +390,7 @@ def get_warp_perspective_funcs(
     # --------------------------
 
     
-    timer.end()
+    # ~ timer.end()
     
     return warp_func, warp_back_func
 
@@ -400,25 +400,25 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     marked.
     """
 
-    timer.start()
+    # ~ timer.start()
     
     
-    timer.start(".convert")
+    # ~ timer.start(".convert")
     
     cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
 
-    timer.end(".convert")
-    timer.start(".thresh")
+    # ~ timer.end(".convert")
+    # ~ timer.start(".thresh")
 
     _, threshed = cv2.threshold(cvt_image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     
-    timer.end(".thresh")
-    timer.start(".blur")
+    # ~ timer.end(".thresh")
+    # ~ timer.start(".blur")
     
     blur_image = cv2.GaussianBlur(threshed, (MARK_EDGES_BLUR,MARK_EDGES_BLUR), 0)
 
-    timer.end(".blur")
-    timer.start(".sobel")
+    # ~ timer.end(".blur")
+    # ~ timer.start(".sobel")
 
     sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
     sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
@@ -430,7 +430,7 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD] = 0
     
     
-    timer.end(".sobel")
+    # ~ timer.end(".sobel")
     
     # ~ _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
     # ~ _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
@@ -441,7 +441,7 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     # ~ sobel_image = cv2.bitwise_or(rs_binary_like, sobel_image.astype(np.uint8))
     
     
-    timer.end()
+    # ~ timer.end()
     
     return sobel_image
 
@@ -454,7 +454,7 @@ def get_start_positions(
     width. 
     """
     
-    timer.start()
+    # ~ timer.start()
     
     
     distrubution = np.sum(
@@ -493,7 +493,7 @@ def get_start_positions(
     # --------------------------
 
 
-    timer.end()
+    # ~ timer.end()
 
     return left_lane_start, right_lane_start, graph
 
@@ -517,7 +517,7 @@ def find_lane_with_sliding_window(
     If debug_image is provided it will be drawn upon.
     """
     
-    timer.start()
+    # ~ timer.start()
     
     
     window_height = math.ceil(bitmap.shape[0]/numb_windows)
@@ -570,7 +570,7 @@ def find_lane_with_sliding_window(
         # Store bad value since no points found
         polynomial = None
 
-    timer.end()
+    # ~ timer.end()
 
     return polynomial
 
@@ -582,7 +582,7 @@ def find_horizontal_lines(
 ) -> None:
     """ Find horizontal lines on image """
     
-    timer.start()
+    # ~ timer.start()
     
     top_x = int((bitmap.shape[1] - DFLT_MID_WINDOW_WIDTH ) / 2)
     top_y = bitmap.shape[0] - DFLT_MID_WINDOW_HEIGHT - DFLT_MID_OFFSET
@@ -622,7 +622,7 @@ def find_horizontal_lines(
     if debug_image is not None:
         cv2.rectangle(debug_image, (top_x, top_y), (bottom_x, bottom_y), square_color, 2)
     
-    timer.end()
+    # ~ timer.end()
 
 def dl_detect_lanes(
     bitmap:BitmapMtx,drive_well,  
@@ -630,7 +630,7 @@ def dl_detect_lanes(
 ) -> Tuple[Pol2d, Pol2d, ImageMtx, ImageMtx]:
     """ Takes an bitmap and returns lanes tracked on it """
      
-    timer.start()
+    # ~ timer.start()
     
     # Find where pixels are concentrated and mark them as startpositions    
     graph = None
@@ -654,13 +654,26 @@ def dl_detect_lanes(
     if debug:
         camera.preview_image_grid([[pre_image], [graph]])
     
-    timer.end()
+    # ~ timer.end()
     
     return left_lane, right_lane, graph, pre_image
 
 
+def convert_image(image:ImageMtx) -> BitmapMtx:
+    undistort = calibrate.get_undistort()
+    fisheye_removed = undistort(image)
+
+    warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
+    warped = warp_func(fisheye_removed)
+
+    # Does things to image but not warps it
+    edges = dl_mark_edges(warped)
+    
+    return edges
+
+
 def detect_lines(
-        image:ImageMtx,drive_well:driving_logic, 
+    bitmap:BitmapMtx, drive_well:driving_logic, 
     preview_steps=False, preview_result=False, get_image_data=False
 ) -> Tuple[Number, Number, ImageMtx]:
 
@@ -670,24 +683,14 @@ def detect_lines(
     
     # camera.preview_image(image)
     
-    timer.start()
+    # ~ timer.start()
     
     load_images = get_image_data or preview_result or preview_steps
-
-    undistort = calibrate.get_undistort()
-
-    fisheye_removed = undistort(image)
-
-    warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
-    warped = warp_func(fisheye_removed)
-
-    # Does things to image but not warps it
-    edges = dl_mark_edges(warped)
-
-    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(edges,drive_well, debug=False, get_pics=load_images)
+    
+    lane_left, lane_right, graph, lanes_image = dl_detect_lanes(bitmap, drive_well, debug=False, get_pics=load_images)
     
     # Calculate center offset
-    camera_pos = (int(image.shape[1]/2), image.shape[0])
+    camera_pos = (int(bitmap.shape[1]/2), bitmap.shape[0])
     
     drive_well.drive()
 
@@ -743,7 +746,7 @@ def detect_lines(
     # ____________________________________________
 
         
-    timer.end()
+    # ~ timer.end()
     
     # ~ print("finish: detect_lines")
     # ~ debug_time = Time.time() - debug_time
