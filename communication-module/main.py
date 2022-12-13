@@ -77,11 +77,17 @@ def main():
         messege = ""
         
         if drive_well.stop is True:
-            print("----------> stop")
-            drive_well = driving_logic(dropoff_list, dropoff_directions)
-            message = f"er:st={0}:sp=0:"
-            asyncio.run(send(message, "ws://localhost:8765"))
-            time.sleep(5)
+            if drive_well.direction_list == dropoff_list:
+                print("True end reached")
+                message = f"er:st={0}:sp=0:"
+                asyncio.run(send(message, "ws://localhost:8765"))
+                break
+            else:
+                print("----------> stop")
+                drive_well = driving_logic(dropoff_list, dropoff_directions)
+                message = f"er:st={0}:sp=0:"
+                asyncio.run(send(message, "ws://localhost:8765"))
+                time.sleep(5)
         else:
             error = detection.calc_error(turn_to_hit, turn_to_align, drive_well)
             message = f"er:st={int(error*100)}:sp=1:"

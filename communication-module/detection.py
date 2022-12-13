@@ -218,9 +218,6 @@ def calc_adjust_turn(
 	# ~ print(f"DRIVE_WELL(left:{drive_well.drive_left}, 
 	#			right:{drive_well.drive_right}, forward:{drive_well.drive_forward})")
 
-	# Calculate lane to follow
-	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
-	use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
     if left_lane is not None and right_lane is not None:
         drive_well.lanes_seen = 2
         drive_well.seeing_left_lane = True
@@ -237,6 +234,10 @@ def calc_adjust_turn(
         drive_well.lanes_seen = 0
         drive_well.seeing_left_lane = False
         drive_well.seeing_right_lane = False
+        
+	# Calculate lane to follow
+	use_left_lane = left_lane is not None and drive_well.look_for_left_lane()
+	use_right_lane = right_lane is not None and drive_well.look_for_right_lane()
 
 	if use_left_lane and use_right_lane:
 		lane = np.asarray([(left_lane[i] + right_lane[i]) / 2 for i in range(3)])
