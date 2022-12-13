@@ -120,11 +120,11 @@ int main(void)
 
 		//"kp:f=1:l=1:b=1:r=1:";
 		//"es:"
-		//"sm:m=1:" == manual "switchmode:mode=0:" == autonomous
-		//"tm:s=2000:d=2:"
+		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
+		//"tm:s=3000:d=2:"
 		//"spp:p=1:i=2:d=3:"
 		//"stp:p=1:i=2:d=3:"
-		//"er:st=-500:sp=3000:"
+		//"er:st=-500:sp=0:"
 		if(received)
 		{
 			received = false;
@@ -209,7 +209,7 @@ int main(void)
 					turn_error_received = false;
 				}
 				//PID LOOP/FUNCTION for speed
-				if(speed_error_received)
+				if(velocity_received)
 				{
 					//int speed = 10000 
 					int speederror = (target_speed) - velocity; 
@@ -217,7 +217,7 @@ int main(void)
 					int speedcorrection = spd_PIDIteration(speederror);
 					send_debug();
 					drive(speedcorrection);	
-					speed_error_received = false;
+					velocity_received = false;
 				}
 				old_millis = millis();
 				
