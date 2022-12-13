@@ -135,7 +135,7 @@ void handshake()
 	{
 		if(millis()-new_time > 100)
 		{
-			old_millis = millis();
+			new_time = millis();
 			//Denna ska va h�r ---- start
 			send_data("sensor_module\n");
 			//Denna ska va h�r ---- slut
@@ -267,7 +267,7 @@ ISR(TIMER1_COMPA_vect)
 {
 	milliseconds++;
 	interval_counter++;
-	if(interval_counter == 250)
+	if(interval_counter == 175)
 	{
 		sendbool = true;
 		interval_counter = 0;

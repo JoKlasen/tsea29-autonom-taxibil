@@ -24,6 +24,7 @@ void parse(char input[])
 	bool error_boolean = false;
 	int label_end = 0;
 	int value_separator = 0;
+	char value_msg[50];
 	
 	for (int i = 0; input[i] != '\0'; i++)
 	{
@@ -244,7 +245,8 @@ void parse(char input[])
 					else if (!strcmp(&value_name[0], "sp"))
 					{
 						target_speed = atoi(&text_value[0]);
-						//
+						sprintf(&value_msg[0],"target speed == %d\n",target_speed);
+						send_data(value_msg);
 					}
 
 					label_end = i;

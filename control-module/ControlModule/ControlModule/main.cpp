@@ -79,13 +79,13 @@ void turn_percent(int correction)
 
 void drive(int correction)
 {
-	if ((SPEED_REGISTER + correction - 10000)  >= MAX_AUTO_SPEED)
+	if ((SPEED_REGISTER + correction)  >= MAX_AUTO_SPEED)
 	{
 		SPEED_REGISTER = MAX_AUTO_SPEED;
 	}
 	else
 	{
-		SPEED_REGISTER = SPEED_REGISTER + correction - 10000;
+		SPEED_REGISTER = SPEED_REGISTER + correction;
 	}
 }
 
@@ -108,7 +108,7 @@ int main(void)
 		//"kp:f=1:l=1:b=1:r=1:";
 		//"es:"
 		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
-		//"tm:s=12.345:d=2:"
+		//"tm:s=0.000:d=2:"
 		//"spp:p=1:i=2:d=3:"
 		//"stp:p=1:i=2:d=3:"
 		//"er:st=-500:sp=1:"
@@ -198,7 +198,7 @@ int main(void)
 				if(speed_error_received)
 				{
 					//int speed = 10000 
-					int speederror = 10000 + (velocity - (target_speed*1000)); 
+					int speederror = (target_speed) - velocity; 
 					int speedcorrection = spd_PIDIteration(speederror);
 					sprintf(debugdata,"DEBUG:Speed Correction = %d SPEEDerror=%d\n",speedcorrection,speederror);
 					send_data(debugdata);

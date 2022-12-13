@@ -133,9 +133,10 @@ ISR(TIMER2_COMPA_vect)
 {
 	
 	milliseconds++;
-	if(milliseconds - old_millis >= 1000)
+	if(milliseconds - old_millis >= 3000)
 	{
-		SPEED_REGISTER = 0;
+		//SPEED_REGISTER = 0;
+		//send_data("Watchdog\n");
 	}
 }
 
