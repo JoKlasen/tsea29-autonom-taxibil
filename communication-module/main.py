@@ -109,7 +109,7 @@ class CalcThread(threading.Thread):
     LOG_ERRORS = False
     
     # Key functions
-    SEND_TO_SERVER = False
+    SEND_TO_SERVER = True
         
     def __init__(self, camera_thread):
         threading.Thread.__init__(self)
@@ -208,26 +208,27 @@ class CalcThread(threading.Thread):
             messege = "" 
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
             
-            if drive_well.stop is True:
+            if self.drive_well.stop is True:
                 print("----------> stop")
-                drive_well = driving_logic(dropoff_list, dropoff_directions)
+                self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
                 message = f"er:st={0}:sp=0:"
                 asyncio.run(send(message, "ws://localhost:8765"))
                 time.sleep(5)
-                if drive_well.direction_list == dropoff_list:
+                if self.drive_well.direction_list == dropoff_list:
                     print("True end reached")
                     message = f"er:st={0}:sp=0:"
                     asyncio.run(send(message, "ws://localhost:8765"))
                     break
                 else:
                     print("----------> stop")
-                    drive_well = driving_logic(dropoff_list, dropoff_directions)
+                    self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
                     message = f"er:st={0}:sp=0:"
                     asyncio.run(send(message, "ws://localhost:8765"))
                     time.sleep(5)
             else:
-                error = detection.calc_error(turn_to_hit, turn_to_align, drive_well)
+                error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
                 message = f"er:st={int(error*100)}:sp=1:"
+                asyncio.run(send(message, "ws://localhost:8765"))
 
             # Get turn_errors from data
             
