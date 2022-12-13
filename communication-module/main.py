@@ -43,7 +43,10 @@ class CameraThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.running = False
-
+        self.dead = False
+        
+        self.name = "Camera" + self.name
+        
         self.loaded_image = None
         self.wait_cond = threading.Condition()
         
@@ -59,21 +62,17 @@ class CameraThread(threading.Thread):
     # Main loop of thread
     def run(self):
         self.running = True
-    
-        camera = cam.init()
-    
-        if self.MEASURE_TIME:
-            exec_timer.start(".Run")
+        self.alive = True
         
         if self.PRINT_INFO:
             print("CameraThread - Start")
-                
+        
+        camera = cam.init()
+
         while self.running:
             if self.MEASURE_TIME:
                 exec_timer.start(".Loop")
-                
-            # ~ debug_time = time.time()
-            
+                            
             image = cam.capture_image(camera)
             
             # Store image and notify threads who waits on it
@@ -84,14 +83,12 @@ class CameraThread(threading.Thread):
             if self.MEASURE_TIME:
                 exec_timer.end(".Loop")
                 
-            # ~ print(f"CameraThread: {- debug_time + time.time()}")
-
 
         if self.PRINT_INFO:
             print("CameraThread - Stop")
+            
+        self.alive = False
 
-        if self.MEASURE_TIME:
-            exec_timer.end(".Run")
 
     
     def stop(self):
@@ -103,7 +100,7 @@ class CameraThread(threading.Thread):
     
 class ConverterThread(threading.Thread):
     
-    MEASURE_TIME = False
+    MEASURE_TIME = True
     PRINT_INFO = True
     
     
@@ -111,6 +108,9 @@ class ConverterThread(threading.Thread):
         threading.Thread.__init__(self)
         self.camera_thread = camera_thread
         self.running = False
+        self.alive = False
+        
+        self.name = "Converter" + self.name
         
         self.loaded_image = None
         self.wait_cond = threading.Condition()
@@ -125,11 +125,8 @@ class ConverterThread(threading.Thread):
         return image
         
     def run(self):
-        
         self.running = True
-        
-        if self.MEASURE_TIME:
-            exec_timer.start(".Run")
+        self.alive = True
         
         if self.PRINT_INFO:
             print("CameraThread - Start")
@@ -141,7 +138,13 @@ class ConverterThread(threading.Thread):
             # ~ debug_time = time.time()
             
             # Get image
-            image = self.camera_thread.wait_for_image()           
+            image = self.camera_thread.wait_for_image()      
+            
+            if image is None:
+                self.stop()
+                if self.MEASURE_TIME:
+                    exec_timer.end(".Loop")
+                break                     
             
             # Converted image
             image = detection.convert_image(image)
@@ -159,15 +162,14 @@ class ConverterThread(threading.Thread):
 
         if self.PRINT_INFO:
             print("ConversionThread - Stop")
-
-        if self.MEASURE_TIME:
-            exec_timer.end(".Run")
             
-            
-
+        self.alive = False
                     
     def stop(self):
         self.running = False
+        
+        with self.wait_cond:
+            self.wait_cond.notify_all()
     
     
 
@@ -186,7 +188,10 @@ class CalcThread(threading.Thread):
         
     def __init__(self, converter_thread):
         threading.Thread.__init__(self)
-        self.running = True
+        self.running = False
+        self.alive = False
+                
+        self.name = "Calc" + self.name
                 
         self.log = None
         self.path = None
@@ -195,6 +200,9 @@ class CalcThread(threading.Thread):
         
         self.image_producer = converter_thread
 
+    # ==================================================================
+    # Helpers
+    # ==================================================================
 
     def send_data(self, error):
         message = f"er:st={int(error*100)}:sp=2:"
@@ -204,6 +212,9 @@ class CalcThread(threading.Thread):
             message = f"es:"
             asyncio.run(send(message, "ws://localhost:8765"))                
 
+    # ==================================================================
+    # Log - Logging information
+    # ==================================================================
 
     def load_log_resources(self): 
         self.path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'
@@ -238,17 +249,20 @@ class CalcThread(threading.Thread):
         log.write('\n\n')
         
         
+    # ==================================================================
+    # Main - Runs when thread starts
+    # ==================================================================
+        
     # The thread main process
     def run(self):        
+        self.alive = True
+        self.running = True
+        
         if self.PRINT_INFO:
             print("CalcThread - Start")
 
         if self.LOG_ERRORS or self.LOG_IMAGES:
             self.load_log_resources()
-        
-        
-        if self.MEASURE_TIME:
-            exec_timer.start(".Run")
         
         index = 0
         
@@ -268,13 +282,11 @@ class CalcThread(threading.Thread):
             if self.MEASURE_TIME:
                 exec_timer.start(".Loop")
             
-            # ~ debug_time = time.time()
-            
             # Get image or wait on it
             image = self.image_producer.wait_for_image()
             
             if image is None:
-                stop()
+                self.stop()
                 if self.MEASURE_TIME:
                     exec_timer.end(".Loop")
                 break
@@ -302,7 +314,7 @@ class CalcThread(threading.Thread):
                         time.sleep(5)
                 else:
                     error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
-                    message = f"er:st={int(error*100)}:sp=1:"
+                    message = f"er:st={int(error*100)}:sp=3000:"
                     asyncio.run(send(message, "ws://localhost:8765"))
 
             # Get turn_errors from data
@@ -321,20 +333,17 @@ class CalcThread(threading.Thread):
                 self.log_text(index, {'error': error, 'turn_to_hit': turn_to_hit, 'turn_to_align': turn_to_align})
             
             index += 1
-  
-            # ~ print(f"CalcThread: {-debug_time + time.time()}")
             
             if self.MEASURE_TIME:
                 exec_timer.end(".Loop")
 
-
         if self.PRINT_INFO:
             print("CalcThread - Stop")
             
-        if self.MEASURE_TIME:
-            exec_timer.end(".Run")
-            exec_timer.print_time(".Run")
-            exec_timer.print_time(".Loop")
+            # ~ if self.MEASURE_TIME:
+                # ~ exec_timer.print_time(".Loop")
+    
+        self.alive = False
     
     def stop(self):
         self.running = False
@@ -355,6 +364,12 @@ def main():
     camera_thread.stop()
     conversion_thread.stop()
     calc_thread.stop()
+    
+    while camera_thread.alive and conversion_thread.alive and calc_thread.alive:
+        time.sleep(.1)
+    
+    exec_timer.print_memory()
+    
 
 # ----------------------------------------------------------------------
 # Tests

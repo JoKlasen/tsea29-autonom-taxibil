@@ -402,15 +402,10 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
 
     # ~ timer.start()
     
-    
-    # ~ timer.start(".convert")
-    
-    cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
-
-    # ~ timer.end(".convert")
+     
     # ~ timer.start(".thresh")
 
-    _, threshed = cv2.threshold(cvt_image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     
     # ~ timer.end(".thresh")
     # ~ timer.start(".blur")
@@ -418,19 +413,39 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     blur_image = cv2.GaussianBlur(threshed, (MARK_EDGES_BLUR,MARK_EDGES_BLUR), 0)
 
     # ~ timer.end(".blur")
-    # ~ timer.start(".sobel")
-
+    # ~ timer.start(".sobel-sobel")
+    
     sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
     sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
-    
-    sobel = np.sqrt(np.square(sobel_x ** 2) + np.square(sobel_y ** 2)) 
+
+    # ~ timer.end(".sobel-sobel")    
+    # ~ timer.start(".sobel-hyper")
+
+    sobel = np.square(sobel_x ** 2) + np.square(sobel_y ** 2)
     #sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
 
+    # ~ timer.end(".sobel-hyper")
+    # ~ timer.start(".sobel-thresh")
+        
     sobel_image = np.ones_like(sobel, dtype=image.dtype)
-    sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD] = 0
+    sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD**2] = 0
+            
+    # ~ timer.end(".sobel-thresh")
+        
+    # ~ timer.start(".sobel-alt")
+
+    # ~ sobel_x = cv2.convertScaleAbs(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
+    # ~ sobel_y = cv2.convertScaleAbs(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
     
-    
-    # ~ timer.end(".sobel")
+    # ~ sobel = np.sqrt(np.square(sobel_x ** 2) + np.square(sobel_y ** 2)) 
+    # ~ #sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
+
+    # ~ sobel_image = np.ones_like(sobel, dtype=image.dtype)
+    # ~ sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD] = 0
+
+    # ~ camera.preview_image(sobel_image*255)
+        
+    # ~ timer.end(".sobel-alt")
     
     # ~ _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
     # ~ _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
