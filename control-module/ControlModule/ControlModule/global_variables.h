@@ -20,7 +20,7 @@ extern volatile int receive_buffer_index;
 
 extern volatile int velocity;
 extern volatile int steering_error;
-extern volatile int speed_error;
+extern volatile int target_speed;
 extern volatile int detection;
 extern volatile bool turn_error_received;
 extern volatile bool speed_error_received;

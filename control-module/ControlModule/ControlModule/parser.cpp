@@ -160,6 +160,8 @@ void parse(char input[])
 						strlcpy(&decimal_array[0], &text_value[decimal_separator+1], (j-decimal_separator));				
 						velocity = (atoi(&heltal_array[0]) * 1000) + atoi(&decimal_array[0]);
 						velocity_received = true;
+						speed_error_received = true;
+						send_data("DEBUG:I där vi sätter velocity\n");
 					}
 					else if (!strcmp(&value_name[0], "d"))
 					{
@@ -241,8 +243,8 @@ void parse(char input[])
 					}
 					else if (!strcmp(&value_name[0], "sp"))
 					{
-						speed_error = atoi(&text_value[0]);
-						speed_error_received = true;
+						target_speed = atoi(&text_value[0]);
+						//
 					}
 
 					label_end = i;
@@ -291,4 +293,5 @@ void parse(char input[])
 	send_data(&value_msg[0]);
 	
 	*/
+	
 }

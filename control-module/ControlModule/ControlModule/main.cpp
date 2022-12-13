@@ -36,7 +36,7 @@ volatile int receive_buffer_index = 0;
 
 volatile int velocity = 0;
 volatile int steering_error = 0;
-volatile int speed_error = 0;
+volatile int target_speed = 0;
 volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
@@ -75,6 +75,18 @@ void turn_percent(int correction)
 		steering = STEER_NEUTRAL;
 	}
 	STEER_REGISTER = steering;
+}
+
+void drive(int correction)
+{
+	if ((SPEED_REGISTER + correction - 10000)  >= MAX_AUTO_SPEED)
+	{
+		SPEED_REGISTER = MAX_AUTO_SPEED;
+	}
+	else
+	{
+		SPEED_REGISTER = SPEED_REGISTER + correction - 10000;
+	}
 }
 
 
@@ -134,8 +146,7 @@ int main(void)
 			}
 			else//Automatic Mode
 			{
-				
-				//Bugg h�r n�nstans
+				detection = 100;
 				if(detection <= 2)
 				{
 					brake();
@@ -166,9 +177,6 @@ int main(void)
 						SPEED_REGISTER = localspeed;
 					}
 				}
-
-				
-				//Buggen ovan
 				
 				// H�rdkodad s�l�nge
 
@@ -189,6 +197,13 @@ int main(void)
 				//PID LOOP/FUNCTION for speed
 				if(speed_error_received)
 				{
+					//int speed = 10000 
+					int speederror = 10000 + (velocity - (target_speed*1000)); 
+					int speedcorrection = spd_PIDIteration(speederror);
+					sprintf(debugdata,"DEBUG:Speed Correction = %d SPEEDerror=%d\n",speedcorrection,speederror);
+					send_data(debugdata);
+					memset(debugdata,0,50);
+					drive(speedcorrection);
 					// TODO: 
 					// error = expected_speed - velocity // Do proper range conversion
 					// int correction = spd_PIDiteration(error);
