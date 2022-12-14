@@ -282,8 +282,11 @@ class CalcThread(threading.Thread):
         # ~ intersection = False
         # ~ lost_intersection = False
         # ~ stop = False
- 
-        node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main("RA","RF","RC") # List of nodes and directions to drive from pathfinding
+        if(len(sys.argv) != 4):
+            print('\033[91m'+"<--------------Provide commandline arguments!!-------------->" + '\033[0m')
+            return
+        
+        node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main(*sys.argv[1:]) # List of nodes and directions to drive from pathfinding
         node_list, direction_list, dropoff_list, dropoff_directions = [str(r) for r in node_list], [str(r) for r in direction_list], [str(r) for r in dropoff_list], [str(r) for r in dropoff_directions]
  
         drive_index = 0
@@ -307,7 +310,7 @@ class CalcThread(threading.Thread):
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
             error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
 
-            # ~ error -= 0.02
+            error -= 0.015
 
             print(f"Error: {error}  Delay: {time.time() - timestamp} index :{index}")
             
@@ -400,7 +403,7 @@ def test_folder():
     if not len(images):
         print(f"No images in folder {images}!")
         return None, None
-
+    print(sys.argv)
     node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main("RA","RF","RC")
     node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
     drive_well = driving_logic.driving_logic(node_list, direction_list) 
