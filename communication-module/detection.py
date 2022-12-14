@@ -287,11 +287,14 @@ def calc_adjust_turn(
     # Calculate angle from straight forward to alignment to road
     turn_to_align = math.atan2(align_vector[0], align_vector[1])
     
+    if use_left_lane + use_right_lane == 1 and drive_well.drive_intersection:
+        turn_to_hit = .8 * turn_to_hit
+        turn_to_align = .8 * turn_to_align
     
     if debug_image is not None:
         for y in range(0, debug_image.shape[1]):
             x = int(pol2d_over(lane, y))
-			
+            
             cv2.circle(debug_image, (x, y), 2, (255, 100, 100), 2)
             
     # ~ print(f"ALIGN({align_vector})")
@@ -320,14 +323,19 @@ def calc_error(
 
     error = turn_hit*turnconst + turn_align*alignconst 
 
+    # scale small errors
+    #if -0.25 < error < 0.25:
+     #   error = error/3
     # Ignore small errors
     if -ignore_less < error < ignore_less:
         error = 0
+
     if drive_well.drive_intersection:
-        if drive_well.drive_right and error < 0.05 and not drive_well.seeing_right_lane:
-            error = 0.1
-        elif drive_well.drive_left and -0.05 < error and not drive_well.seeing_left_lane:
-            error = -0.1
+        if drive_well.drive_right and not drive_well.seeing_right_lane:
+            print("RIGHT MISSING")
+            error = 2
+        elif drive_well.drive_left and not drive_well.seeing_left_lane:
+            error = -2
         elif drive_well.drive_forward and drive_well.lanes_seen == 2:
             error = 0
 
@@ -546,6 +554,8 @@ def find_lane_with_sliding_window(
     window_height = math.ceil(bitmap.shape[0]/numb_windows)
     current_x = start
     
+    numb_wind = 0
+    
     lane_pixels = [
         np.empty(0),
         np.empty(0)
@@ -570,6 +580,7 @@ def find_lane_with_sliding_window(
         lane_pixels[1] = np.append(lane_pixels[1], pixels_in_window[0] + win_y[0])
         
         if len(pixels_in_window[0]) > min_to_recenter_window:
+            numb_wind += 1
             # Recenter around found pixels
             current_x = int(np.mean(pixels_in_window[1])) + win_x[0]
 
@@ -578,16 +589,21 @@ def find_lane_with_sliding_window(
             cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
 
 
-    if len(lane_pixels[1]) > 400:
-        # Calculate parameters      
-        polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
-                
-        if debug_image is not None:
-            # Fill pixels used to calculate line
-            debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
+    if len(lane_pixels[1]) > 600:
+        
+        if numb_wind > 6:
+            # Calculate parameters      
+            polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
+                    
+            if debug_image is not None:
+                # Fill pixels used to calculate line
+                debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
 
-            # Draw calculated line on image
-            draw_polynomial_on_image(debug_image, polynomial, pol_color)
+                # Draw calculated line on image
+                draw_polynomial_on_image(debug_image, polynomial, pol_color)
+                
+        else:
+            polynomial = None
 
     else:
         # Store bad value since no points found
@@ -620,18 +636,23 @@ def find_horizontal_lines(
     drive_well.intersection_found = False
     drive_well.right_stop_found = False
     drive_well.left_stop_found = False
-    if special_distr > 200:
+    drive_well.frames_since_line += 1
+    if special_distr > DFLT_MID_LINE_MIN_TO_CARE:
         left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
         right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
         if left_side > 0 or right_side > 0:
-            if 3*right_side > 2*left_side > right_side: # 1.5 > left_side/right_side > 0.5
+            if 2.4*right_side > 2*left_side > 1.4*right_side: # 1.5 > left_side/right_side > 0.5
                 drive_well.intersection_found = True
                 if drive_well.drive_intersection is False:
                     drive_well.normal_driving()
-            elif left_side > right_side:
+            elif left_side > right_side and drive_well.frames_since_line >= 8:
+                drive_well.frames_since_line = 0
                 drive_well.left_stop_found = True
-            else:
+            elif drive_well.frames_since_line >= 8:
+                drive_well.frames_since_line = 0
                 drive_well.right_stop_found = True
+            else:
+                pass
             
 
     # ~ print("-----SPECIAL DIST----- \n" ,special_distr)

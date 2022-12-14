@@ -29,10 +29,10 @@
 
 
 'lane_margin':
-	40
+	15
 ,
 'min_to_recenter_window':
-	10
+	20
 ,
 'numb_windows':
 	20
@@ -51,13 +51,13 @@
 
 
 'mid_line_min_to_care': 
-	200
+	500
 ,
 'mid_offset': 
-	20
+	0
 ,
 'mid_window_height': 
-	150
+	60
 ,
 'mid_window_width': 
 	100

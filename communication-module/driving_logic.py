@@ -7,7 +7,7 @@ class driving_logic:
         self.lost_intersection = False
         self.stop = False
         self.node_list, self.direction_list = node_list, direction_list
-        self.drive_index = 0
+        self.drive_index = 1
         self.drive_right = False
         self.drive_left = False
         self.drive_forward = True # False
@@ -15,6 +15,7 @@ class driving_logic:
         self.lanes_seen = 2
         self.seeing_right_lane = True
         self.seeing_left_lane = True
+        self.frames_since_line = 8
 
 
     def look_for_left_lane(self):
@@ -118,6 +119,7 @@ class driving_logic:
                         self.drive_index] + f"\n with index: {self.drive_index}"
                         + "\n --- \n")
                 self.drive_intersection = False
+                self.frames_since_line = 0
                 self.lost_intersection = False
                 self.drive_forwards()
             if debug:
