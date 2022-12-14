@@ -53,7 +53,7 @@ int spd_PIDIteration(int Error) {
     spd_DTerm = spd_ConstantD * (spd_dTemp - Error);
     spd_dTemp = Error;
 
-    return ((spd_PTerm + spd_ITerm + spd_DTerm) );
+    return ((spd_PTerm + spd_ITerm + spd_DTerm) ) / 100;
 }
 
 /*

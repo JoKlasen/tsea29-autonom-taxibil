@@ -55,6 +55,7 @@ volatile int Latest_SPerror=0;
 volatile int Latest_SP =0;
 volatile int Latest_STerror = 0;
 volatile int Latest_ST =0;
+char debugsend[40];
 
 void turn_percent(int correction)
 {
@@ -92,12 +93,15 @@ void drive(int correction)
 	{
 		SPEED_REGISTER = SPEED_REGISTER + correction;
 	}
+	/*
+	sprintf(debugsend,"S=%d",SPEED_REGISTER);
+	send_data(debugsend);*/
 }
 
 void send_debug()
 {
-	char debugsend[40];
-	sprintf(debugsend,"db:esp=%d:sp=%d:est=%d:st=%d:",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST);
+
+	sprintf(debugsend," db:esp=%d:sp=%d:est=%d:st=%d:\n",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST);
 	send_data(debugsend);
 	clear_buffer(debugsend,40);
 	
@@ -115,6 +119,7 @@ int main(void)
 	int localspeed = 0;
 	handshake();
 	PORTA |= (1 << LED2); // Turn on handshake LED
+	int dbcounter=0;
 	while (1)
 	{
 
@@ -122,9 +127,11 @@ int main(void)
 		//"es:"
 		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
 		//"tm:s=3000:d=2:"
+		//"tm:s=0:d=2:"
 		//"spp:p=1:i=2:d=3:"
 		//"stp:p=1:i=2:d=3:"
 		//"er:st=-500:sp=0:"
+		//"er:st=-500:sp=3000:"
 		if(received)
 		{
 			received = false;
@@ -212,10 +219,23 @@ int main(void)
 				if(velocity_received)
 				{
 					//int speed = 10000 
+					/*
+					sprintf(debugsend,"v=%d",velocity);
+					send_data(debugsend);
+					*/
 					int speederror = (target_speed) - velocity; 
 					Latest_SPerror = speederror;
 					int speedcorrection = spd_PIDIteration(speederror);
-					send_debug();
+					/*
+					sprintf(debugsend,"sc=%d",speedcorrection);
+					send_data(debugsend);
+					*/
+					dbcounter++;
+					if(dbcounter == 5)
+					{
+						send_debug();
+						dbcounter = 0;
+					}
 					drive(speedcorrection);	
 					velocity_received = false;
 				}
