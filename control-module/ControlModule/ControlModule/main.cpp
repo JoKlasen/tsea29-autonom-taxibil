@@ -123,7 +123,7 @@ int main(void)
 	while (1)
 	{
 
-		//"kp:f=1:l=1:b=1:r=1:";
+		//"kp:f=1:l=1:b=0:r=0:";
 		//"es:"
 		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
 		//"tm:s=3000:d=2:"

@@ -49,8 +49,11 @@ ISR (USART0_RX_vect)
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
-
-
+		//char tempbuffer[RECEIVE_BUFFER_SIZE];
+		//sprintf(&tempbuffer[0], "Received \n%s",working_buffer);
+		//send_data("In receeive data, received:\n");
+		//send_data(tempbuffer);
+		//clear_buffer(tempbuffer);
 	}
 }
 

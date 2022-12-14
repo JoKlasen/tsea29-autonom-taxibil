@@ -261,7 +261,7 @@ void parse(char input[])
 	}
 	else if(telemetry)
 	{
-		sprintf(&value_msg[0], "Received speed:%d detection:%d\n", velocity,detection );
+		sprintf(&value_msg[0], "sspeed:s=%d:d=%d:\n", velocity,detection );
 
 	}
 	else if(emergencystop)
@@ -274,10 +274,9 @@ void parse(char input[])
 	}
 	else
 	{
-		sprintf(&value_msg[0],"Didnt receive any Parser_Data\n");
+		sprintf(&value_msg[0],"eerrr:e=1:\n");
 	}
 	send_data(&value_msg[0]);
-	
 	*/
 	
 }

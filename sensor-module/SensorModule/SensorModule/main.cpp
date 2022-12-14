@@ -30,6 +30,8 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
+#define SEND_RATE 250 // How long the main loop should wait before sending new data in ms
+
 #define SPEED_PRECISION 1000 // 3 decimalers precision
 #define SPEED_CONSTANT 0.026 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning �t v�nster, f�r 1 tick
 
@@ -181,8 +183,6 @@ int main(void)
 	send_data(Data);
 	volatile bool localsend = false;	
 	volatile bool localultrasound = false;
-	volatile bool localhallsensor = false;
-	volatile unsigned long long old_time = 0;
 
 	char initial[50];
 	char * speed_msg = &initial[0]; 
@@ -197,8 +197,6 @@ int main(void)
 	//char receive_buffer[RECEIVE_BUFFER_SIZE]; 
 	clear_buffer(&receive_buffer[0]);
 	clear_buffer(&working_buffer[0]);
-	volatile int counter =0;
-	volatile bool has_full_string = false;
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 
@@ -207,14 +205,11 @@ int main(void)
 	PORTA |= (1 << LED2);
 	while(1)
 	{
-		new_time = millis();
 		cli();
 		localultrasound = echo_updated;
 		sei();
 		if (localultrasound)
 		{
-			char test_inital[50];
-			char * echo_test = &test_inital[0];
 			pulse_length = echo_end - echo_start;
 			echo_updated = false;
 		}
