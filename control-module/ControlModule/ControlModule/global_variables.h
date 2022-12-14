@@ -20,7 +20,7 @@ extern volatile int receive_buffer_index;
 
 extern volatile int velocity;
 extern volatile int steering_error;
-extern volatile int speed_error;
+extern volatile int target_speed;
 extern volatile int detection;
 extern volatile bool turn_error_received;
 extern volatile bool speed_error_received;
@@ -35,5 +35,10 @@ extern volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
 extern volatile int spd_PTerm, spd_ITerm, spd_DTerm;
 extern volatile int spd_CurrentI, spd_MaxI, spd_MinI;
 extern volatile int spd_dTemp;
+
+extern volatile int Latest_SPerror;
+extern volatile int Latest_SP;
+extern volatile int Latest_STerror;
+extern volatile int Latest_ST;
 
 #endif

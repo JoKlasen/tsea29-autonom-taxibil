@@ -36,7 +36,7 @@ volatile int receive_buffer_index = 0;
 
 volatile int velocity = 0;
 volatile int steering_error = 0;
-volatile int speed_error = 0;
+volatile int target_speed = 0;
 volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
@@ -51,6 +51,11 @@ volatile int spd_ConstantP, spd_ConstantI, spd_ConstantD;
 volatile int spd_PTerm, spd_ITerm, spd_DTerm;
 volatile int spd_CurrentI, spd_MaxI, spd_MinI = 0;
 volatile int spd_dTemp = 0;
+volatile int Latest_SPerror=0;
+volatile int Latest_SP =0;
+volatile int Latest_STerror = 0;
+volatile int Latest_ST =0;
+char debugsend[40];
 
 void turn_percent(int correction)
 {
@@ -75,8 +80,32 @@ void turn_percent(int correction)
 		steering = STEER_NEUTRAL;
 	}
 	STEER_REGISTER = steering;
+	Latest_ST = steering;
 }
 
+void drive(int correction)
+{
+	if ((SPEED_REGISTER + correction)  >= MAX_AUTO_SPEED)
+	{
+		SPEED_REGISTER = MAX_AUTO_SPEED;
+	}
+	else
+	{
+		SPEED_REGISTER = SPEED_REGISTER + correction;
+	}
+	/*
+	sprintf(debugsend,"S=%d",SPEED_REGISTER);
+	send_data(debugsend);*/
+}
+
+void send_debug()
+{
+
+	sprintf(debugsend," db:esp=%d:sp=%d:est=%d:st=%d:\n",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST);
+	send_data(debugsend);
+	clear_buffer(debugsend,40);
+	
+}
 
 
 int main(void)
@@ -90,16 +119,19 @@ int main(void)
 	int localspeed = 0;
 	handshake();
 	PORTA |= (1 << LED2); // Turn on handshake LED
+	int dbcounter=0;
 	while (1)
 	{
 
 		//"kp:f=1:l=1:b=0:r=0:";
 		//"es:"
 		//"sm:m=0:" == manual "switchmode:mode=0:" == autonomous
-		//"tm:s=12.345:d=2:"
+		//"tm:s=3000:d=2:"
+		//"tm:s=0:d=2:"
 		//"spp:p=1:i=2:d=3:"
 		//"stp:p=1:i=2:d=3:"
-		//"er:st=-500:sp=1:"
+		//"er:st=-500:sp=0:"
+		//"er:st=-500:sp=3000:"
 		if(received)
 		{
 			received = false;
@@ -121,6 +153,7 @@ int main(void)
 					steering = STEER_NEUTRAL;
 				}
 				STEER_REGISTER = steering;
+				Latest_ST = steering;
 				if (man_forward)
 				{
 					SPEED_REGISTER = MAX_SPEED;
@@ -134,8 +167,7 @@ int main(void)
 			}
 			else//Automatic Mode
 			{
-				
-				//Bugg h�r n�nstans
+				detection = 100;
 				if(detection <= 2)
 				{
 					brake();
@@ -166,9 +198,6 @@ int main(void)
 						SPEED_REGISTER = localspeed;
 					}
 				}
-
-				
-				//Buggen ovan
 				
 				// H�rdkodad s�l�nge
 
@@ -187,16 +216,28 @@ int main(void)
 					turn_error_received = false;
 				}
 				//PID LOOP/FUNCTION for speed
-				if(speed_error_received)
+				if(velocity_received)
 				{
-					// TODO: 
-					// error = expected_speed - velocity // Do proper range conversion
-					// int correction = spd_PIDiteration(error);
-					// SPEED_REGISTER = SPEED_REGISTER + correction; // With range check
-					// variabeln == "velocity"
-					//SPEED_REGISTER = 3500;
-					//velocity_received = false;		
-					speed_error_received = false;
+					//int speed = 10000 
+					/*
+					sprintf(debugsend,"v=%d",velocity);
+					send_data(debugsend);
+					*/
+					int speederror = (target_speed) - velocity; 
+					Latest_SPerror = speederror;
+					int speedcorrection = spd_PIDIteration(speederror);
+					/*
+					sprintf(debugsend,"sc=%d",speedcorrection);
+					send_data(debugsend);
+					*/
+					dbcounter++;
+					if(dbcounter == 5)
+					{
+						send_debug();
+						dbcounter = 0;
+					}
+					drive(speedcorrection);	
+					velocity_received = false;
 				}
 				old_millis = millis();
 				

@@ -24,6 +24,7 @@ void parse(char input[])
 	bool error_boolean = false;
 	int label_end = 0;
 	int value_separator = 0;
+	char value_msg[50];
 	
 	for (int i = 0; input[i] != '\0'; i++)
 	{
@@ -143,25 +144,8 @@ void parse(char input[])
 					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
 					if (!strcmp(&value_name[0], "s"))
 					{
-						int decimal_separator = 0;
-						int j = 0;
-						for (; text_value[j] != '\0' ; j++)
-						{
-							if (text_value[j] == '.')
-							{
-								decimal_separator = j;
-							}
-						}
-						char heltal_array[5];
-						char decimal_array[5];
-						clear_buffer(&heltal_array[0],5);
-						clear_buffer(&decimal_array[0],5);
-						strlcpy(&heltal_array[0], &text_value[0],decimal_separator+1);
-						strlcpy(&decimal_array[0], &text_value[decimal_separator+1], (j-decimal_separator));	
-						//send_data(heltal_array);
-						//send_data("\n\n");
-						//send_data(decimal_array);			
-						velocity = (atoi(&heltal_array[0]) * 1000) + atoi(&decimal_array[0]);
+						velocity = atoi(&text_value[0]);
+						Latest_SP = velocity;
 						velocity_received = true;
 					}
 					else if (!strcmp(&value_name[0], "d"))
@@ -244,8 +228,9 @@ void parse(char input[])
 					}
 					else if (!strcmp(&value_name[0], "sp"))
 					{
-						speed_error = atoi(&text_value[0]);
-						speed_error_received = true;
+						target_speed = atoi(&text_value[0]);
+						sprintf(&value_msg[0],"target speed == %d\n",target_speed);
+						send_data(value_msg);
 					}
 
 					label_end = i;
@@ -293,4 +278,5 @@ void parse(char input[])
 	}
 	send_data(&value_msg[0]);
 	*/
+	
 }
