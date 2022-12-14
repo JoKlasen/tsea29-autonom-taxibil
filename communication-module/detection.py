@@ -194,6 +194,7 @@ def fill_between_polynomials(
 def calc_adjust_turn(
     left_lane:Pol2d, right_lane:Pol2d, 
     camera_pos:Vector2d, drive_well:driving_logic, 
+    debug_image=None,
     hit_height=DFLT_HIT_HEIGHT
 ) -> Tuple[Number, Number, Vector2d, Vector2d]:
     """ Calculate the turn required to reach a point late on road.
@@ -246,8 +247,8 @@ def calc_adjust_turn(
         
         offset = int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
         
-        lane[2] = left_lane[2] + left_lane[0]*offset*offset - left_lane[1]*offset
-        lane[1] = left_lane[1] - 2 * left_lane[0] * offset
+        lane[2] = left_lane[2] #+ left_lane[0]*offset*offset - left_lane[1]*offset
+        lane[1] = left_lane[1] #- 2 * left_lane[0] * offset
         lane[0] = left_lane[0]
         
         lane[2] -= offset
@@ -257,8 +258,8 @@ def calc_adjust_turn(
         
         offset = int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
         
-        lane[2] = right_lane[2] + right_lane[0]*offset*offset - right_lane[1]*offset
-        lane[1] = right_lane[1] - 2 * right_lane[0] * offset
+        lane[2] = right_lane[2] #+ right_lane[0]*offset*offset - right_lane[1]*offset
+        lane[1] = right_lane[1] #- 2 * right_lane[0] * offset
         lane[0] = right_lane[0]
         
         lane[2] -= offset
@@ -285,6 +286,13 @@ def calc_adjust_turn(
 
     # Calculate angle from straight forward to alignment to road
     turn_to_align = math.atan2(align_vector[0], align_vector[1])
+    
+    
+    if debug_image is not None:
+        for y in range(0, debug_image.shape[1]):
+            x = int(pol2d_over(lane, y))
+			
+            cv2.circle(debug_image, (x, y), 2, (255, 100, 100), 2)
             
     # ~ print(f"ALIGN({align_vector})")
     
@@ -674,7 +682,7 @@ def dl_detect_lanes(
     return left_lane, right_lane, graph, pre_image
 
 
-def convert_image(image:ImageMtx) -> BitmapMtx:
+def convert_image(image:ImageMtx, preview_steps=False) -> BitmapMtx:
     undistort = calibrate.get_undistort()
     fisheye_removed = undistort(image)
 
@@ -684,12 +692,15 @@ def convert_image(image:ImageMtx) -> BitmapMtx:
     # Does things to image but not warps it
     edges = dl_mark_edges(warped)
     
+    if preview_steps:
+        camera.preview_image_grid([[image, fisheye_removed, warped, edges*255]])
+    
     return edges
 
 
 def detect_lines(
     bitmap:BitmapMtx, drive_well:driving_logic, 
-    preview_steps=False, preview_result=False, get_image_data=False
+    preview_result=False, get_image_data=False
 ) -> Tuple[Number, Number, ImageMtx]:
 
     """ A line detection function that from an inputed image detect two
@@ -700,7 +711,7 @@ def detect_lines(
     
     # ~ timer.start()
     
-    load_images = get_image_data or preview_result or preview_steps
+    load_images = get_image_data or preview_result
     
     lane_left, lane_right, graph, lanes_image = dl_detect_lanes(bitmap, drive_well, debug=False, get_pics=load_images)
     
@@ -710,29 +721,12 @@ def detect_lines(
     drive_well.drive()
 
     # Calculate turn error
-    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
+    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well, debug_image=lanes_image if load_images else None)
 
     # _________________PREVIEW____________________
     # An image to preview result
     return_image = None
     if load_images:
-        preview_image = undistort(image)    
-
-        if lane_left is not None and lane_right is not None:        
-            # Add colored road
-            color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
-            preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
-
-            # Draw a line inbetween lanes 
-            for y in range(lanes_image.shape[1]):
-                x = int((
-                    (lane_left[0] + lane_right[0]) * y**2 + 
-                    (lane_left[1] + lane_right[1]) * y +
-                    (lane_left[2] + lane_right[2])
-                ) / 2)
-                cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
-
-
         # Add line to describe dumb path
         cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
 
@@ -748,14 +742,10 @@ def detect_lines(
         cv2.line(lanes_image, hit_point, align_point, (100, 255, 100), 3)
         
         cv2.circle(lanes_image, hit_point, 0, (0, 0, 0), 3)
-        
 
-        if preview_steps:
-            calc_error(turn_hit, turn_align, debug=True)
-            camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
-            
-        if preview_result:          
-            camera.preview_image_grid([[image], [lanes_image]])
+        if preview_result:
+            calc_error(turn_hit, turn_align, drive_well, debug=True)
+            camera.preview_image_grid([[255*bitmap, 255*graph, lanes_image]])
                         
         return_image = lanes_image
     # ____________________________________________

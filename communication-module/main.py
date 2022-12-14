@@ -37,7 +37,7 @@ async def send(msg, uri):
 class CameraThread(threading.Thread):
     
     # Debug
-    MEASURE_TIME = False
+    MEASURE_TIME = True
     PRINT_INFO = True
     
     def __init__(self):
@@ -113,6 +113,7 @@ class ConverterThread(threading.Thread):
         self.name = "Converter" + self.name
         
         self.loaded_image = None
+        self.original_image = None
         self.wait_cond = threading.Condition()
 
     # Will halt thread to wait for image to be produced
@@ -120,9 +121,10 @@ class ConverterThread(threading.Thread):
         with self.wait_cond:
             while self.loaded_image is None and self.running:
                 self.wait_cond.wait()
-            image = self.loaded_image
+            images = (self.loaded_image, self.original_image)
             self.loaded_image = None
-        return image
+            self.original_image = None
+        return images
         
     def run(self):
         self.running = True
@@ -138,6 +140,7 @@ class ConverterThread(threading.Thread):
             # ~ debug_time = time.time()
             
             # Get image
+            
             image = self.camera_thread.wait_for_image()      
             
             if image is None:
@@ -147,14 +150,14 @@ class ConverterThread(threading.Thread):
                 break                     
             
             # Converted image
-            image = detection.convert_image(image)
-            
+            converted_image = detection.convert_image(image)
             
             # ~ print(f"ConvertThread: {- debug_time + time.time()}")
             
             # Store image and notify threads who waits on it
             with self.wait_cond:
-                self.loaded_image = image
+                self.loaded_image = converted_image
+                self.original_image = image
                 self.wait_cond.notify()        
 
             if self.MEASURE_TIME:
@@ -176,7 +179,7 @@ class ConverterThread(threading.Thread):
 class CalcThread(threading.Thread):
         
     # Debug
-    MEASURE_TIME = False
+    MEASURE_TIME = True
     PRINT_INFO = True
     
     # Logging
@@ -184,7 +187,7 @@ class CalcThread(threading.Thread):
     LOG_ERRORS = False
     
     # Key functions
-    SEND_TO_SERVER = True
+    SEND_TO_SERVER = False
         
     def __init__(self, converter_thread):
         threading.Thread.__init__(self)
@@ -283,7 +286,9 @@ class CalcThread(threading.Thread):
                 exec_timer.start(".Loop")
             
             # Get image or wait on it
-            image = self.image_producer.wait_for_image()
+            images = self.image_producer.wait_for_image()
+            image = images[0]
+            original_image = images[1]
             
             if image is None:
                 self.stop()
@@ -328,7 +333,7 @@ class CalcThread(threading.Thread):
                # self.send_data(error)
             
             if self.LOG_IMAGES:
-                self.log_images(index, image, resulting_image)
+                self.log_images(index, original_image, resulting_image)
                 
             if self.LOG_ERRORS:
                 self.log_text(index, {'error': error, 'turn_to_hit': turn_to_hit, 'turn_to_align': turn_to_align})
@@ -379,12 +384,13 @@ def main():
 
 def test_folder():
 
-    images = glob.glob("./Lanetest_320x256_Visionen" + "/*.jpg")
+    images = glob.glob("./Lanetest_320x256_temp" + "/*.jpg")
 
     if not len(images):
         print(f"No images in folder {images}!")
         return None, None
-    node_list, direction_list = Pathfinding.main()
+
+    node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main("RA","RB","RD")
     node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
     drive_well = driving_logic.driving_logic(node_list, direction_list) 
 
@@ -395,11 +401,13 @@ def test_folder():
 
         exec_timer.start()
 
-        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(image, drive_well, preview_steps=True)
+        converted_image = detection.convert_image(image, preview_steps=True)
+
+        turn_to_hit, turn_to_align, preview_image = detection.detect_lines(converted_image, drive_well, preview_result=True)
         if drive_well.stop is True:
             print("----------> stop")
         else:
-            error = detection.calc_error(turn_to_hit, turn_to_align)
+            error = detection.calc_error(turn_to_hit, turn_to_align, drive_well)
             # ~ print(error)
         
         measured_time = exec_timer.end()
@@ -413,7 +421,7 @@ def test_folder():
     
 
 def test_pathing():
-    node_list, direction_list = Pathfinding.main()
+    node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main("RA","RB","RD")
     node_list, direction_list = [str(r) for r in node_list], [str(r) for r in direction_list]
     print(node_list)
     drive_well = driving_logic.driving_logic(node_list, direction_list)
@@ -424,6 +432,7 @@ def test_pathing():
     else:
         #send normal msg
         pass
+
     
 
 if __name__ == "__main__":
@@ -434,5 +443,4 @@ if __name__ == "__main__":
 
     #test_pathing()
     
-    
-    
+
