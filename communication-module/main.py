@@ -184,7 +184,7 @@ class CalcThread(threading.Thread):
     LOG_ERRORS = False
     
     # Key functions
-    SEND_TO_SERVER = False
+    SEND_TO_SERVER = True
         
     def __init__(self, converter_thread):
         threading.Thread.__init__(self)
@@ -314,7 +314,8 @@ class CalcThread(threading.Thread):
                         time.sleep(5)
                 else:
                     error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
-                    message = f"er:st={int(error*100)}:sp=3000:"
+                    #message = f"er:st={int(error*100)}:sp=3000:"
+                    message = f"er:st=0:sp=1000:"
                     asyncio.run(send(message, "ws://localhost:8765"))
 
             # Get turn_errors from data
