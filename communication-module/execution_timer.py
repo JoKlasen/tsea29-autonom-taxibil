@@ -7,6 +7,11 @@ from typing import Dict, List, Tuple, Optional, Union
 
 
 class NoExecTimer:
+	""" A shell of ExecTimer that have no content so that it can replace it and 
+	lessen the load without having to remove calls from code.
+
+	Note: If exec_timer of this file is used, then it should be replaced here.
+	"""
 	
 	def start(self,suffix=""):
 		return 
@@ -22,52 +27,73 @@ class NoExecTimer:
 
 
 class ExecTimer(NoExecTimer):
+	""" A timer that measures the execution time of methods. Should be used 
+	via the method .start() and .end() in that order.
 
+	Can handle measuring time for multiple threads.
+	"""
+
+	##### Debug Parameters ###############
 	PRINT_DURING_EXECUTION = False
+	######################################
 	
 	class ExecMemory:
+		""" A class to represent the memory of each functions time. """
 		name: str
 		times_called: float
 		total_exec_time: float
 		total_children_exec_time: float
 		
 		def __init__(self, name:str):
+			""" Initialize memory for a new item which will be loaded with empty values.
+			"""
 			self.name = name
 			self.times_called = 0
 			self.total_exec_time = 0
 			self.total_children_exec_time = 0
 		
 		def add_execution(self, exec_time, children_exec_time):
+			""" Add measured time to memory for this item. """
 			self.times_called += 1
 			self.total_exec_time += exec_time
 			self.total_children_exec_time += children_exec_time
 		
 		def average_exec_time(self, count_children_exec_time=True) -> float:
+			""" Get the average execution time of this memory item. """
 			exec_time = self.total_exec_time
 
 			if not count_children_exec_time:
 				exec_time -= self.total_children_exec_time
 				
 			return exec_time / self.times_called
-		
+
+	# The memory of all executions
 	memory: Dict[str, 'ExecMemory']
+	# The call stack for each thread with memorized time for each call
 	thread_stack: Dict[int, List[List[Union[str, float]]]]
 	
 	def __init__(self):
 		self.thread_stack = {}
 		self.memory = {}
 	
-	
 	def thread_title(self, thread):
+		""" Get name of thread that is unique and presentable. """
 		return f"{thread.name}:{thread.ident}"
 	
 
 	def get_caller(self, suffix):
+		""" Get caller of a method for this class. 
+		
+		Note: This method is only to be called from another class method that is 
+		called from an function outside it.
+		"""
 		
 		caller_frame = inspect.stack()[2][0]
 
+		# Get function name
 		ret = caller_frame.f_code.co_name + suffix
 		
+		# If method of a class, then add its name to function identifier
 		if "self" in caller_frame.f_locals: 
 			class_name = caller_frame.f_locals["self"].__class__.__name__
 			ret = class_name + '.' + ret
@@ -76,6 +102,9 @@ class ExecTimer(NoExecTimer):
 		
 	
 	def start(self, suffix=""):
+		""" Start
+		
+		"""
 		caller = self.get_caller(suffix)
 				
 		# Get stack for this thread
