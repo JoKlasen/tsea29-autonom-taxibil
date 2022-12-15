@@ -22,6 +22,7 @@ void parse(char input[])
 	bool telemetry = false;
 	bool emergencystop = false;
 	bool error_boolean = false;
+	bool toggle = false;
 	int label_end = 0;
 	int value_separator = 0;
 	char value_msg[50];
@@ -64,9 +65,15 @@ void parse(char input[])
 				{
 					telemetry = true;
 					findcommand = false;
-				}else if (!strcmp(&command[0], "er"))
+				}
+				else if (!strcmp(&command[0], "er"))
 				{
 					error_boolean = true;
+					findcommand = false;
+				}
+				else if (!strcmp(&command[0], "td"))
+				{
+					toggle = true;
 					findcommand = false;
 				}
 			}
@@ -225,18 +232,37 @@ void parse(char input[])
 					{
 						steering_error = atoi(&text_value[0]);
 						turn_error_received = true;
+						//Latest_STerror = steering_error;
 					}
 					else if (!strcmp(&value_name[0], "sp"))
 					{
 						target_speed = atoi(&text_value[0]);
-						sprintf(&value_msg[0],"target speed == %d\n",target_speed);
-						send_data(value_msg);
 					}
 
 					label_end = i;
 				}
 			}
-		
+			else if (toggle)
+			{
+				if (input[i] == '=')
+				{
+					clear_buffer(&value_name[0], 20);
+					strlcpy(&value_name[0], &input[label_end+1], ((i) - label_end));
+					value_separator = i;
+				}
+				else if (input[i] == ':')
+				{
+					clear_buffer(&text_value[0], 10);
+					strlcpy(&text_value[0], &input[value_separator+1], ((i) - value_separator) );
+					if (!strcmp(&value_name[0], "d"))
+					{
+						toggle_detection = atoi(&text_value[0]);
+						//sprintf(&value_msg[0],"Toggle = %d\n",toggle_detection);
+						//send_data(value_msg);
+					}
+				label_end = i;
+				}
+			}
 		}
 	}
 	
