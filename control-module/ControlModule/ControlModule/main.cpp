@@ -41,6 +41,7 @@ volatile int detection = 10;
 volatile bool turn_error_received = false;
 volatile bool speed_error_received = false;
 volatile bool velocity_received = false;
+volatile bool toggle_detection = true;
 
 volatile int ConstantP, ConstantI, ConstantD;
 volatile int PTerm, ITerm, DTerm;
@@ -57,11 +58,12 @@ volatile int Latest_STerror = 0;
 volatile int Latest_ST =0;
 char debugsend[40];
 
+/*
 void turn_percent(int correction)
 {
-	if (correction < 0)
+	if (correction <= 0)
 	{
-		steering += correction;
+		steering = STEER_NEUTRAL + correction;
 		if (steering < MAX_STEER_LEFT)
 		{
 			steering = MAX_STEER_LEFT;
@@ -69,15 +71,30 @@ void turn_percent(int correction)
 	}
 	else if (correction > 0)
 	{
-		steering += correction;
+		steering = STEER_NEUTRAL + correction;
 		if (steering > MAX_STEER_RIGHT)
 		{
 			steering = MAX_STEER_RIGHT;
 		}
 	}
-	else
+	//else
+	//{
+	//	steering = STEER_NEUTRAL;
+	//}
+	STEER_REGISTER = steering;
+	Latest_ST = steering;
+}*/
+	
+	void turn_percent(int correction)
+{
+	steering = STEER_NEUTRAL + correction;
+	if (steering < MAX_STEER_LEFT)
 	{
-		steering = STEER_NEUTRAL;
+		steering = MAX_STEER_LEFT;
+	}
+	else if (steering > MAX_STEER_RIGHT)
+	{
+		steering = MAX_STEER_RIGHT;
 	}
 	STEER_REGISTER = steering;
 	Latest_ST = steering;
@@ -101,7 +118,7 @@ void drive(int correction)
 void send_debug()
 {
 
-	sprintf(debugsend," db:esp=%d:sp=%d:est=%d:st=%d:\n",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST);
+	sprintf(debugsend," db:esp=%d:sp=%d:est=%d:st=%d:tar=%d:\n",Latest_SPerror,Latest_SP,Latest_STerror,Latest_ST,target_speed);
 	send_data(debugsend);
 	clear_buffer(debugsend,40);
 	
@@ -132,6 +149,7 @@ int main(void)
 		//"stp:p=1:i=2:d=3:"
 		//"er:st=-500:sp=0:"
 		//"er:st=-500:sp=3000:"
+		//"td:d=1:"
 		if(received)
 		{
 			received = false;
@@ -167,8 +185,7 @@ int main(void)
 			}
 			else//Automatic Mode
 			{
-				detection = 100;
-				if(detection <= 2)
+				if((detection <= 3) && toggle_detection)
 				{
 					brake();
 				}
@@ -197,6 +214,45 @@ int main(void)
 						}
 						SPEED_REGISTER = localspeed;
 					}
+					
+					if(velocity_received)
+					{
+						//int speed = 10000 
+						/*
+						sprintf(debugsend,"v=%d",velocity);
+						send_data(debugsend);
+						*/
+						//PID LOOP/FUNCTION for speed
+
+						int speedcorrection =0;
+						if (target_speed == 0)
+						{
+							SPEED_REGISTER = 0;
+							brake();
+						
+						}
+						else
+						{
+							release_brake();
+							int speederror = (target_speed) - velocity; 
+							Latest_SPerror = speederror;
+							speedcorrection = spd_PIDIteration(speederror);					
+							drive(speedcorrection);	
+
+						}
+
+						/*
+						sprintf(debugsend,"sc=%d",speedcorrection);
+						send_data(debugsend);
+						*/
+						dbcounter++;
+						if(dbcounter == 5)
+						{
+							send_debug();
+							dbcounter = 0;
+						}
+						velocity_received = false;
+					}
 				}
 				
 				// H�rdkodad s�l�nge
@@ -209,36 +265,14 @@ int main(void)
 				if(turn_error_received)
 				{
 					int correction = PIDIteration(steering_error);
+					Latest_STerror = steering_error;
 					sprintf(debugdata,"Correction = %d\n",correction);
 					send_data(debugdata);
 					memset(debugdata,0,50);
 					turn_percent(correction);
 					turn_error_received = false;
 				}
-				//PID LOOP/FUNCTION for speed
-				if(velocity_received)
-				{
-					//int speed = 10000 
-					/*
-					sprintf(debugsend,"v=%d",velocity);
-					send_data(debugsend);
-					*/
-					int speederror = (target_speed) - velocity; 
-					Latest_SPerror = speederror;
-					int speedcorrection = spd_PIDIteration(speederror);
-					/*
-					sprintf(debugsend,"sc=%d",speedcorrection);
-					send_data(debugsend);
-					*/
-					dbcounter++;
-					if(dbcounter == 5)
-					{
-						send_debug();
-						dbcounter = 0;
-					}
-					drive(speedcorrection);	
-					velocity_received = false;
-				}
+
 				old_millis = millis();
 				
 			}

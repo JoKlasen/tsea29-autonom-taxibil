@@ -34,7 +34,7 @@ int PIDIteration(int Error) {
     DTerm = ConstantD * (dTemp - Error);
     dTemp = Error;
 
-    return ((PTerm + DTerm) ); // + ITerm 
+    return ((PTerm + DTerm)); // + ITerm 
 }
 
 int spd_PIDIteration(int Error) {

@@ -25,6 +25,8 @@ extern volatile int detection;
 extern volatile bool turn_error_received;
 extern volatile bool speed_error_received;
 extern volatile bool velocity_received;
+extern volatile bool toggle_detection;
+
 
 extern volatile int ConstantP, ConstantI, ConstantD;
 extern volatile int PTerm, ITerm, DTerm;
