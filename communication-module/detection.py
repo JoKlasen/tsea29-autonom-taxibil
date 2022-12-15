@@ -15,7 +15,7 @@ from typing import Tuple
 from camera import ImageMtx, BitmapMtx, Pol2d, Vector2d, Color
 
 
-CONFIG_FILE = './config.txt'
+CONFIG_FILE = '/home/g13/git/communication-module/config.txt'
 TESTFILE =  "Lanetest_320x256_LaneMissing/LeftMirrored.jpg"
 
 # ----- Parameters -----
@@ -421,7 +421,7 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
      
     # ~ timer.start(".thresh")
 
-    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_TOZERO_INV)
     
     # ~ timer.end(".thresh")
     # ~ timer.start(".blur")
@@ -641,7 +641,9 @@ def find_horizontal_lines(
         left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
         right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
         if left_side > 0 or right_side > 0:
-            if 2.4*right_side > 2*left_side > 1.4*right_side: # 1.5 > left_side/right_side > 0.5
+            if (drive_well.lost_intersection == True):
+                drive_well.intersection_found = True
+            elif 2.6*right_side > 2*left_side > 1.4*right_side: # 1.5 > left_side/right_side > 0.5
                 drive_well.intersection_found = True
                 if drive_well.drive_intersection is False:
                     drive_well.normal_driving()

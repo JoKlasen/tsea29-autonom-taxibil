@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 
 from datetime import datetime
 import opencv_stream as cam
@@ -308,9 +309,10 @@ class CalcThread(threading.Thread):
             
             messege = "" 
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
+            turn_to_align -= 0.2
             error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
 
-            error -= 0.015
+            #error -= 0.015
 
             print(f"Error: {error}  Delay: {time.time() - timestamp} index :{index}")
             

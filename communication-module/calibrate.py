@@ -15,8 +15,8 @@ from numpy.typing import NDArray
 
 # ----- Parameters -----
 # Change as required
-CALIBRATOR_PARAMS_FILENAME = 'Calibration-Params_Test.txt'
-CALIBRATOR_IMAGES_FOLDER = './Chesstest_160x128'
+CALIBRATOR_PARAMS_FILENAME = '/home/g13/git/communication-module/Calibration-Params_Test.txt'
+CALIBRATOR_IMAGES_FOLDER = '/home/g13/git/communication-module/Chesstest_160x128'
 
 
 def get_undistort() -> Callable[[ImageMtx], ImageMtx]:
