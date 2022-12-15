@@ -214,6 +214,45 @@ int main(void)
 						}
 						SPEED_REGISTER = localspeed;
 					}
+					
+					if(velocity_received)
+					{
+						//int speed = 10000 
+						/*
+						sprintf(debugsend,"v=%d",velocity);
+						send_data(debugsend);
+						*/
+						//PID LOOP/FUNCTION for speed
+
+						int speedcorrection =0;
+						if (target_speed == 0)
+						{
+							SPEED_REGISTER = 0;
+							brake();
+						
+						}
+						else
+						{
+							release_brake();
+							int speederror = (target_speed) - velocity; 
+							Latest_SPerror = speederror;
+							speedcorrection = spd_PIDIteration(speederror);					
+							drive(speedcorrection);	
+
+						}
+
+						/*
+						sprintf(debugsend,"sc=%d",speedcorrection);
+						send_data(debugsend);
+						*/
+						dbcounter++;
+						if(dbcounter == 5)
+						{
+							send_debug();
+							dbcounter = 0;
+						}
+						velocity_received = false;
+					}
 				}
 				
 				// H�rdkodad s�l�nge
@@ -233,43 +272,7 @@ int main(void)
 					turn_percent(correction);
 					turn_error_received = false;
 				}
-				//PID LOOP/FUNCTION for speed
-				if(velocity_received)
-				{
-					//int speed = 10000 
-					/*
-					sprintf(debugsend,"v=%d",velocity);
-					send_data(debugsend);
-					*/
-					int speedcorrection =0;
-					if (target_speed == 0)
-					{
-						SPEED_REGISTER = 0;
-						brake();
-						
-					}
-					else
-					{
-						release_brake();
-						int speederror = (target_speed) - velocity; 
-						Latest_SPerror = speederror;
-						speedcorrection = spd_PIDIteration(speederror);					
-						drive(speedcorrection);	
 
-					}
-
-					/*
-					sprintf(debugsend,"sc=%d",speedcorrection);
-					send_data(debugsend);
-					*/
-					dbcounter++;
-					if(dbcounter == 5)
-					{
-						send_debug();
-						dbcounter = 0;
-					}
-					velocity_received = false;
-				}
 				old_millis = millis();
 				
 			}
