@@ -57,6 +57,8 @@ void pid_init(int in_p, int in_i, int in_d);
 
 int pid_loop(int error);
 
+int spd_PIDIteration(int Error);
+
 bool parse_handshake();
 
 void handshake();
