@@ -35,6 +35,9 @@ DFLT_LANE_MARGIN = 50
 DFLT_MIN_TO_RECENTER_WINDOW = 10
 DFLT_NUMB_WINDOWS = 20
 
+CALC_DRIFT_ADJUST = 0.2
+CALC_EASE_ONE_LANES_ERRORS = 0.8
+
 DFLT_TURNCONST = 1
 DFLT_ALIGNCONST = 1
 DFLT_IGNORE_LESS = 0.04
@@ -84,7 +87,12 @@ def load_config():
     DFLT_ALIGNCONST = config['align_error_const']
     global DFLT_IGNORE_LESS
     DFLT_IGNORE_LESS = config['ignore_less']
-
+    
+    global CALC_DRIFT_ADJUST
+    CALC_DRIFT_ADJUST = config['adjust_drift']
+    global CALC_EASE_ONE_LANES_ERRORS
+    CALC_EASE_ONE_LANES_ERRORS = config['one_lane_scale']
+	
     global DFLT_MID_LINE_MIN_TO_CARE
     DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
     global DFLT_MID_OFFSET
@@ -103,7 +111,6 @@ def pol2d_over(pol2d:Pol2d, over:Number):
     provided value.
     """
     return pol2d[0]*over**2 + pol2d[1]*over+pol2d[2]
-
 
 
 
@@ -209,7 +216,6 @@ def calc_adjust_turn(
     
     # ~ timer.start() 
     
-    
     # ------NOTE:------
     # Flip x, y axises since they are considered over the y-axis
     # -----------------
@@ -279,6 +285,9 @@ def calc_adjust_turn(
     # Calculate angle from straight forward to turn_vector
     turn_to_hit = math.atan2(hit_vector[0], hit_vector[1])
     
+    # Adjust for drift    
+    turn_to_hit -= CALC_DRIFT_ADJUST
+    
     align_slope = 2*lane[0]*hit_x + lane[1]
     align_vector = (1, align_slope)
     # Rotate so 0 is straight forward
@@ -288,8 +297,8 @@ def calc_adjust_turn(
     turn_to_align = math.atan2(align_vector[0], align_vector[1])
     
     if use_left_lane + use_right_lane == 1 and drive_well.drive_intersection:
-        turn_to_hit = .8 * turn_to_hit
-        turn_to_align = .8 * turn_to_align
+        turn_to_hit = CALC_EASE_ONE_LANES_ERRORS * turn_to_hit
+        turn_to_align = CALC_EASE_ONE_LANES_ERRORS * turn_to_align
     
     if debug_image is not None:
         for y in range(0, debug_image.shape[1]):
@@ -298,7 +307,6 @@ def calc_adjust_turn(
             cv2.circle(debug_image, (x, y), 2, (255, 100, 100), 2)
             
     # ~ print(f"ALIGN({align_vector})")
-    
     
     # ~ timer.end()
     
@@ -318,9 +326,7 @@ def calc_error(
     """ Calculate the error. Positive means turn right. """
         
     # ~ timer.start()
-    
-
-
+   
     error = turn_hit*turnconst + turn_align*alignconst 
 
     # scale small errors
@@ -418,7 +424,6 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
 
     # ~ timer.start()
     
-     
     # ~ timer.start(".thresh")
 
     _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_TOZERO_INV)
@@ -686,17 +691,13 @@ def dl_detect_lanes(
     if debug or get_pics:
         pre_image = cv2.cvtColor(bitmap*255, cv2.COLOR_GRAY2RGB)
 
-
     # Use sliding window technique to track lanes
     left_lane = find_lane_with_sliding_window(bitmap, left_lane_start, debug_image=pre_image, pixels_color = (0, 255 ,0))
     right_lane = find_lane_with_sliding_window(bitmap, right_lane_start, debug_image=pre_image, pixels_color = (0, 0, 255))
-    
-    # ~ print(f" - [ left_lane:{left_lane}, right_lane:{right_lane} ]")
-    
+        
     # Find horizontal lines on image
     find_horizontal_lines(bitmap, drive_well, pre_image)
-                    
-                            
+                                            
     if debug:
         camera.preview_image_grid([[pre_image], [graph]])
     
@@ -789,13 +790,33 @@ def detect_lines(
 # Testing
 # ----------------------------------------------------------------------
 
+def test_region_of_interest():
+	
+	cam = camera.init()
+		
+	while True:
+		image = camera.capture_image(cam)
+		
+		undistort = calibrate.get_undistort()
+		fisheye_removed = undistort(image)
+		
+		cv2.line(fisheye_removed, (160,256), (160,0), (0, 255, 0), 3)
+
+		warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=True)
+
+
 if __name__ == "__main__":
 
-    image = cv2.imread(TESTFILE)    
-    bitmap = dl_mark_edges(np.asarray(image))
-    pre_image = cv2.cvtColor(bitmap*255, cv2.COLOR_GRAY2RGB)
-    pol = find_lane_with_sliding_window(bitmap, 100)
-    camera.preview_image(pre_image)
+	test_region_of_interest()
+
+
+    # ~ image = cv2.imread(TESTFILE)    
+    # ~ bitmap = dl_mark_edges(np.asarray(image))
+    # ~ pre_image = cv2.cvtColor(bitmap*255, cv2.COLOR_GRAY2RGB)
+    # ~ pol = find_lane_with_sliding_window(bitmap, 100)
+    # ~ camera.preview_image(pre_image)
+
+
 
 
     # ~ image = cv2.imread(TESTFILE)    

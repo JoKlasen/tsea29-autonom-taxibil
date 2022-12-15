@@ -37,9 +37,10 @@ async def send(msg, uri):
 
 class CameraThread(threading.Thread):
     
-    # Debug
+    ##### Debug Parameters #############
     MEASURE_TIME = True
     PRINT_INFO = True
+    ####################################
     
     def __init__(self):
         threading.Thread.__init__(self)
@@ -111,8 +112,10 @@ class CameraThread(threading.Thread):
     
 class ConverterThread(threading.Thread):
     
+    ##### Debug Parameters #############
     MEASURE_TIME = True
     PRINT_INFO = True
+    ####################################
     
     
     def __init__(self, camera_thread):
@@ -159,7 +162,7 @@ class ConverterThread(threading.Thread):
                 break
             
             # Converted image
-            converted_image = detection.convert_image(image)
+            converted_image = detection.convert_image(image, preview_steps=True)
             
             # ~ print(f"ConvertThread: {- debug_time + time.time()}")
             
@@ -187,16 +190,15 @@ class ConverterThread(threading.Thread):
 
 class CalcThread(threading.Thread):
         
-    # Debug
+    ###### Debug - Control #############
     MEASURE_TIME = True
     PRINT_INFO = True
-    
-    # Logging
+    ###### Logging - Control ###########   
     LOG_IMAGES = False
     LOG_ERRORS = False
-    
-    # Key functions
-    SEND_TO_SERVER = True
+    ###### Functionality - Control #####
+    SEND_TO_SERVER = False
+    ####################################
         
     def __init__(self, converter_thread):
         threading.Thread.__init__(self)
@@ -309,10 +311,8 @@ class CalcThread(threading.Thread):
             
             messege = "" 
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
-            turn_to_align -= 0.2
-            error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
 
-            #error -= 0.015
+            error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
 
             print(f"Error: {error}  Delay: {time.time() - timestamp} index :{index}")
             

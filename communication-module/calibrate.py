@@ -57,7 +57,7 @@ def create_calibration_images() -> None:
 
 	# Have user take image when pressing enter, end if first typed "end"
 	while ("end" != input("").lower()):
-		ret, image = camera.interrupted_preview(cam, wait=5)
+		ret, image = camera.interrupted_preview(cam, wait=20)
 		if ret:
 			img = Image.fromarray(image)
             
@@ -168,9 +168,31 @@ def calibrate_camera(debug = False, checkerboard = (7, 7)) -> Tuple[TransformMtx
 			
 	return matrix, distortion
 
+
+def test_calibration(foldername="./CalibrationTests"):
+	
+    images = glob.glob(foldername + "/*.jpg")
+
+    if not len(images):
+        print(f"No images in folder {images}!")
+        return None
+
+    converter = get_undistort()
+
+    for filename in images:
+        image = cv2.imread(filename)
+
+        print(f"<<< {filename} >>>")
+			
+        converted_image = converter(image)
+        
+        camera.preview_image_grid([[image, converted_image,]])
+
+
+
 if __name__ == "__main__":
 	
-	calibrate_camera(1)
+	#calibrate_camera(1)
 	
 	#create_and_save_calibration_params(True)
 	
@@ -178,3 +200,4 @@ if __name__ == "__main__":
 	
 	#create_calibration_images()
 	
+	test_calibration()

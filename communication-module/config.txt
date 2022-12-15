@@ -50,6 +50,14 @@
 ,
 
 
+'adjust_drift': 
+	0.2
+,
+'one_lane_scale': 
+	0.8
+,
+
+
 'mid_line_min_to_care': 
 	500
 ,

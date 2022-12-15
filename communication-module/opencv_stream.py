@@ -159,6 +159,7 @@ def interrupted_preview(cam:cv2.VideoCapture, title='Preview', wait:int=0):
     start = time.time()
     while (not keyPressed):
         img = capture_image(cam)
+        ret = True
         cv2.imshow(title, img)
         if not cv2.waitKey(40) == -1:
             keyPressed = True
