@@ -15,7 +15,7 @@ from typing import Tuple
 from camera import ImageMtx, BitmapMtx, Pol2d, Vector2d, Color
 
 
-CONFIG_FILE = './config.txt'
+CONFIG_FILE = '/home/g13/git/communication-module/config.txt'
 TESTFILE =  "Lanetest_320x256_LaneMissing/LeftMirrored.jpg"
 
 # ----- Parameters -----
@@ -194,6 +194,7 @@ def fill_between_polynomials(
 def calc_adjust_turn(
     left_lane:Pol2d, right_lane:Pol2d, 
     camera_pos:Vector2d, drive_well:driving_logic, 
+    debug_image=None,
     hit_height=DFLT_HIT_HEIGHT
 ) -> Tuple[Number, Number, Vector2d, Vector2d]:
     """ Calculate the turn required to reach a point late on road.
@@ -246,8 +247,8 @@ def calc_adjust_turn(
         
         offset = int(pol2d_over(left_lane, camera_pos[0])) - camera_pos[1]
         
-        lane[2] = left_lane[2] + left_lane[0]*offset*offset - left_lane[1]*offset
-        lane[1] = left_lane[1] - 2 * left_lane[0] * offset
+        lane[2] = left_lane[2] #+ left_lane[0]*offset*offset - left_lane[1]*offset
+        lane[1] = left_lane[1] #- 2 * left_lane[0] * offset
         lane[0] = left_lane[0]
         
         lane[2] -= offset
@@ -257,8 +258,8 @@ def calc_adjust_turn(
         
         offset = int(pol2d_over(right_lane, camera_pos[0])) - camera_pos[1]
         
-        lane[2] = right_lane[2] + right_lane[0]*offset*offset - right_lane[1]*offset
-        lane[1] = right_lane[1] - 2 * right_lane[0] * offset
+        lane[2] = right_lane[2] #+ right_lane[0]*offset*offset - right_lane[1]*offset
+        lane[1] = right_lane[1] #- 2 * right_lane[0] * offset
         lane[0] = right_lane[0]
         
         lane[2] -= offset
@@ -285,6 +286,16 @@ def calc_adjust_turn(
 
     # Calculate angle from straight forward to alignment to road
     turn_to_align = math.atan2(align_vector[0], align_vector[1])
+    
+    if use_left_lane + use_right_lane == 1 and drive_well.drive_intersection:
+        turn_to_hit = .8 * turn_to_hit
+        turn_to_align = .8 * turn_to_align
+    
+    if debug_image is not None:
+        for y in range(0, debug_image.shape[1]):
+            x = int(pol2d_over(lane, y))
+            
+            cv2.circle(debug_image, (x, y), 2, (255, 100, 100), 2)
             
     # ~ print(f"ALIGN({align_vector})")
     
@@ -312,14 +323,19 @@ def calc_error(
 
     error = turn_hit*turnconst + turn_align*alignconst 
 
+    # scale small errors
+    #if -0.25 < error < 0.25:
+     #   error = error/3
     # Ignore small errors
     if -ignore_less < error < ignore_less:
         error = 0
+
     if drive_well.drive_intersection:
-        if drive_well.drive_right and error < 0.05 and not drive_well.seeing_right_lane:
-            error = 0.1
-        elif drive_well.drive_left and -0.05 < error and not drive_well.seeing_left_lane:
-            error = -0.1
+        if drive_well.drive_right and not drive_well.seeing_right_lane:
+            print("RIGHT MISSING")
+            error = 2
+        elif drive_well.drive_left and not drive_well.seeing_left_lane:
+            error = -2
         elif drive_well.drive_forward and drive_well.lanes_seen == 2:
             error = 0
 
@@ -402,15 +418,10 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
 
     # ~ timer.start()
     
-    
-    # ~ timer.start(".convert")
-    
-    cvt_image = cv2.cvtColor(np.asarray(image), cv2.COLOR_BGR2HLS)
-
-    # ~ timer.end(".convert")
+     
     # ~ timer.start(".thresh")
 
-    _, threshed = cv2.threshold(cvt_image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
+    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_TOZERO_INV)
     
     # ~ timer.end(".thresh")
     # ~ timer.start(".blur")
@@ -418,19 +429,39 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     blur_image = cv2.GaussianBlur(threshed, (MARK_EDGES_BLUR,MARK_EDGES_BLUR), 0)
 
     # ~ timer.end(".blur")
-    # ~ timer.start(".sobel")
-
+    # ~ timer.start(".sobel-sobel")
+    
     sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
     sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
-    
-    sobel = np.sqrt(np.square(sobel_x ** 2) + np.square(sobel_y ** 2)) 
+
+    # ~ timer.end(".sobel-sobel")    
+    # ~ timer.start(".sobel-hyper")
+
+    sobel = np.square(sobel_x ** 2) + np.square(sobel_y ** 2)
     #sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
 
+    # ~ timer.end(".sobel-hyper")
+    # ~ timer.start(".sobel-thresh")
+        
     sobel_image = np.ones_like(sobel, dtype=image.dtype)
-    sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD] = 0
+    sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD**2] = 0
+            
+    # ~ timer.end(".sobel-thresh")
+        
+    # ~ timer.start(".sobel-alt")
+
+    # ~ sobel_x = cv2.convertScaleAbs(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
+    # ~ sobel_y = cv2.convertScaleAbs(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
     
-    
-    # ~ timer.end(".sobel")
+    # ~ sobel = np.sqrt(np.square(sobel_x ** 2) + np.square(sobel_y ** 2)) 
+    # ~ #sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
+
+    # ~ sobel_image = np.ones_like(sobel, dtype=image.dtype)
+    # ~ sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD] = 0
+
+    # ~ camera.preview_image(sobel_image*255)
+        
+    # ~ timer.end(".sobel-alt")
     
     # ~ _, s_binary = cv2.threshold(cvt_image[:,:,2], 70, 255, cv2.THRESH_BINARY_INV)
     # ~ _, r_thresh = cv2.threshold(image[:, :, 2], 70, 255, cv2.THRESH_BINARY_INV)
@@ -523,6 +554,8 @@ def find_lane_with_sliding_window(
     window_height = math.ceil(bitmap.shape[0]/numb_windows)
     current_x = start
     
+    numb_wind = 0
+    
     lane_pixels = [
         np.empty(0),
         np.empty(0)
@@ -547,6 +580,7 @@ def find_lane_with_sliding_window(
         lane_pixels[1] = np.append(lane_pixels[1], pixels_in_window[0] + win_y[0])
         
         if len(pixels_in_window[0]) > min_to_recenter_window:
+            numb_wind += 1
             # Recenter around found pixels
             current_x = int(np.mean(pixels_in_window[1])) + win_x[0]
 
@@ -555,16 +589,21 @@ def find_lane_with_sliding_window(
             cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
 
 
-    if len(lane_pixels[1]) > 400:
-        # Calculate parameters      
-        polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
-                
-        if debug_image is not None:
-            # Fill pixels used to calculate line
-            debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
+    if len(lane_pixels[1]) > 600:
+        
+        if numb_wind > 6:
+            # Calculate parameters      
+            polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
+                    
+            if debug_image is not None:
+                # Fill pixels used to calculate line
+                debug_image[lane_pixels[1].astype(int), lane_pixels[0].astype(int)] = pixels_color
 
-            # Draw calculated line on image
-            draw_polynomial_on_image(debug_image, polynomial, pol_color)
+                # Draw calculated line on image
+                draw_polynomial_on_image(debug_image, polynomial, pol_color)
+                
+        else:
+            polynomial = None
 
     else:
         # Store bad value since no points found
@@ -597,18 +636,25 @@ def find_horizontal_lines(
     drive_well.intersection_found = False
     drive_well.right_stop_found = False
     drive_well.left_stop_found = False
-    if special_distr > 200:
+    drive_well.frames_since_line += 1
+    if special_distr > DFLT_MID_LINE_MIN_TO_CARE:
         left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
         right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
         if left_side > 0 or right_side > 0:
-            if 3*right_side > 2*left_side > right_side: # 1.5 > left_side/right_side > 0.5
+            if (drive_well.lost_intersection == True):
+                drive_well.intersection_found = True
+            elif 2.6*right_side > 2*left_side > 1.4*right_side: # 1.5 > left_side/right_side > 0.5
                 drive_well.intersection_found = True
                 if drive_well.drive_intersection is False:
                     drive_well.normal_driving()
-            elif left_side > right_side:
+            elif left_side > right_side and drive_well.frames_since_line >= 8:
+                drive_well.frames_since_line = 0
                 drive_well.left_stop_found = True
-            else:
+            elif drive_well.frames_since_line >= 8:
+                drive_well.frames_since_line = 0
                 drive_well.right_stop_found = True
+            else:
+                pass
             
 
     # ~ print("-----SPECIAL DIST----- \n" ,special_distr)
@@ -659,7 +705,7 @@ def dl_detect_lanes(
     return left_lane, right_lane, graph, pre_image
 
 
-def convert_image(image:ImageMtx) -> BitmapMtx:
+def convert_image(image:ImageMtx, preview_steps=False) -> BitmapMtx:
     undistort = calibrate.get_undistort()
     fisheye_removed = undistort(image)
 
@@ -669,12 +715,15 @@ def convert_image(image:ImageMtx) -> BitmapMtx:
     # Does things to image but not warps it
     edges = dl_mark_edges(warped)
     
+    if preview_steps:
+        camera.preview_image_grid([[image, fisheye_removed, warped, edges*255]])
+    
     return edges
 
 
 def detect_lines(
     bitmap:BitmapMtx, drive_well:driving_logic, 
-    preview_steps=False, preview_result=False, get_image_data=False
+    preview_result=False, get_image_data=False
 ) -> Tuple[Number, Number, ImageMtx]:
 
     """ A line detection function that from an inputed image detect two
@@ -685,7 +734,7 @@ def detect_lines(
     
     # ~ timer.start()
     
-    load_images = get_image_data or preview_result or preview_steps
+    load_images = get_image_data or preview_result
     
     lane_left, lane_right, graph, lanes_image = dl_detect_lanes(bitmap, drive_well, debug=False, get_pics=load_images)
     
@@ -695,29 +744,12 @@ def detect_lines(
     drive_well.drive()
 
     # Calculate turn error
-    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well)
+    turn_hit, turn_align, hit_point, align_vector = calc_adjust_turn(lane_left, lane_right, (camera_pos[1], camera_pos[0]), drive_well, debug_image=lanes_image if load_images else None)
 
     # _________________PREVIEW____________________
     # An image to preview result
     return_image = None
     if load_images:
-        preview_image = undistort(image)    
-
-        if lane_left is not None and lane_right is not None:        
-            # Add colored road
-            color_these_bits = fill_between_polynomials(image.shape[:2], lane_left, lane_right)
-            preview_image = add_bitmap_on_image(warp_back_func(color_these_bits), preview_image, (0,255,0))
-
-            # Draw a line inbetween lanes 
-            for y in range(lanes_image.shape[1]):
-                x = int((
-                    (lane_left[0] + lane_right[0]) * y**2 + 
-                    (lane_left[1] + lane_right[1]) * y +
-                    (lane_left[2] + lane_right[2])
-                ) / 2)
-                cv2.circle(lanes_image, (x, y), 2, (255, 100, 100), 2)
-
-
         # Add line to describe dumb path
         cv2.line(lanes_image, (camera_pos[0], 0), (camera_pos[0], lanes_image.shape[0]), (100, 100, 255), 5)
 
@@ -733,14 +765,10 @@ def detect_lines(
         cv2.line(lanes_image, hit_point, align_point, (100, 255, 100), 3)
         
         cv2.circle(lanes_image, hit_point, 0, (0, 0, 0), 3)
-        
 
-        if preview_steps:
-            calc_error(turn_hit, turn_align, debug=True)
-            camera.preview_image_grid([[image, fisheye_removed, warped], [255*edges, graph, lanes_image]])
-            
-        if preview_result:          
-            camera.preview_image_grid([[image], [lanes_image]])
+        if preview_result:
+            calc_error(turn_hit, turn_align, drive_well, debug=True)
+            camera.preview_image_grid([[255*bitmap, 255*graph, lanes_image]])
                         
         return_image = lanes_image
     # ____________________________________________

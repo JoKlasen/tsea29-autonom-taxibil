@@ -55,8 +55,9 @@ def init(resx:int=320, resy:int=256, fps:int=30) -> cv2.VideoCapture:
 # ----------------------------------------------------------------------
 
 def read(cam:cv2.VideoCapture):
-    for i in range(3):
-        ret = cam.grab()
+    ret = cam.grab()
+    # ~ for i in range(3):
+        # ~ ret = cam.grab()
     return cam.retrieve()
 
 def capture_image(camera:cv2.VideoCapture, debug=False) -> ImageMtx:
