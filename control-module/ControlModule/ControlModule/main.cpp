@@ -185,7 +185,7 @@ int main(void)
 			}
 			else//Automatic Mode
 			{
-				if((detection <= 2) && toggle_detection)
+				if((detection <= 3) && toggle_detection)
 				{
 					brake();
 				}
