@@ -18,7 +18,7 @@ import driving_logic
 
 from execution_timer import exec_timer
 
-RESULTED_IMAGE_FOLDER = './Result_320x256'
+RESULTED_IMAGE_FOLDER = '/home/g13/git/communication-module/Result_320x256'
 
 # ----------------------------------------------------------------------
 # Key functions
@@ -197,7 +197,7 @@ class CalcThread(threading.Thread):
     LOG_IMAGES = False
     LOG_ERRORS = False
     ###### Functionality - Control #####
-    SEND_TO_SERVER = False
+    SEND_TO_SERVER = True
     ####################################
         
     def __init__(self, converter_thread):
@@ -381,7 +381,9 @@ def main():
     conversion_thread.start()
     calc_thread.start()
     
-    input("")
+    #input("")
+    while True:
+        hello = 1
     
     camera_thread.stop()
     conversion_thread.stop()

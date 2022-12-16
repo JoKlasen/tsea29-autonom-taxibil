@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import asyncio
 from websockets import serve
@@ -64,11 +64,11 @@ def sendToCV(message):
             pickup_location = message_parts[2].split('=')[1]
             drop_location = message_parts[3].split('=')[1]
 
-            #command_string = '/usr/bin/python3 /home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
-            command_string = '/home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
+            command_string = '/usr/bin/python3 /home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
+            #command_string = '/home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
 
             print("mi Command: " + command_string)
-            subprocess.call(command_string, shell=True)
+            subprocess.Popen(command_string, shell=True)
 
 # Send message to all connected clients§
 async def sendAll(websocket):
