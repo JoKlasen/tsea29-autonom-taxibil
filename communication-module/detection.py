@@ -417,7 +417,7 @@ def get_warp_perspective_funcs(
     return warp_func, warp_back_func
 
 
-def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
+def dl_mark_edges(image:ImageMtx, debug=False) -> BitmapMtx:
     """ Returns an image of the provided one where the edges are
     marked.
     """
@@ -442,7 +442,7 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
     # ~ timer.end(".sobel-sobel")    
     # ~ timer.start(".sobel-hyper")
 
-    sobel = np.square(sobel_x ** 2) + np.square(sobel_y ** 2)
+    sobel = np.square(sobel_x) + np.square(sobel_y)
     #sobel = (sobel_x ** 2 + sobel_y ** 2)**(1/2)
 
     # ~ timer.end(".sobel-hyper")
@@ -450,7 +450,53 @@ def dl_mark_edges(image:ImageMtx) -> BitmapMtx:
         
     sobel_image = np.ones_like(sobel, dtype=image.dtype)
     sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD**2] = 0
-            
+           
+    if debug:
+        sobel_x = sobel_x.astype('uint8')
+        sobel_y = sobel_y.astype('uint8')
+        sobel = np.sqrt(sobel).astype('uint8')
+        
+        # ~ # Test Threshing
+        # ~ threshed = [cv2.threshold(image[:,:,1], i, 255, cv2.THRESH_TOZERO_INV)[1] for i in range(40, 120, 10)]
+        # ~ camera.preview_image_grid([[image,] + threshed])
+
+		# ~ # Test Blur
+        # ~ blured = [cv2.GaussianBlur(threshed, (i,i), 0) for i in range(1, 15, 2)]
+        # ~ sobels = []
+        # ~ for blur in blured:    
+            # ~ sobel_x = np.absolute(cv2.Sobel(blur, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
+            # ~ sobel_y = np.absolute(cv2.Sobel(blur, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
+            # ~ sobel = np.square(sobel_x) + np.square(sobel_y)
+            # ~ sobel_image = np.ones_like(sobel, dtype=image.dtype)
+            # ~ sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD**2] = 0
+            # ~ sobels.append(sobel_image*255)
+        # ~ camera.preview_image_grid([[image,] + blured, [threshed,] + sobels])
+        
+		# ~ # Test Sobel
+        # ~ sobels = []
+        # ~ for i in range(1,15,2):    
+            # ~ sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, i))
+            # ~ sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, i))
+            # ~ sobel = np.square(sobel_x) + np.square(sobel_y)
+            # ~ sobel_image = np.ones_like(sobel, dtype=image.dtype)
+            # ~ sobel_image[sobel < MARK_EDGES_SOBEL_THRESHOLD**2] = 0
+            # ~ sobels.append(sobel_image*255)
+        # ~ camera.preview_image_grid([[image, blur_image] + sobels])
+        
+        # ~ # Test Sobel Edge
+        # ~ sobels = []
+        # ~ for i in range(10,40,5):    
+            # ~ sobel_x = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 1, 0, MARK_EDGES_SOBEL))
+            # ~ sobel_y = np.absolute(cv2.Sobel(blur_image, cv2.CV_64F, 0, 1, MARK_EDGES_SOBEL))
+            # ~ sobel = np.square(sobel_x) + np.square(sobel_y)
+            # ~ sobel_image = np.ones_like(sobel, dtype=image.dtype)
+            # ~ sobel_image[sobel < i**2] = 0
+            # ~ sobels.append(sobel_image*255)
+        # ~ camera.preview_image_grid([[image, blur_image] + sobels])
+        
+        # ~ print(["Image", image, "Threash",threshed, "Blur",blur_image, "Sobel_X", sobel_x, "Sobel_Y", sobel_y, "Sobel", sobel, "Final*255",sobel_image*255])
+        camera.preview_image_grid([[image, threshed, blur_image, sobel_x, sobel_y, sobel, sobel_image*255]])
+           
     # ~ timer.end(".sobel-thresh")
         
     # ~ timer.start(".sobel-alt")
@@ -811,10 +857,26 @@ def test_region_of_interest():
 
 		camera.preview_image_grid([[image, fisheye_removed, warped]])
 
+def test_saturation():
+	
+	cam = camera.init()
+		
+	while True:
+		image = camera.capture_image(cam)
+		
+		undistort = calibrate.get_undistort()
+		fisheye_removed = undistort(image)
+		
+		warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
+		
+		warped = warp_func(fisheye_removed)
+		
+		edge = dl_mark_edges(warped, debug=True)
+
 
 if __name__ == "__main__":
 
-	test_region_of_interest()
+	test_saturation()
 
 
     # ~ image = cv2.imread(TESTFILE)    

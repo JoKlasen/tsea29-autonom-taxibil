@@ -299,7 +299,7 @@ class CalcThread(threading.Thread):
 
         if not self.path:
             print("CalcThread - End")
-            self.close()
+            self.stop()
             self.alive = False
             return 
         
