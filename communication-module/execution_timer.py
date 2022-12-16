@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple, Optional, Union
 
 
 class NoExecTimer:
+	""" An empty representation of the execution timer to replace it. """
 	
 	def start(self,suffix=""):
 		return 
@@ -22,10 +23,14 @@ class NoExecTimer:
 
 
 class ExecTimer(NoExecTimer):
+	""" A timer to measure the execution time of code. """
 
+    ###### Debug - Control #############   
 	PRINT_DURING_EXECUTION = False
+    ####################################   
 	
 	class ExecMemory:
+		""" A representation of the memory of a measurment for a function. """
 		name: str
 		times_called: float
 		total_exec_time: float
@@ -54,16 +59,23 @@ class ExecTimer(NoExecTimer):
 	thread_stack: Dict[int, List[List[Union[str, float]]]]
 	
 	def __init__(self):
+		""" Initalize memory. """
 		self.thread_stack = {}
 		self.memory = {}
 	
 	
 	def thread_title(self, thread):
+		""" [ PRIVATE ] 
+		Get a title for the thread that is unique and presentable.
+		"""
 		return f"{thread.name}:{thread.ident}"
 	
 
-	def get_caller(self, suffix):
-		
+	def get_caller(self, suffix) -> str:
+		""" [ PRIVATE ]
+		Get the caller identifier of a method of this class. This only works
+		for toplevel functions that calls this.
+		"""
 		caller_frame = inspect.stack()[2][0]
 
 		ret = caller_frame.f_code.co_name + suffix
@@ -75,7 +87,12 @@ class ExecTimer(NoExecTimer):
 		return ret
 		
 	
-	def start(self, suffix=""):
+	def start(self, suffix=""):		
+		""" Start measurment of the time for the caller function. 
+		
+		For each call a corresponding .end() call must be made with the same
+		suffix. 
+		"""
 		caller = self.get_caller(suffix)
 				
 		# Get stack for this thread
@@ -91,6 +108,15 @@ class ExecTimer(NoExecTimer):
 		self.thread_stack[thread.ident].append([caller, time.time(), 0])
 				
 	def end(self, suffix=""):
+		""" Stop the time measurments and store the result for the caller 
+		function. 
+		
+		This is only to be called after call to .start() in the same function 
+		which must have the same suffix. 
+		
+		Note: Calls to .start() can exist inbetween the .start() call with the 
+		same suffix as this call, but they can't have the same suffix. 
+		"""
 		# Finish measuring time
 		now = time.time()
 		caller = self.get_caller(suffix)
@@ -132,6 +158,7 @@ class ExecTimer(NoExecTimer):
 		return execution_time
 		
 	def print_time(self, suffix=""):
+		""" Print time for the caller function. """
 		caller = self.get_caller(suffix)
 		thread = threading.current_thread()
 		thread_title = self.thread_title(thread)
@@ -148,6 +175,12 @@ class ExecTimer(NoExecTimer):
 
 
 	def print_memory(self):
+		""" Print the memory for this execution timer.
+		
+		Note: Calls in all threads will be displayed and is best executed after
+		they have exited to display all measurments. 
+		"""
+		
 		print("___EXECUTION_MEMORY___")
 		
 		for name, obj in sorted(self.memory.items(), key=lambda x: -x[1].average_exec_time(False)):			

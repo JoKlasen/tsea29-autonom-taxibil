@@ -16,7 +16,7 @@ class driving_logic:
         self.lanes_seen = 2
         self.seeing_right_lane = True
         self.seeing_left_lane = True
-        self.frames_since_line = 8
+        self.instersection_bool = False
 
 
     def look_for_left_lane(self):
