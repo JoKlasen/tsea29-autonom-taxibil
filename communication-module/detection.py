@@ -800,9 +800,16 @@ def test_region_of_interest():
 		undistort = calibrate.get_undistort()
 		fisheye_removed = undistort(image)
 		
-		cv2.line(fisheye_removed, (160,256), (160,0), (0, 255, 0), 3)
+		warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=False)
+		
+		warped = warp_func(fisheye_removed)
+		
+		
+		cv2.line(fisheye_removed, (160,256), (160,0), (0, 255, 0), 1)
+		cv2.line(warped, (160,256), (160,0), (0, 255, 0), 1)
 
-		warp_func, warp_back_func = get_warp_perspective_funcs(fisheye_removed, debug=True)
+
+		camera.preview_image_grid([[image, fisheye_removed, warped]])
 
 
 if __name__ == "__main__":

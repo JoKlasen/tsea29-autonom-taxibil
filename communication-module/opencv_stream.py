@@ -116,15 +116,14 @@ def create_example_images(path:str = "./Example/"):
 
 def preview_image(image:ImageMtx, title="¡YEAY!") -> None:
     """ Uses opencv to preview an image """
-    hello1 = 1 
     # Show window
-    #cv2.namedWindow(title, cv2.WINDOW_NORMAL)
-    #cv2.resizeWindow(title, 1500, 800)
-    #cv2.imshow(title, image)
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(title, 1500, 800)
+    cv2.imshow(title, image)
 
     # Wait on key then destroy
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def preview_image_grid(img_grid:Collection[Collection[ImageMtx]]) -> None:

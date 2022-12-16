@@ -153,16 +153,17 @@ class ConverterThread(threading.Thread):
                         
             # Get image
             
-            image, timestamp = self.camera_thread.wait_for_image()      
+            result = self.camera_thread.wait_for_image()      
             
-            if image is None:
+            if result is None:
                 self.stop()
                 if self.MEASURE_TIME:
                     exec_timer.end(".Loop")
                 break
+            image, timestamp = result            
             
             # Converted image
-            converted_image = detection.convert_image(image, preview_steps=True)
+            converted_image = detection.convert_image(image, preview_steps=False)
             
             # ~ print(f"ConvertThread: {- debug_time + time.time()}")
             
@@ -194,66 +195,82 @@ class CalcThread(threading.Thread):
     MEASURE_TIME = True
     PRINT_INFO = True
     ###### Logging - Control ###########   
-    LOG_IMAGES = False
-    LOG_ERRORS = False
+    LOG_IMAGES = True
+    LOG_ERRORS = True
     ###### Functionality - Control #####
-    SEND_TO_SERVER = True
+    SEND_TO_SERVER = False
     ####################################
         
-    def __init__(self, converter_thread):
+    def __init__(self, converter_thread, path_to_drive=[]):
         threading.Thread.__init__(self)
         self.running = False
         self.alive = False
                 
         self.name = "Calc" + self.name
                 
-        self.log = None
-        self.path = None
+        self.log_folderpath = None
         
         self.drive_well = None
-        
         self.image_producer = converter_thread
+        
+        self.path = []
+        self.load_path(path_to_drive)
 
     # ==================================================================
     # Helpers
     # ==================================================================
 
-    def send_data(self, error):
-        message = f"er:st={int(error*100)}:sp=2:"
+    def send_data(self, turn, speed):
+        message = f"er:st={int(turn)}:sp={int(speed)}:"
         asyncio.run(send(message, "ws://localhost:8765"))
 
-        if self.drive_well.stop:
-            message = f"es:"
-            asyncio.run(send(message, "ws://localhost:8765"))                
+            
+    def load_path(self, path):
+        
+        error = None
+        
+        if type(path) is not list:
+            error = "Not a list."
+        elif not len(path) == 3:
+            error = "Path must be 3 in length."
+        else:
+            self.path = path
+        
+        
+        if self.PRINT_INFO:
+            if not error:
+                print(f"Loaded path: {path}")
+            else:
+                print(f"Couldn't load path. {error} Path: {path}")
 
     # ==================================================================
     # Log - Logging information
     # ==================================================================
 
     def load_log_resources(self): 
-        self.path = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'
+        self.log_folderpath = RESULTED_IMAGE_FOLDER + f'/Run_{datetime.now().strftime("%y.%m.%d-%H.%M.%S") }'
 
         if self.LOG_IMAGES or self.LOG_ERRORS:
             # Create directory to store images in
-            os.makedirs(self.path, exist_ok=True)
+            os.makedirs(self.log_folderpath, exist_ok=True)
 
         if self.LOG_ERRORS:
             # Open log file to write to
-            log = open(f'{self.path}/log.txt', 'a')
+            log = open(f'{self.log_folderpath}/log.txt', 'a')
             log.write("And then tests saved the day!\n\n\n")
             log.close()
             
     def log_images(self, index, from_image, to_image):
         # Store images
         org_img = Image.fromarray(from_image)
-        org_img.save(f"{self.path}/RSLT_{index}_From.jpg")
+        org_img.save(f"{self.log_folderpath}/RSLT_{index}_From.jpg")
         rslt_img = Image.fromarray(to_image)
-        rslt_img.save(f"{self.path}/RSLT_{index}_To.jpg")
+        rslt_img.save(f"{self.log_folderpath}/RSLT_{index}_To.jpg")
     
     
     def log_text(self, index, log_dict):
         # Store data produced
-        log = open(f'{self.path}/log.txt', 'a')
+        log = open(f'{self.log_folderpath}/log.txt', 'a')
         
         print("Writing")
         log.write(f'_______{index}_________')
@@ -279,17 +296,14 @@ class CalcThread(threading.Thread):
             self.load_log_resources()
         
         index = 0
+
+        if not self.path:
+            print("CalcThread - End")
+            self.close()
+            self.alive = False
+            return 
         
-        # ~ left = False
-        # ~ right = False
-        # ~ intersection = False
-        # ~ lost_intersection = False
-        # ~ stop = False
-        if(len(sys.argv) != 4):
-            print('\033[91m'+"<--------------Provide commandline arguments!!-------------->" + '\033[0m')
-            return
-        
-        node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main(*sys.argv[1:]) # List of nodes and directions to drive from pathfinding
+        node_list, direction_list, dropoff_list, dropoff_directions = Pathfinding.main(*self.path) # List of nodes and directions to drive from pathfinding
         node_list, direction_list, dropoff_list, dropoff_directions = [str(r) for r in node_list], [str(r) for r in direction_list], [str(r) for r in dropoff_list], [str(r) for r in dropoff_directions]
  
         drive_index = 0
@@ -310,7 +324,7 @@ class CalcThread(threading.Thread):
                 break
             
             messege = "" 
-            turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)        
+            turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)
 
             error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)
 
@@ -320,30 +334,26 @@ class CalcThread(threading.Thread):
                 if self.drive_well.stop is True:
                     print("----------> stop")
                     self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
-                    message = f"er:st={0}:sp=0:"
-                    asyncio.run(send(message, "ws://localhost:8765"))
+                    self.send_data(turn=0, speed=0) # Send to server
                     time.sleep(1)
+                    
                     if self.drive_well.direction_list == dropoff_list:
                         print("True end reached")
-                        message = f"er:st={0}:sp=0:"
-                        asyncio.run(send(message, "ws://localhost:8765"))
+                        self.send_data(turn=0, speed=0) # Send to server
+                        self.stop()
+                        if self.MEASURE_TIME:
+                            exec_timer.end(".Loop")
                         break
+                        
                     else:
                         print("----------> stop")
                         self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
-                        message = f"er:st={0}:sp=0:"
-                        asyncio.run(send(message, "ws://localhost:8765"))
+                        self.send_data(turn=0, speed=0) # Send to server
                         time.sleep(5)
                 else:
-                    message = f"er:st={int(error*100)}:sp=800:"
-                    #message = f"er:st=0:sp=1000:"
-                    asyncio.run(send(message, "ws://localhost:8765"))
+                    self.send_data(turn=int(error*100), speed=800) # Send to server
 
-            # Get turn_errors from data
-            
-            # Get final error from turn_errors
 
-    
             #if self.SEND_TO_SERVER:
                 # Send data to server
                # self.send_data(error)
@@ -373,17 +383,17 @@ class CalcThread(threading.Thread):
 
 def main():
     
+    path_to_drive = sys.argv[1:]
+        
     camera_thread = CameraThread()
     conversion_thread = ConverterThread(camera_thread)
-    calc_thread = CalcThread(conversion_thread)
+    calc_thread = CalcThread(conversion_thread, path_to_drive)
     
     camera_thread.start()
     conversion_thread.start()
     calc_thread.start()
     
-    #input("")
-    while True:
-        hello = 1
+    input("")
     
     camera_thread.stop()
     conversion_thread.stop()
