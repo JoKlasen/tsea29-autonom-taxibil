@@ -195,7 +195,7 @@ class CalcThread(threading.Thread):
     MEASURE_TIME = True
     PRINT_INFO = True
     ###### Logging - Control ###########   
-    LOG_IMAGES = True
+    LOG_IMAGES = False
     LOG_ERRORS = True
     ###### Functionality - Control #####
     SEND_TO_SERVER = False
@@ -314,16 +314,14 @@ class CalcThread(threading.Thread):
                 exec_timer.start(".Loop")
             
             # Get image or wait on it
-            image, original_image = self.image_producer.wait_for_image()
-            image, timestamp = image
-            
+            image, original_image = self.image_producer.wait_for_image()            
             if image is None:
                 self.stop()
                 if self.MEASURE_TIME:
                     exec_timer.end(".Loop")
                 break
-            
-            messege = "" 
+            image, timestamp = image
+
             turn_to_hit, turn_to_align, resulting_image = detection.detect_lines(image, self.drive_well, get_image_data=self.LOG_IMAGES)
 
             error = detection.calc_error(turn_to_hit, turn_to_align, self.drive_well)

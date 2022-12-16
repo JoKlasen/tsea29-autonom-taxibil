@@ -38,11 +38,15 @@ DFLT_NUMB_WINDOWS = 20
 CALC_DRIFT_ADJUST = 0.2
 CALC_EASE_ONE_LANES_ERRORS = 0.8
 
+FIND_LANE_MIN_PIXELS = 600
+FIND_LANE_MIN_WINDOWS = 5
+
 DFLT_TURNCONST = 1
 DFLT_ALIGNCONST = 1
 DFLT_IGNORE_LESS = 0.04
 
 DFLT_MID_LINE_MIN_TO_CARE = 200
+DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES = 0.3
 DFLT_MID_OFFSET = 40
 DFLT_MID_WINDOW_HEIGHT = 100
 DFLT_MID_WINDOW_WIDTH = 150
@@ -81,6 +85,11 @@ def load_config():
     global DFLT_NUMB_WINDOWS
     DFLT_NUMB_WINDOWS = config['numb_windows']
 
+    global FIND_LANE_MIN_PIXELS
+    FIND_LANE_MIN_PIXELS = config['min_pixels_in_lane']
+    global FIND_LANE_MIN_WINDOWS
+    FIND_LANE_MIN_WINDOWS = config['min_windows_in_lane']
+
     global DFLT_TURNCONST
     DFLT_TURNCONST = config['turn_error_const']
     global DFLT_ALIGNCONST
@@ -95,6 +104,8 @@ def load_config():
 	
     global DFLT_MID_LINE_MIN_TO_CARE
     DFLT_MID_LINE_MIN_TO_CARE = config['mid_line_min_to_care']
+    global DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES
+    DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES = config['mid_line_difference_between_lines']
     global DFLT_MID_OFFSET
     DFLT_MID_OFFSET = config['mid_offset']
     global DFLT_MID_WINDOW_HEIGHT
@@ -640,9 +651,9 @@ def find_lane_with_sliding_window(
             cv2.rectangle(debug_image,(win_x[0], win_y[0]),(win_x[1], win_y[1]), square_color, 2)
 
 
-    if len(lane_pixels[1]) > 600:
+    if len(lane_pixels[1]) > FIND_LANE_MIN_PIXELS:
         
-        if numb_wind > 6:
+        if numb_wind > FIND_LANE_MIN_WINDOWS:
             # Calculate parameters      
             polynomial = np.polyfit(lane_pixels[1], lane_pixels[0], 2)
                     
@@ -694,7 +705,7 @@ def find_horizontal_lines(
         if left_side > 0 or right_side > 0:
             if (drive_well.lost_intersection == True):
                 drive_well.intersection_found = True
-            elif 2.6*right_side > 2*left_side > 1.4*right_side: # 1.5 > left_side/right_side > 0.5
+            elif (1+DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES)*right_side > left_side > (1-DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES)*right_side: # 1.5 > left_side/right_side > 0.5
                 drive_well.intersection_found = True
                 if drive_well.drive_intersection is False:
                     drive_well.normal_driving()
