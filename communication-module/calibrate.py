@@ -1,12 +1,11 @@
 import numpy as np
 import cv2
 import glob
-import camera
+import opencv_stream as camera
 import os
 from PIL import Image
 from io import BytesIO
 from datetime import datetime
-import picamera
 import time
 
 from typing import Tuple, Callable, Any
@@ -16,8 +15,8 @@ from numpy.typing import NDArray
 
 # ----- Parameters -----
 # Change as required
-CALIBRATOR_PARAMS_FILENAME = 'Calibration-Params_Test.txt'
-CALIBRATOR_IMAGES_FOLDER = './Chesstest_160x128'
+CALIBRATOR_PARAMS_FILENAME = '/home/g13/git/communication-module/Calibration-Params_Test.txt'
+CALIBRATOR_IMAGES_FOLDER = '/home/g13/git/communication-module/Chesstest_160x128'
 
 
 def get_undistort() -> Callable[[ImageMtx], ImageMtx]:
@@ -46,9 +45,7 @@ def create_calibration_images() -> None:
 	"""
 	
 	# Initialises camera
-	camera = picamera.PiCamera()
-	camera.resolution = (320,256)
-	camera.framerate = 24
+	cam = camera.init(320,256,24)
 
 	# Wait for camera to wake (or images will have bad lighting)
 	time.sleep(2)
@@ -57,21 +54,18 @@ def create_calibration_images() -> None:
 	path = CALIBRATOR_IMAGES_FOLDER
 	if not os.path.exists(path):
 		os.mkdir(path)
-			
-	camera.start_preview()
 
 	# Have user take image when pressing enter, end if first typed "end"
-	while "end" != input("").lower():
-		stream = BytesIO()
-		camera.capture(stream, format='jpeg')
-		
-		# Create image from data
-		stream.seek(0)		
-		img = Image.open(stream)
-		
-		# Store image
-		now = datetime.now()		
-		img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+	while ("end" != input("").lower()):
+		ret, image = camera.interrupted_preview(cam, wait=5)
+		if ret:
+			img = Image.fromarray(image)
+            
+            # Store image
+			now = datetime.now()		
+			img.save("{}/CI_{}.jpg".format(path, now.strftime("%y.%m.%d.%H.%M.%S")))
+		else:
+			print("Calibrate: Failed to capture image")
 
 
 def create_and_save_calibration_params(debug = False) -> None:

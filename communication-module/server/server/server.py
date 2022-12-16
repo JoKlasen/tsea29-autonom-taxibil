@@ -14,7 +14,7 @@ serial_port = ' '.join(sys.argv[1:])
 # Define which commands should be sent where.
 commands_app = ["db", "tm", "DEBUG"]
 commands_cv = ["mi"]
-commands_control = ["kp", "es", "sm", "spp", "stp", "er", "tm"]
+commands_control = ["kp", "es", "sm", "spp", "stp", "er", "tm", "td"]
 
 # Get timestamp
 def timestamp():
@@ -52,12 +52,27 @@ def sendToAVR(message):
 
 
     if (message_type in commands_control):
+        message = message + '\n';
         print("To Control-Module: ", message)
         ser.write(message.encode())
 
 # TODO IMPLEMENT SENDING TO CV MODULE
 def sendToCV(message):
-    print("To CV-Module: ", message)
+    message_type = message.split(':')[0]
+    message_parts = message.split(':')
+    print("Before CV-Module: ", message)
+    if (message_type in commands_cv):
+        print("To CV-Module: ", message)
+        if (message_type == 'mi'):
+            from_location = message_parts[1].split('=')[1]
+            pickup_location = message_parts[2].split('=')[1]
+            drop_location = message_parts[3].split('=')[1]
+
+            #command_string = '/usr/bin/python3 /home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
+            command_string = '/home/g13/git/communication-module/main.py ' + from_location + ' ' + pickup_location + ' ' + drop_location
+
+            print("mi Command: " + command_string)
+            subprocess.call(command_string, shell=True)
 
 # Send message to all connected clients§
 async def sendAll(websocket):

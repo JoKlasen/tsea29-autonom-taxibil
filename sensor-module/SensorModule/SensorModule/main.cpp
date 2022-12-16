@@ -30,8 +30,10 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)	
 
+#define SEND_RATE 250 // How long the main loop should wait before sending new data in ms
+
 #define SPEED_PRECISION 1000 // 3 decimalers precision
-#define SPEED_CONSTANT 0.026 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning åt vänster, för 1 tick
+#define SPEED_CONSTANT 0.026 * 3.6 * 1000 * SPEED_PRECISION // konvertering till km/h med 0 decimalers shiftning ï¿½t vï¿½nster, fï¿½r 1 tick
 
 #define RECEIVE_BUFFER_SIZE 100
 
@@ -41,18 +43,21 @@ volatile unsigned long long milliseconds = 0;
 volatile unsigned long long echo_start = 0;
 volatile unsigned long long	echo_end = 0;
 volatile unsigned long long hall_left_latest = 0;
+volatile unsigned long long hall_left_previous = 0;
 volatile unsigned long long hall_left_old = 0;
 volatile unsigned long long hall_right_latest = 0;
 volatile unsigned long long new_time = 0;
+volatile unsigned long long timeout_counter = 0;
+volatile int speed = 0;
 // ISR flags
 volatile bool echo_updated = false;
 volatile bool hall_left_updated = false;
 volatile bool hall_right_updated = false;  
 
-//Skicka data med jämnt intervall
+//Skicka data med jï¿½mnt intervall
 volatile bool sendbool = false;
 
-//För att ta emot data
+//Fï¿½r att ta emot data
 volatile bool received = false;
 char receive_buffer[RECEIVE_BUFFER_SIZE];
 char working_buffer[RECEIVE_BUFFER_SIZE];
@@ -111,23 +116,6 @@ void start_echo_pulse()
 	sei();
 }
 
-
-
-// ======================
-// Main program
-// ======================
-
-void setup()
-{
-	portinit();
-	UART_init();
-	timer0_init();
-	timer1_init();
-	ext_intr_init();
-	sei();
-}
-
-
 void clear_buffer(char* buffer,int size = RECEIVE_BUFFER_SIZE)
 {
 	for(int i = 0;i < size ;i++)
@@ -152,10 +140,10 @@ void handshake()
 	{
 		if(millis()-new_time > 100)
 		{
-			old_millis = millis();
-			//Denna ska va här ---- start
+			new_time = millis();
+			//Denna ska va hï¿½r ---- start
 			send_data("sensor_module\n");
-			//Denna ska va här ---- slut
+			//Denna ska va hï¿½r ---- slut
 			if(received)
 			{
 				cli();
@@ -172,6 +160,22 @@ void handshake()
 }
 
 
+
+
+// ======================
+// Main program
+// ======================
+
+void setup()
+{
+	portinit();
+	UART_init();
+	timer0_init();
+	timer1_init();
+	ext_intr_init();
+	sei();
+}
+
 int main(void)
 {
 	setup();
@@ -179,8 +183,6 @@ int main(void)
 	send_data(Data);
 	volatile bool localsend = false;	
 	volatile bool localultrasound = false;
-	volatile bool localhallsensor = false;
-	volatile unsigned long long old_time = 0;
 
 	char initial[50];
 	char * speed_msg = &initial[0]; 
@@ -195,8 +197,6 @@ int main(void)
 	//char receive_buffer[RECEIVE_BUFFER_SIZE]; 
 	clear_buffer(&receive_buffer[0]);
 	clear_buffer(&working_buffer[0]);
-	volatile int counter =0;
-	volatile bool has_full_string = false;
 	memset(receive_buffer,0,sizeof receive_buffer);
 	memset(working_buffer,0,sizeof working_buffer);
 
@@ -205,14 +205,11 @@ int main(void)
 	PORTA |= (1 << LED2);
 	while(1)
 	{
-		new_time = millis();
 		cli();
 		localultrasound = echo_updated;
 		sei();
 		if (localultrasound)
 		{
-			char test_inital[50];
-			char * echo_test = &test_inital[0];
 			pulse_length = echo_end - echo_start;
 			echo_updated = false;
 		}
@@ -223,22 +220,7 @@ int main(void)
 		sei();
 		if(localsend)
 		{
-			hall_left_old = local_hall_left_latest;
-			cli();
-			local_hall_counter = hall_left_counter;
-			local_hall_left_latest = hall_left_latest;
-			hall_left_counter = 0;
-			sei();
-			
-			unsigned long long diff = local_hall_left_latest - hall_left_old; // diff in ms for 5 ticks
-
-			unsigned long tmp = local_hall_counter * SPEED_CONSTANT / ( diff ); // tmp = hastighet i km/h shiftat med precisionen
-			
-			heltal = tmp / SPEED_PRECISION;
-			decimal = tmp % SPEED_PRECISION;
-			
-			//send_data_routine();
-			sprintf(speed_msg, "telemetry:speed=%u.%03u:detection=%u:\n", heltal, decimal, pulse_length );
+			sprintf(speed_msg,"tm:s=%u:d=%u:\n",speed,pulse_length);
 			send_data(speed_msg);
 			cli();
 			sendbool = false;
@@ -268,13 +250,18 @@ ISR(TIMER1_COMPA_vect)
 {
 	milliseconds++;
 	interval_counter++;
-	if(interval_counter == 250)
+	timeout_counter++;
+	if(timeout_counter == 1000)
+	{
+		speed = 0;
+	}
+	if(interval_counter == 100)
 	{
 		sendbool = true;
 		interval_counter = 0;
-		
 		start_echo_pulse();
 	}
+
 }
 
 //HALL_RIGHT
@@ -287,8 +274,12 @@ ISR(INT0_vect)
 //HALL_LEFT
 ISR(INT1_vect)
 {
-	hall_left_counter++;
+	//hall_left_counter++;
+	hall_left_previous = hall_left_latest;
 	hall_left_latest = millis();
+	speed = (((float)1)/ ((float)(hall_left_latest - hall_left_previous))) * 100000.0;
+	timeout_counter = 0;
+
 }
 
 //ECHO_OUTPUT

@@ -49,8 +49,11 @@ ISR (USART0_RX_vect)
 		memset(receive_buffer,0,receive_buffer_index);
 		receive_buffer_index =0;
 		received = true;
-
-
+		//char tempbuffer[RECEIVE_BUFFER_SIZE];
+		//sprintf(&tempbuffer[0], "Received \n%s",working_buffer);
+		//send_data("In receeive data, received:\n");
+		//send_data(tempbuffer);
+		//clear_buffer(tempbuffer);
 	}
 }
 
@@ -133,9 +136,10 @@ ISR(TIMER2_COMPA_vect)
 {
 	
 	milliseconds++;
-	if(milliseconds - old_millis >= 1000)
+	if(milliseconds - old_millis >= 3000)
 	{
-		SPEED_REGISTER = 0;
+		//SPEED_REGISTER = 0;
+		//send_data("Watchdog\n");
 	}
 }
 

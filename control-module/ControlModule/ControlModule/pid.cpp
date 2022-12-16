@@ -7,6 +7,12 @@ void PIDSetup(int InputP, int InputI, int InputD) {
     ConstantP = InputP;
     ConstantI = InputI;
     ConstantD = InputD;
+
+
+    // TODO: Take parameters, add parsing
+    spd_ConstantP = 1;
+    spd_ConstantI = 0; 
+    spd_ConstantD = 0;
 }
 
 // Returns amount of steering to counteract error.
@@ -14,19 +20,40 @@ int PIDIteration(int Error) {
 	
     PTerm = (Error * ConstantP);
     
-    CurrentI += Error;
-    if (CurrentI > MaxI) {
-        CurrentI = MaxI;
-    }
-    else if (CurrentI < MinI) {
-        CurrentI = MinI;
-    }
-    ITerm = (ConstantI * CurrentI);
+    // Integration commented out since compiler cant optimize it away
+
+    // CurrentI += Error;
+    // if (CurrentI > MaxI) {
+    //     CurrentI = MaxI;
+    // }
+    // else if (CurrentI < MinI) {
+    //     CurrentI = MinI;
+    // }
+    // ITerm = (ConstantI * CurrentI);
 
     DTerm = ConstantD * (dTemp - Error);
     dTemp = Error;
 
-    return ((PTerm + ITerm + DTerm) );
+    return ((PTerm + DTerm)); // + ITerm 
+}
+
+int spd_PIDIteration(int Error) {
+	
+    spd_PTerm = (Error * spd_ConstantP);
+    
+    spd_CurrentI += Error;
+    if (spd_CurrentI > spd_MaxI) {
+        spd_CurrentI = spd_MaxI;
+    }
+    else if (spd_CurrentI < spd_MinI) {
+        spd_CurrentI = spd_MinI;
+    }
+    spd_ITerm = (spd_ConstantI * spd_CurrentI);
+
+    spd_DTerm = spd_ConstantD * (spd_dTemp - Error);
+    spd_dTemp = Error;
+
+    return ((spd_PTerm + spd_ITerm + spd_DTerm) ) / 100;
 }
 
 /*

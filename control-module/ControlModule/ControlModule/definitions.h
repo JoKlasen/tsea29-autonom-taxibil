@@ -18,14 +18,14 @@
 #define USART_BAUDRATE 57600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1)
 
-#define MAX_SPEED 4000
-#define MAX_AUTO_SPEED 5000
+#define MAX_SPEED 3000
+#define MAX_AUTO_SPEED 3000
 
 #define MAX_STEER_LEFT 2100
-#define STEER_NEUTRAL 3046 //Drar aningen åt vänster (välidgt lite)
+#define STEER_NEUTRAL 3046 //Drar aningen ï¿½t vï¿½nster (vï¿½lidgt lite)
 #define MAX_STEER_RIGHT 4200
 
-#define ONE_THOUSAND_RIGHT ((MAX_STEER_RIGHT - STEER_NEUTRAL) / 1000)
+#define ONE_THOUSAND_RIGHT ((MAX_STEER_RIGHT - STEER_NEUTRAL) / 1000) // Q: Unused???
 
 #define  STEER_REGISTER OCR3A
 #define  SPEED_REGISTER OCR1A
@@ -56,6 +56,8 @@ void speedlimiter(int speed);
 void pid_init(int in_p, int in_i, int in_d);
 
 int pid_loop(int error);
+
+int spd_PIDIteration(int Error);
 
 bool parse_handshake();
 

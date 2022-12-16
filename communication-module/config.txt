@@ -1,0 +1,65 @@
+{
+'message_to_the_universe': 
+	'¡Hola Mundo!'
+,
+
+'default_roi': 
+#	((0, .4297), (0, 1), (1, 1), (1, .4297))
+	((0, .3), (-0.5, 1), (1.5, 1), (1, .3))
+,	
+
+
+'hit_height': 
+	80
+,
+
+
+'mark_edges_blur':
+	7
+,
+'mark_edges_sobel':
+	7
+,
+'mark_edges_sobel_threshold':
+	30
+,
+'mark_edges_threshold':
+	60
+,
+
+
+'lane_margin':
+	15
+,
+'min_to_recenter_window':
+	20
+,
+'numb_windows':
+	20
+,
+
+
+'turn_error_const': 
+	1
+,
+'align_error_const': 
+	1
+,
+'ignore_less': 
+	0.04
+,
+
+
+'mid_line_min_to_care': 
+	500
+,
+'mid_offset': 
+	0
+,
+'mid_window_height': 
+	60
+,
+'mid_window_width': 
+	110
+,
+}
