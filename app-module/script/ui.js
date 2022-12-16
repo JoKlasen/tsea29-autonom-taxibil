@@ -13,6 +13,20 @@ function switchMode() {
         sendMessage("sm:m=0:")
     }
 }
+var detection = 1;
+function switchDetection() {
+    detection++;
+    if (detection == 2) {detection = 0}
+
+    if (detection == 1) {
+        document.getElementById("toggle-detection-text").innerHTML = "Detect<br>On"
+        sendMessage("td:d=1:")
+    }
+    else {
+        document.getElementById("toggle-detection-text").innerHTML = "Detect<br>Off"
+        sendMessage("td:d=0:")
+    }
+}
 
 function sendPID() {
     let pidvalues = "stp" +
@@ -37,5 +51,6 @@ function sendMission() {
         ":p=" + document.getElementById("mi-p").value +
         ":e=" + document.getElementById("mi-e").value + ':'
 
+    console.log(mission)
     sendMessage(mission)
 }
