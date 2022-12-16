@@ -1,3 +1,4 @@
+from websockets import connect
 
 class driving_logic:
     def __init__(self, node_list, direction_list):
@@ -30,6 +31,17 @@ class driving_logic:
             self.intersection_driving(debug)
         else:
             self.normal_driving(debug)
+
+    async def send(self, msg, uri):
+        async with connect(uri) as websocket:
+            await websocket.send(msg)
+
+    def updateLocationOnMap(self):
+        # send position to map on application.
+        if (self.drive_index+1 < len(self.node_list)):
+            self.send("sl:p=" + self.node_list[self.drive_index] + ":n=" + self.node_list[self.drive_index+1] + ":", "ws://localhost:8765")
+        else:
+            self.send("sl:p=" + self.node_list[self.drive_index] + ":n=" + self.node_list[0] + ":", "ws://localhost:8765")
 
     def normal_driving(self, debug=False):
         #print("entered normal")
@@ -141,16 +153,19 @@ class driving_logic:
 
 
     def drive_forwards(self):
+        self.updateLocationOnMap()
         self.drive_forward = True
         self.drive_left = False
         self.drive_right = False
 
     def drive_to_right(self):
+        self.updateLocationOnMap()
         self.drive_forward = False
         self.drive_left = False
         self.drive_right = True
 
     def drive_to_left(self):
+        self.updateLocationOnMap()
         self.drive_forward = False
         self.drive_left = True
         self.drive_right = False

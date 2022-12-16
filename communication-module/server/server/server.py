@@ -12,7 +12,7 @@ import subprocess
 serial_port = ' '.join(sys.argv[1:])
 
 # Define which commands should be sent where.
-commands_app = ["db", "tm"]
+commands_app = ["db", "tm", "sl"]
 commands_cv = ["mi"]
 commands_control = ["kp", "es", "sm", "spp", "stp", "er", "tm", "td"]
 
