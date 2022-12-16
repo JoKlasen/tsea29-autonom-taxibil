@@ -12,7 +12,7 @@ import subprocess
 serial_port = ' '.join(sys.argv[1:])
 
 # Define which commands should be sent where.
-commands_app = ["db", "tm"]
+commands_app = ["db", "tm", "DEBUG"]
 commands_cv = ["mi"]
 commands_control = ["kp", "es", "sm", "spp", "stp", "er", "tm"]
 
@@ -47,6 +47,10 @@ ser = serial.Serial (serial_port, 57600)
 def sendToAVR(message):
     message_type = message.split(':')[0]
     
+    # remove first character from string
+    message = message[1:]
+
+
     if (message_type in commands_control):
         print("To Control-Module: ", message)
         ser.write(message.encode())
