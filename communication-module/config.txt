@@ -71,7 +71,7 @@
 	500
 ,
 'mid_line_difference_between_lines':
-	.3
+	.6
 ,
 'mid_offset': 
 	0

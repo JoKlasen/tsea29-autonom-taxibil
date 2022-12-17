@@ -16,7 +16,8 @@ class driving_logic:
         self.lanes_seen = 2
         self.seeing_right_lane = True
         self.seeing_left_lane = True
-        self.instersection_bool = False
+        self.intersection_bool = False
+        self.test_count = 8
 
 
     def look_for_left_lane(self):
@@ -41,7 +42,8 @@ class driving_logic:
         if (self.drive_index+1 < len(self.node_list)):
             self.send("sl:p=" + self.node_list[self.drive_index] + ":n=" + self.node_list[self.drive_index+1] + ":", "ws://localhost:8765")
         else:
-            self.send("sl:p=" + self.node_list[self.drive_index] + ":n=" + self.node_list[0] + ":", "ws://localhost:8765")
+            pass
+            #self.send("sl:p=" + self.node_list[self.drive_index] + ":n=" + self.node_list[0] + ":", "ws://localhost:8765")
 
     def normal_driving(self, debug=False):
         #print("entered normal")

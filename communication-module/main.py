@@ -198,7 +198,7 @@ class CalcThread(threading.Thread):
     LOG_IMAGES = False
     LOG_ERRORS = True
     ###### Functionality - Control #####
-    SEND_TO_SERVER = False
+    SEND_TO_SERVER = True
     ####################################
         
     def __init__(self, converter_thread, path_to_drive=[]):

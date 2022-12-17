@@ -437,7 +437,7 @@ def dl_mark_edges(image:ImageMtx, debug=False) -> BitmapMtx:
     
     # ~ timer.start(".thresh")
 
-    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_TOZERO_INV)
+    _, threshed = cv2.threshold(image[:,:,1], MARK_EDGES_THRESHOLD, 255, cv2.THRESH_BINARY_INV)
     
     # ~ timer.end(".thresh")
     # ~ timer.start(".blur")
@@ -698,26 +698,32 @@ def find_horizontal_lines(
     drive_well.intersection_found = False
     drive_well.right_stop_found = False
     drive_well.left_stop_found = False
+    drive_well.test_count +=1
     if special_distr > DFLT_MID_LINE_MIN_TO_CARE:
         left_side = np.sum(special_rect[:,:int(special_rect.shape[1]/2)])
         right_side =np.sum(special_rect[:,int(special_rect.shape[1]/2):])
         if left_side > 0 or right_side > 0:
             if (drive_well.lost_intersection == True):
-				drive_well.intersection_bool = True
+                drive_well.test_count = 0
+                #print("SET THE BOOL")
+                #drive_well.intersection_bool = True
                 drive_well.intersection_found = True
             elif (1+DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES)*right_side > left_side > (1-DFLT_MID_LINE_MAX_DIFFERENCE_BETWEEN_SIDES)*right_side: # 1.5 > left_side/right_side > 0.5
                 drive_well.intersection_found = True
-                drive_well.intersection_bool = True
+                drive_well.test_count = 0
+                #print("SET THE BOOL")
+                #drive_well.intersection_bool = True
                 if drive_well.drive_intersection is False:
                     drive_well.normal_driving()
-            elif left_side > right_side and drive_well.intersection_bool is False:
+            elif left_side > right_side and drive_well.test_count >= 8:
                 drive_well.left_stop_found = True
-            elif drive_well.intersection_bool is False:
+            elif drive_well.test_count >= 8:
                 drive_well.right_stop_found = True
             else:
                 pass
-     else:
-		 drive_well.instersection_bool = False
+    else:
+        print("I RESET THE BOOL")
+        drive_well.instersection_bool = False
 
     # ~ print("-----SPECIAL DIST----- \n" ,special_distr)
     # ~ print("-----SPECIAL_DIST MID----- \n" , special_distr/2)
