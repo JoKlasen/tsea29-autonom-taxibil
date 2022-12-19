@@ -348,11 +348,16 @@ def calc_error(
         error = 0
 
     if drive_well.drive_intersection:
-        if drive_well.drive_right and not drive_well.seeing_right_lane:
-            print("RIGHT MISSING")
-            error = 2
-        elif drive_well.drive_left and not drive_well.seeing_left_lane:
-            error = -2
+        if drive_well.drive_right:
+            if not drive_well.seeing_right_lane:
+                error = 2
+            elif error < -0.1:
+                error = 2
+        elif drive_well.drive_left:
+            if not drive_well.seeing_left_lane:
+                error = -2
+            elif error > 0.1:
+                error = -2
         elif drive_well.drive_forward and drive_well.lanes_seen == 2:
             error = 0
 
@@ -893,7 +898,7 @@ def test_saturation():
 
 if __name__ == "__main__":
 
-	test_saturation()
+	test_region_of_interest()
 
 
     # ~ image = cv2.imread(TESTFILE)    

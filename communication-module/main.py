@@ -196,7 +196,7 @@ class CalcThread(threading.Thread):
     PRINT_INFO = True
     ###### Logging - Control ###########   
     LOG_IMAGES = False
-    LOG_ERRORS = True
+    LOG_ERRORS = False
     ###### Functionality - Control #####
     SEND_TO_SERVER = True
     ####################################
@@ -308,6 +308,7 @@ class CalcThread(threading.Thread):
  
         drive_index = 0
         self.drive_well = driving_logic.driving_logic(node_list, direction_list) 
+        second_run = False
         
         while self.running:
             if self.MEASURE_TIME:
@@ -335,7 +336,7 @@ class CalcThread(threading.Thread):
                     self.send_data(turn=0, speed=0) # Send to server
                     time.sleep(1)
                     
-                    if self.drive_well.direction_list == dropoff_list:
+                    if second_run:
                         print("True end reached")
                         self.send_data(turn=0, speed=0) # Send to server
                         self.stop()
@@ -345,11 +346,12 @@ class CalcThread(threading.Thread):
                         
                     else:
                         print("----------> stop")
+                        second_run = True
                         self.drive_well = driving_logic.driving_logic(dropoff_list, dropoff_directions)
                         self.send_data(turn=0, speed=0) # Send to server
                         time.sleep(5)
                 else:
-                    self.send_data(turn=int(error*100), speed=800) # Send to server
+                    self.send_data(turn=int(error*100), speed=1500) # Send to server
 
 
             #if self.SEND_TO_SERVER:
