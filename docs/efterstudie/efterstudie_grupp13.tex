@@ -1,0 +1,125 @@
+\documentclass[10pt,oneside,swedish]{lips}
+
+%\usepackage[square]{natbib}\bibliographystyle{plainnat}\setcitestyle{numbers}
+%\usepackage[round]{natbib}
+\bibliographystyle{IEEEtran}
+
+% Configure the document
+\title{Efterstudie}
+\author{Projektgrupp 13}
+\date{20 december 2022}
+\version{1.0}
+
+\reviewed{Johan Klasén}{2022-12-20}
+\approved{}{2022-12-20} % Ska godkännas av kund
+
+\begin{document}
+\input{proj_id.tex}
+
+\cleardoublepage
+\tableofcontents
+
+\cleardoublepage
+\section*{Dokumenthistorik}
+\begin{tabular}{p{.06\textwidth}|p{.1\textwidth}|p{.45\textwidth}|p{.13\textwidth}|p{.13\textwidth}} 
+  \multicolumn{1}{c}{\bfseries Version} & 
+  \multicolumn{1}{|c}{\bfseries Datum} & 
+  \multicolumn{1}{|c}{\bfseries Utförda förändringar} & 
+  \multicolumn{1}{|c}{\bfseries Utförda av} & 
+  \multicolumn{1}{|c}{\bfseries Granskad}\\
+  \hline
+  \hline
+  1.0 & 2022-12-20 & Första versionen & Gruppen & Johan   \\
+  \hline
+\end{tabular}
+
+\cleardoublepage
+\pagenumbering{arabic}\cfoot{\thepage}
+
+\section{Tidsåtgång}
+
+\subsection{Arbetsfördelning}
+Vi har haft problem med att se till att det är en jämn arbetsfödelning genom hela projektet då det bara fanns en uppsättning hårdvara och majoriteten av arbetet riktades just mot denna del hårdvara. Det var för stor gruppstorlek för att endast ha en uppsättning bil. 
+Vi har inte heller tagit höjd i planeringen för hur arbetet ska läggas upp efter att vissa nyckelsteg har uppnåtts, vilket fått personer att stå utan arbetsuppgift. 
+
+\subsection{Tidsåtgång jämfört med planerad tid}
+Det var svårt att uppskatta projektets tidsåtgång men baserat på erfarenheter etc. tog vi fram en tidsplan. Denna visade sig stämma bra med hur mycket tid som behövde läggas ner för att nå projektets mål. \\
+
+\begin{tabular}{| c | c | c |}
+  \hline
+  \bfseries Fas & \bfseries Planerad tid (h) & \bfseries Använd tid (h) \\
+  \hline \hline
+  Innan BP3 & 40 & 40   \\
+  \hline
+  Under projektet & 855 & 863 \\
+  \hline
+  Efter BP5 & 65 & 27,5   \\
+  \hline
+\end{tabular}
+
+\section{Analys av arbete och problem}
+Under arbetets gång har vi stött på flera problem. Allt från hårdvaruproblem, installation av bibliotek som inte fungerade som förväntat till en variation av tekniska problem/utmaningar rörande exekveringstid. Dessa har fått lösas på olika sätt, t.ex med hjälp från handledare med hårdvarubrister som gruppen inte kunde lösa själva. Bibliotek och annan variation på mjukvaruproblem löstes av gruppen till slut. Dessa tog mycket tid från projektet och gjorde problemen rörande exekveringstid svårare att felsöka, samt fördröjde efterföljande arbete. Slutligen så är det relevant att nämna att gruppen mötte en del kommunikationsproblem, mestadels via meddelanden, som gjorde det svårt för vissa medlemmar att engagera sig i relevant arbete.
+
+\subsection{Vad hände under de olika faserna (bra/dåligt/orsak)?}
+Förarbetet/designfasen flöt på bra. Det gav en bra möjlighet för alla att samla in kunskap och gruppen kunde komma överens en generell bild av hur systemet skulle se ut och vad som behövde göras. En del aktiviteter kunde eventuellt ha utökats, med det är alltid svårt att designa något helt från början utan att ha sett eller bekantat sig med hårdvaran man jobbat med eller att börja testa kodstycken. Vi gjorde vårt bästa för att försöka uppskatta aktiviteters tidsåtgång, men dessa skulle ha behövts reviderats en bit inpå projektets gång.\\
+
+\noindent
+Under själva implementeringsfasen flöt arbetet på väldigt bra i början. Aktiviteterna stämde bra överens med vad som behövde göras och alla hade tydliga uppgifter. Längre in i projektet märkte vi att det fanns rätt mycket uppgifter som inte täcktes av någon aktivitet och andra aktiviteter inte väl speglade vad som faktiskt behövde göras. Arbetsfördelningen för aktiviteterna var inte helt optimal då vissa gruppmedlemmar snabbt klarade aktiviteterna de var tilldelade men inte hade en tydlig bild av vad för arbete dom skulle gå över till.
+Här skulle det ha behövts att vi någon gång gemensamt skulle gått igenom och reviderat planeringen. 
+
+\subsection{Hur vi arbetade tillsammans (ansvar, beslut, kommunikation etc.)?}
+Samarbetet har varit en svår del inom projektet. Detta för att kommunikationen varit bristfällig, till större eller mindre del beroende på vem du frågar i gruppen. Kvaliteten på kommunikationen på plats har varierat. Gruppen är dock överens om att kommunikationen på distans var dålig. Detta jämte schemakrockar gjorde att gruppen inte alltid kunde arbete på plats tillsammans, ledde till förvirring och dålig information kring arbetsuppgifter. \\
+
+\noindent
+Strukturen på arbetet har gjort det svårt att avgöra vilka delar som arbetas aktivt med och vilka som är klara. Gruppen har saknat en tydlig ledare som tog ett steg tillbaka och inte fastnade i arbetet utan fokuserade på att koordinera gruppens arbetsinsats.
+
+
+\subsection{Hur använde vi projektmodellen?}
+Vi arbetade stegvis för att klara av de olika beslutspunkterna. Det fungerade bra. Designunderlaget var en bra utgångspunkt att utgå från vid implementationen och sparade rätt mycket tid, även om man delvis avvek från den senare inpå projektet då man stött på nya hinder som inte hade förutsett under designfasen.
+
+\subsection{Hur fungerade relationen med beställaren?}
+Arbetet mot beställaren har fungerat bra och utan friktion. Det har varit god och öppen kommunikation där sådan behövdes. Kontakten var i helhelt i anslutning till avtalade leveranstider och möten.
+
+\subsection{Hur fungerade relationen med handledaren?}
+Relationen med handledaren fungerade bra. Tillmötesgående och hjälpsam, snabb att assistera när det blev elektriska problem. Bollade idéer och implementerings-förslag med oss på en lagom nivå utan att ge för mycket handhållning.
+
+\subsection{Tekniska framgångar/problem}
+
+\begin{itemize}
+    \item Svårt att installera OpenCV via PIP på Raspberry Pi.
+    \item Kameran hade en viss fördröjning i början då vi använde den vanliga (ta bild funktionen) vilket ledde till att bilderna blev sena och då fick vi en väldigt dålig respons av bilen (ca 1,25 fps i början). Detta upptäcktes genom att bilen körde av banan och sedan gjorde svängen som om den fortfarande var i banan. Detta löstes genom att vi multitrådade hämtningen av bilder genom videoström så att resterande delen av bildbehandlingen skulle ha up-to-date bilder som den kunde analysera.
+    \item Kameran var i originalfäste inte centrerad. Standardisera mer stabila fästen.
+    \item Dåliga fartreglage. Brände transistorer på chippet 3 gånger under projektet.
+    \item Problem med att taxibilsscriptet inte startades från bootup. Löstes genom att göra om scriptet till en linux-daemon process som kör i bakgrunden så fort som Raspberry-Pin startades.
+    \item Att hantera vägkorsningar skapade flera problem med datorseendet. Dessa löstes genom att analysera hur den läste linjerna och varför den gav utslag när den gjorde och sedan hanterade problemen en i taget.
+\end{itemize}
+
+En framgång var att vi snabbt och tidigt fick ihop en fungerade grundfunktionallitet på produkten. Det gick väldigt smidigt att få bilen att köra manuellt med integration mellan webbapp, kommunikationsmodul och styrmodul, även om funktionaliteten var oslipad i början såklart.
+
+\section{Måluppfyllelse}
+Målen lyckades uppfyllas i tid, även om det var lite snävt mot slutet för sista beslutspunkten.
+
+\subsection{Vad har uppnåtts?}
+Vi fick fram en fungerande autonom taxibil. Bilen fungerar enligt de idéer och specifikationer gruppen satte upp i designfasen och kan utföra sitt uppdrag på ett effektivt sätt.
+
+\subsection{Hur fungerade leveransen?}
+Vi hade problem med leveransen (BP5) då vi inte hade haft särskilt mycket tid till att testa produkten innan. Därför var produkten något oslipad när vi demonstrerade den för Beställaren och behövde ytterligare några timmars justeringar för att uppnå fullgott resultat. När vi väl hade finjusterat bilen så fungerade den som den skulle när vi visade för beställaren igen några dagar senare.
+
+\subsection{Hur har studiesituationen påverkat projektet?}
+Då arbetsbelastningen i övriga kurser förändrades, möjliggjordes även mer och mindre arbete med produkten. Under sista veckorna lades därför mer tid ned, vilket tillät oss att driva projektet i mål på ett bra sätt.
+
+\section{Sammanfattning}
+Projektet hade sina problem, sina framgångar och vi lyckades till slut. Vi hade problem med kommunikationen, lite tekniska problem men inget som vi inte kunde lösa :) .
+
+\subsection{De tre viktigaste erfarenheterna}
+
+\begin{itemize}
+    \item Lägg tid på att göra en bra design i förarbetet. En bra design gör arbetet mycket enklare och sparar massa tid i längden.
+    \item Planera bra från början och försök följa planen så gott de går.
+    \item Jobba på en bra kommunikation, något system för att hålla alla uppdaterade och revidera planeringen när den inte längre stämmer överens med verkligheten.
+\end{itemize}
+
+\subsection{Goda råd till de som ska utföra ett liknande projekt}
+Se till att kunna absorbera de personer i gruppen som inte har något att göra till de aktiviteter som fortfarande har jobb att göra. Kommunicera bättre, gärna med regelbundna gruppmöten och använd gärna en ''kanban board'' där man kan se de aktiviteter som finns (kvarvarande, nuvarande och avklarade)
+
+\end{document}  

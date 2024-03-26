@@ -1,0 +1,328 @@
+\documentclass[10pt,oneside,swedish]{lips}
+
+%\usepackage[square]{natbib}\bibliographystyle{plainnat}\setcitestyle{numbers}
+%\usepackage[round]{natbib}
+\bibliographystyle{IEEEtran}
+
+\title{Projektplan}
+\author{Projektgrupp 13\\
+        Powerpuffpinglorna}
+\date{29 september 2022}
+\version{1.0}
+
+\reviewed{Johan Klasén}{2022-09-29}
+\approved{Anders Nilsson}{2022-09-29}
+
+\begin{document}
+\input{../proj_id.tex}
+
+\cleardoublepage
+\tableofcontents
+
+\cleardoublepage
+\section*{Dokumenthistorik}
+\begin{tabular}{p{.06\textwidth}|p{.1\textwidth}|p{.45\textwidth}|p{.13\textwidth}|p{.13\textwidth}} 
+  \multicolumn{1}{c}{\bfseries Version} & 
+  \multicolumn{1}{|c}{\bfseries Datum} & 
+  \multicolumn{1}{|c}{\bfseries Utförda förändringar} & 
+  \multicolumn{1}{|c}{\bfseries Utförda av} & 
+  \multicolumn{1}{|c}{\bfseries Granskad}\\
+  \hline
+  \hline
+    0.1 & 2022-09-22 & Första utkast & Gruppen & ZW   \\
+  \hline
+    0.2 & 2022-09-28 & Andra utkast & Gruppen & JK   \\
+  \hline
+    1.0 & 2022-09-29 & Första Versionen & JK & JK   \\
+  \hline
+\end{tabular}
+
+\cleardoublepage
+\pagenumbering{arabic}\cfoot{\thepage}
+
+\section{Beställare}
+Beställare är Anders Nilsson vid institutionen för systemteknik (ISY) på Linköpings universitet.
+
+\section{Översiktlig beskrivning av projektet}
+
+\subsection{Syfte och mål}
+Projektets syfte är konstruktionen av en autonom taxibil. Arbetet kommer framförallt vara att utveckla systemet och den tekniska designen.
+
+\subsection{Leveranser}
+Leveranser finns listade i kravspecifikationen\cite{kravspec}.
+
+
+\section{Organisationsplan för hela projektet}
+
+\subsection{Definition av arbetsinnehåll och ansvar}
+Följer är en lista på de olika rollera som har tilldelats för projektet där deras uppgifter och ansvar beskrivs.
+
+\subsubsection{Projektledare}
+Projektledare ansvarar för kommunikation mellan kunden och gruppen.
+
+\subsubsection{Testansvarig}
+Testansvarig har ansvaret att förbereda och underhålla resurser för testning så att tester kan utföras vid behov och producerar läsbara resultat.  
+
+\subsubsection{Utvecklare}
+Utvecklare har ansvaret för att utveckla den tekniska designen och uppdatera den efter behov. 
+
+\subsubsection{Dokumentansvarig}
+Dokumentansvarig har uppgiften att se till att alla dokument levereras kompletta och i tid. Har ansvarar för hur dokumenten hanteras och att meddela andra i gruppen om det.
+
+\subsubsection{Konstruktionsansvarig}
+Konstruktiosansvarig har ansvar för materiell till konstruktion och att denna finns tillhandahållen vid konstruktionsmoment.
+
+\pagebreak
+
+
+\section{Dokumentplan}
+\begin{table}[htbp]
+  \centering
+  \caption{Dokumentplan}
+  \label{tab:doks}
+  \begin{tabular}{| l | p{2.2cm} | p{5cm} | p{2cm} | l |}
+    \hline
+      {\bfseries Dokument} & 
+      {\bfseries Ansvarig/ Godkänns av} & 
+      {\bfseries Syfte} & 
+      {\bfseries Distribueras till} & 
+      {\bfseries Färdig datum} \\
+      \hline
+      \hline
+      Systemskiss & Johan/Anders & 
+      Övergripande modell hur produkten ska
+      designas. Ska innehålla modulindelning av
+      systemet och ett preliminärt blockschema. 
+      & Beställare, grupp & 2022-09-22 \\
+      \hline
+      Projektplan & Johan/Anders & 
+      Planering för projektets villkor och
+      utförande samt övergripande fördelning av
+      den tillgängliga projekttiden i form av
+      aktiviteter.
+      & Beställare, grupp & 2022-09-22 \\
+      \hline
+      Tidplan & Linus/Anders & 
+      Detaljerat schema över hur
+      projektmedlemmarna kommer fördela
+      tillgängliga arbetstimmar under
+      projekttiden utgående från aktiviteterna i
+      projektplanen.
+      & Beställare, grupp & 2022-09-22 \\
+      \hline
+      Designspecifikation & Johan/Peter & 
+      Förfining av systemskissen på tydlig
+      detaljnivå över hur produkten ska
+      konstrueras. Ska innehålla krets- och
+      flödesscheman.
+      & Handledare, grupp & 2022-10-13 \\
+      \hline
+      Tekniskt dokumentation & Johan/Anders & 
+      Komplett beskrivning av hur produkten är konstruerad.
+      & Beställare & 2022-12-14 \\
+      \hline
+      Användarhandledning & Johan/Anders & 
+      Tydliga instruktioner hur man använder produkten.
+      & Beställare & 2022-12-14 \\
+      \hline
+      Tidsrapportering & Linus/Anders & 
+      Löpande redovisning av tidsanvändning till kunden.
+      & Beställare, handledare & 2022-12-21 \\
+      \hline
+      Efterstudie & Gruppen/Anders & 
+      Sammanställning hur projektgruppen upplevde utförandet av av arbetet.
+      & Beställare, grupp & 2022-12-21 \\
+      \hline
+    \end{tabular}
+\end{table}
+
+
+
+\section{Utvecklingsmetodik}
+Utveckling kommer ske parvis där det är möjligt. Detta för att sprida kunskapen om kodbasen mellan fler personer och skriva bättre kod. Vid konstruktion kommer gruppen att struktureras så att det är lagom många medlemmar på plats för den givna aktiviteten. Gruppen kommer efter varje aktivitet att testa komponenten mot kraven som ställs på den.
+
+\section{Utbildningplan}
+För att gruppens medlemmar ska kunna arbeta med projektet krävs grundläggande kunskaper inom \textit{computer vision} vilket gruppen kommer behöva utbilda sig i. Gruppen kommer även att behöva studera metoder för trådlös kommunikation och utveckling av web-applikationer.
+
+\section{Rapporteringsplan}
+%%// Tidrapporter? Ska de refereras ty skrivna i kravspecifikationen?  //
+Tidsrapportering kommer ske kontinuerligt till beställaren efter BP3, enligt veckovis schema som beskrivs i kravspecifikationen\cite{kravspec}.  
+
+\section{Mötesplan}
+Möten inom projektet kommer att ske mellan både medlemmar i gruppen första passet varje vecka. Inom projektet kommer det även att krävas möten med handledare och kund, dessa kommer att bokas och planeras efter hand då de behövs.
+
+\section{Resursplan}
+
+
+\subsection{Personer}
+Till projektet finns de 6 medlemmar av gruppen. Handledare finns att tillgå om oväntade problem skulle uppstå eller information krävs för att fortskrida arbetet.
+
+\subsection{Material}
+Tillgången för material till konstruktion samt begränsningar på dessa ansvarar handledare för. Utöver finns datorutrustning och en samling verktyg tillgänglig i dedikerade salar. Papper, penna och likande används till testning. 3D-printer finns tillgänglig genom handledaren.
+
+\subsection{Lokaler}
+Gruppen kommer att arbeta i lokalerna Muxen och Visionen när dessa finns tillgängliga.
+
+\subsection{Ekonomi}
+Efter att designspecifikationen har levererats till handledare förväntas varje medlem att lägga ner 160 timmars arbete. 
+
+\section{Milstolpar och beslutspunkter}
+
+
+\subsection{Milstolpar}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Milstolpar}
+  \label{tab:milstolar}
+  \begin{tabular}{|l|p{80mm}|l|}
+    \hline
+      {\bfseries Nr} & 
+      {\bfseries Beskrivning} & 
+      {\bfseries Datum}  \\
+      \hline
+      \hline
+      1 & Färdigställa designspecifikationen & 2022-10-13 \\
+      \hline
+      2 & Köra bilen genom fjärrstyrning & 2022-11-10 \\
+      \hline
+      3 & Samla och förmedla data från sensor till kommunikationsmodul & 2022-11-17 \\
+      \hline
+      4 & Styrmodulen får sensordata och kan tolka den för att producera tolkningsbara beräkningar & 2022-11-24 \\
+      \hline
+      5 & Enkel autonomt körning, dvs kan följa vägbanan & 2022-12-02 \\
+      \hline
+      6 & Avancerad autonomt körning med planering & 2022-12-12 \\
+      \hline
+    \end{tabular}
+\end{table}
+
+
+\subsection{Beslutspunkter}
+\begin{table}[htpb]
+    \centering
+    \caption{Beslutspunkter}
+    \label{tab:BPs}
+    \begin{tabular}{|l|p{80mm}|l|}
+    \hline
+      {\bfseries Nr} & 
+      {\bfseries Beskrivning} & 
+      {\bfseries Datum}  \\
+      \hline
+      \hline
+      0 & Gruppmedlemmar och projektuppgift fastställs & 2022-09-01 \\
+      \hline
+      1 & Kravspecifikation godkänns & 2022-09-15 \\
+      \hline
+      2 & Systemskiss, projektplan och tidplan godkänns  & 2022-09-29 \\
+      \hline
+      3 & Designspecifikation godkänns & 2022-10-13 \\
+      \hline
+      4 & Konstruktionsgranskning & - \\
+      \hline
+      5 & Verifiering av slutkrav, tillstånd för leverans & 2022-12-19 \\
+      \hline
+      6 & Samtliga leveranser utförda, beställaren fattar beslut om projektets godkännande & 2022-12-21 \\
+      \hline
+    \end{tabular}
+\end{table}
+
+\pagebreak
+
+
+\section{Aktiviteter}
+\begin{longtable}{|l|p{80mm}|p{20mm}|l|}
+    \caption{Aktiviteter} \\
+    \hline
+    
+    {\bfseries Nr} & 
+    {\bfseries Aktivitet} & 
+    {\bfseries Beroende av Aktivitet Nr} & 
+    {\bfseries Beräknad tid} \endhead
+    \hline
+    \hline
+    
+    \hline
+    0.1 & Dokumentation: Skriva teknisk dokumentation & Efter aktivitet är färdig & 48 \\
+    \hline
+    0.2 & Dokumentation: Möten och tidsrapporter & - & 80 \\
+    \hline
+    0.3 & Dokumentation: Skriva Designspecifikation & - & 40 \\
+    \hline
+    0.4 & Dokumentation: Skriva Användarhandledning & - & 28 \\
+    \hline
+    0.5 & Dokumentation: Skriva Efterstudie & - & 15 \\
+    \hline
+    \hline
+    
+    1.1 & Generell: Koppla ihop virkort för varje enskild modul & - & 10 \\
+    \hline
+    1.2 & Generell: Koppla ihop Sensor, Styr och Kommunikationsmodul & 1.1 & 10 \\
+    \hline
+    1.3 & Generell: Systemtest & - & 50 \\
+    \hline
+    \hline
+    
+    2.1 & Styrmodul: Programmera rutin för att skicka pulser till fartreglage.  & - & 20 \\
+    \hline
+    2.2 & Styrmodul: Programmera rutin för att skicka pulser till styrservo.  & - & 20 \\
+    \hline
+    2.3 & Styrmodul: Implementera manuella styrkommandon för motor och servo & 1.1 & 40 \\
+    \hline
+    2.4 & Styrmodul: Skapa PD-reglerings loop och tolka indata från kommunikationsmodul & - & 50 \\
+    \hline
+    \hline
+    
+    3.1 & Sensor: Programmera ultraljudssensorn så att vi kan avgöra avstånd till eventuella hinder. & 1.1 & 16 \\
+    \hline      
+    3.2 & Sensor: Programmera så att vi kan ta emot data från hallsensorerna. & 1.1 & 16 \\
+    \hline
+    \hline
+    
+    4.1 & Kommunikationsmodul: Samla data från kameran & 1.1 & 15 \\
+    \hline      
+    4.2 & Kommunikationsmodul: Ta emot data och skicka vidare den & 3.1/3.2 & 30 \\
+    \hline      
+    4.3 & Kommunikationsmodul: Skicka data till extern dator över wifi  & 4.2 & 20 \\
+    \hline      
+    4.4 & Kommunikationsmodul: Bildhantering av datan från kameran och skicka den till styrmodul & 1.1/4.2 & 190 \\
+    \hline      
+    4.5 & Kommunikationsmodul: Ta emot styrdata extern dator över wifi och skicka till styrmodulen. & 4.2 & 30 \\
+    \hline
+    \hline
+   
+    5.1 & WebApp: Designa Layout & - & 5 \\
+    \hline
+    5.2 & WebApp: Programmera Layout & 5.1 & 17 \\
+    \hline
+    5.3 & WebApp: Kommunicera med Kommunikations-modulen över wifi & 4.3 & 11 \\
+    \hline
+    5.4 & WebApp: Input PID values och skicka till kommunikationsmodulen & 4.3 & 15 \\
+    \hline
+    5.5 & WebApp: Ta emot livestreamad bild och visa den & 4.1/4.3 & 15 \\
+    \hline
+    5.6 & WebApp: Manuella knappar för manuell styrning & 2.1/4.3 & 21 \\
+    \hline
+    5.7 & WebApp: Rita graf med all data som fås från kommunikationsmodulen. (Fel, hastighet, riktning)& 4.3 & 44 \\
+    \hline
+    5.8 & WebApp: Rita en modell av kartan och robotens position på kartan. & 4.3 & 22 \\
+    \hline
+\end{longtable}
+\clearpage
+
+
+
+\section{Testplan}
+När en modul har utvecklats mot att klara en milstolpe eller aktivitet kommer den att testas enligt vad modulen ska klara av för att klara av milstolpen.
+
+\section{Prioriteringar}
+Prioritet kommer att hanteras enligt samma prioritet som hittas i kravspecifikationen\cite{kravspec}.
+Skalan är följande: (1) Krav, (2) Utökat krav i mån av tid och (3) Framtida vidarutveckling
+
+\section{Projektavslut}
+Projektet avslutas med en tävling mot de andra grupperna som har konstruerat autonoma taxibilar och efter det inlämningen av material till handledare.
+
+\clearpage
+\bibliography{references}
+
+\end{document}

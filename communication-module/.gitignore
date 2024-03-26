@@ -3,3 +3,4 @@ Result_*
 *.h264
 *.jpg
 __pycache__/
+Example/*
